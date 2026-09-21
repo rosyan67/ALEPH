@@ -1,6 +1,6 @@
 # ARCHITECTURE.md – Aufbau von ALEPH
 
-Stand: 2026-09-21 · Status: Entwurf, Entscheidungen in Abschnitt 12 offen
+Stand: 2026-09-21 · Status: bestätigt
 
 Dieses Dokument beschreibt, wie ALEPH aufgebaut ist. Jede Claude-Code-Sitzung liest es vor Änderungen am Code. Die verbindlichen Arbeitsregeln stehen in `CLAUDE.md`.
 
@@ -316,9 +316,9 @@ ALEPH/
 └── data/                  (nicht in Git) raw/, cube/, events/
 ```
 
-## 12. Offene Entscheidungen (für Alexander)
+## 12. Entscheidungen (bestätigt am 2026-09-21)
 
-| Nr. | Frage | Vorschlag |
+| Nr. | Frage | Entscheidung |
 |---|---|---|
 | E1 | Rasterweite | 0,25° global |
 | E2 | Zeittakt | monatlich |
@@ -340,8 +340,7 @@ ALEPH/
 | 4 | Layer NO₂, Niederschlag und Schiffsverkehr |
 | 5 | Fokusgebiete: tägliches Nachtlicht und Brände, ACLED; Theorie-Register mit ersten Theorien |
 | 6 | Blindtest und Bericht; Untersuchungsansicht mit Zeitreihen und Kontext |
-| 7 | **Prototyp fertig:** alle Filter, Suche, Fokusgebiet-Ansicht, Theorie-Status |
-| 8 | Stabilisieren, Präsentation, Challenge-Bezug herstellen |
+| 7 | Prototyp fertigstellen, stabilisieren, Präsentation |
 
 **Nach November** (Ideenspeicher, nicht Teil des Prototyps): Radar-Schadenserkennung (Sentinel-1), weitere Fokusgebiete, Live-Kanal, Szenarien, weitere Theorien. Neue Ideen landen zuerst hier, nicht direkt im Plan.
 
