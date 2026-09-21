@@ -1,0 +1,17 @@
+# Getestet mit Python 3.12 auf macOS 12 (Intel). Einrichtung:
+#   uv venv --python 3.12 .venv
+#   uv pip install --python .venv/bin/python --only-binary :all: -r requirements.txt
+earthaccess==0.19.0
+xarray==2026.7.0
+zarr==3.4.0
+rioxarray==0.23.0
+pandas==3.0.6
+pyarrow==25.0.1
+duckdb==1.5.5
+python-dotenv==1.2.3
+pytest==9.1.1
+h5py==3.16.0
+pyyaml==6.0.3
+# Neuere pyproj-Versionen haben kein fertiges Paket für macOS 12 (nur 13 bzw. 15).
+# 3.7.0 ist die letzte Version mit fertigem Paket. Bei einem Systemupdate aufheben.
+pyproj==3.7.0
