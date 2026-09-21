@@ -1,5 +1,6 @@
 # CLAUDE.md – Verbindliche Regeln für ALEPH
 
+- Vor jeder Änderung ARCHITECTURE.md lesen.
 - Keine Annahmen über den Code. Vor jeder Änderung den tatsächlichen Code lesen.
 - Bei größeren Änderungen die komplette Datei liefern statt vieler kleiner Patches.
 - Nach jeder Änderung einen konkreten Test ausführen und das Ergebnis zeigen.
