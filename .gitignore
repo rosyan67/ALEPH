@@ -4,6 +4,9 @@ data/
 # Zugangsdaten
 .env
 
+# Lokale Claude-Code-Einstellungen (nur auf diesem Rechner)
+.claude/settings.local.json
+
 # Python-Cache
 __pycache__/
 *.py[cod]

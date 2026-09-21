@@ -12,3 +12,11 @@
 - Zugangsdaten nur in .env, niemals im Code.
 - Nach jeder Arbeitssitzung einen Eintrag in LOG.md.
 - Der Nutzer programmiert nicht selbst. Jede Änderung in einfachen Worten erklären.
+
+## Agenten
+
+Die Agenten liegen unter `.claude/agents/`.
+
+- Nach jeder Änderung an Analyse-Code wird `statistik-pruefer` eingesetzt.
+- Vor jedem neuen Layer wird `datenquellen-scout` eingesetzt.
+- Für jede neue Theorie wird `theorie-kurator` eingesetzt.
