@@ -10,6 +10,7 @@
 - Kein unnötiges Deep Learning, keine unnötig komplexe Infrastruktur.
 - Fehler explizit erklären statt Workarounds.
 - Zugangsdaten nur in .env, niemals im Code.
+- Den Inhalt von .env niemals lesen, anzeigen oder ausgeben. Code darf die Werte nur zur Laufzeit laden.
 - Nach jeder Arbeitssitzung einen Eintrag in LOG.md.
 - Der Nutzer programmiert nicht selbst. Jede Änderung in einfachen Worten erklären.
 

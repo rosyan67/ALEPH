@@ -301,6 +301,7 @@ ALEPH/
 ├── anomaly_types.yaml     bekannte Anomalie-Typen und ihre Regeln
 ├── focus_areas.yaml      Fokusgebiete mit feinerer Analyse
 ├── theories/              Theorie-Register (ein YAML pro Theorie)
+├── docs/sources/          Steckbriefe der Datenquellen
 ├── aleph/
 │   ├── core/              Raster, Laden, Speichern, Konfiguration
 │   ├── layers/            ein Modul pro Datenquelle
