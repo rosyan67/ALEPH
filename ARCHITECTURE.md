@@ -340,7 +340,7 @@ ALEPH/
 | 4 | Layer NO₂, Niederschlag und Schiffsverkehr |
 | 5 | Fokusgebiete: tägliches Nachtlicht und Brände, ACLED; Theorie-Register mit ersten Theorien |
 | 6 | Blindtest und Bericht; Untersuchungsansicht mit Zeitreihen und Kontext |
-| 7 | Prototyp fertigstellen, stabilisieren, Präsentation |
+| 7 | Prototyp fertigstellen: Globus, Suchleiste, alle Filter, Fokusgebiet-Ansicht, Theorie-Status; Challenge-Bezug herstellen; stabilisieren, Präsentation vorbereiten. |
 
 **Nach November** (Ideenspeicher, nicht Teil des Prototyps): Radar-Schadenserkennung (Sentinel-1), weitere Fokusgebiete, Live-Kanal, Szenarien, weitere Theorien. Neue Ideen landen zuerst hier, nicht direkt im Plan.
 
