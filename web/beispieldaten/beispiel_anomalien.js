@@ -11,15 +11,25 @@
  * Evidenzstufen (statistische Assoziation, Modellprojektion, hypothetisches
  * Szenario) gehören nicht zur Anomalie selbst, sondern zu einer VERKNÜPFUNG
  * mit einer Theorie (Abschnitt 8). Deshalb trägt jedes Feature zusätzlich
- * `verknuepfungen`: eine Liste von { theorie, evidenzstufe, hinweis }. Das ist
- * eine für die Oberfläche vereinfachte, geglättete Sicht auf das, was später
- * aus aleph/link/ und data/events/links.parquet kommt – kein eigenes Format.
+ * `verknuepfungen`: eine Liste, deren Einträge über `typ` unterschieden
+ * werden (Rückmeldung 2026-09-23, zweite Format-Erweiterung):
+ *   - { typ: "theorie", theorie, evidenzstufe, hinweis } – Verknüpfung mit
+ *     einem Eintrag aus beispiel_theorien.js.
+ *   - { typ: "bewegung", herkunft, ziel, richtung, evidenzstufe, hinweis } –
+ *     verbindet zwei Anomalien (Herkunft = Rückgang, Ziel = Anstieg) zu einer
+ *     Bevölkerungsbewegung. Erscheint auf der Karte als gebogener Pfeil
+ *     (berechnet aus den Schwerpunkten von Herkunft und Ziel, siehe app.js
+ *     `bogenlinie()`), nicht als eigene Fläche. Steht auf BEIDEN beteiligten
+ *     Anomalien, damit die Detailansicht von beiden Seiten aus verlinkt.
+ * Das ist eine für die Oberfläche vereinfachte, geglättete Sicht auf das, was
+ * später aus aleph/link/ und data/events/links.parquet kommt – kein eigenes
+ * Format für die echte Pipeline.
  *
  * Modellprojektion und hypothetisches Szenario kommen in diesem Gerüst nie in
  * dieser Datei vor (auch nicht über verknuepfungen) – dafür gibt es
  * beispiel_projektionen.js, die auf der Zeitachse rechts von "heute" liegen.
  *
- * Diese 18 Einträge dienen ausschließlich dazu, das Oberflächen-Gerüst
+ * Diese 19 Einträge dienen ausschließlich dazu, das Oberflächen-Gerüst
  * (Woche 2) zu testen: Globus, Suchleiste, Filter, Untersuchungsansicht.
  * Sobald echte Layer und die Erkennung (Abschnitt 6) laufen, wird diese
  * Datei durch den Export aus aleph/export/ ersetzt.
@@ -102,7 +112,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "evidenzstufe": "beobachtet",
         "fokusgebiet": true,
         "verknuepfungen": [
-          { "theorie": "konflikt-vertreibung", "evidenzstufe": "statistische Assoziation", "hinweis": "Nachtlicht-Rückgang zeitnah zu ACLED-Ereignissen, Muster an Testdaten bestätigt (Beispiel)." }
+          { "typ": "theorie", "theorie": "konflikt-vertreibung", "evidenzstufe": "statistische Assoziation", "hinweis": "Nachtlicht-Rückgang zeitnah zu ACLED-Ereignissen, Muster an Testdaten bestätigt (Beispiel)." }
         ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
@@ -132,7 +142,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
         "verknuepfungen": [
-          { "theorie": "duerre-migration", "evidenzstufe": "statistische Assoziation", "hinweis": "Niederschlagsdefizit und Vegetationsrückgang, Muster an Testdaten bestätigt (Beispiel)." }
+          { "typ": "theorie", "theorie": "duerre-migration", "evidenzstufe": "statistische Assoziation", "hinweis": "Niederschlagsdefizit und Vegetationsrückgang, Muster an Testdaten bestätigt (Beispiel)." }
         ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
@@ -260,12 +270,12 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
       "properties": {
         "id": "bm-009",
         "beispiel": true,
-        "name": "Anomalie: Bevölkerungsbewegung",
+        "name": "Anomalie: Bevölkerungsbewegung (Herkunft)",
         "typ": "Bevölkerungsbewegung",
         "typ_sicherheit": "abgeleitet",
         "layer": ["nachtlicht"],
         "region": "Naher Osten",
-        "ort_label": "Grenzregion Syrien/Türkei (Beispiel)",
+        "ort_label": "Aleppo-Umland, Syrien (Beispiel)",
         "start": "2023-02",
         "ende": "2023-08",
         "richtung": "Rückgang",
@@ -274,7 +284,8 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
         "verknuepfungen": [
-          { "theorie": "konflikt-vertreibung", "evidenzstufe": "statistische Assoziation", "hinweis": "Nachtlicht-Rückgang am Herkunftsort, Muster an Testdaten bestätigt (Beispiel)." }
+          { "typ": "theorie", "theorie": "konflikt-vertreibung", "evidenzstufe": "statistische Assoziation", "hinweis": "Nachtlicht-Rückgang am Herkunftsort, Muster an Testdaten bestätigt (Beispiel)." },
+          { "typ": "bewegung", "herkunft": "bm-009", "ziel": "bm-020", "richtung": "Herkunft → Ziel", "evidenzstufe": "beobachtet", "hinweis": "Satellitendaten zeigen Rückgang hier und Anstieg dort. Die Verbindung ist eine Hypothese und wird erst durch Vertreibungsdaten (IDMC/UNHCR) geprüft." }
         ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
@@ -282,7 +293,37 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
       },
       "geometry": {
         "type": "Polygon",
-        "coordinates": [[[37.0,37.1172],[37.4307,36.9765],[37.6095,36.6592],[37.8803,36.2701],[37.3463,36.1168],[37.0,35.8703],[36.4486,35.89],[36.412,36.3464],[36.2358,36.6996],[36.5134,37.0384],[37.0,37.1172]]]
+        "coordinates": [[[37.1,36.7128],[37.5002,36.5948],[37.835,36.3428],[37.7131,35.9891],[37.5375,35.6637],[37.1,35.3763],[36.6212,35.6179],[36.3793,35.9609],[36.4096,36.3311],[36.6384,36.663],[37.1,36.7128]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "bm-020",
+        "beispiel": true,
+        "name": "Anomalie: Bevölkerungsbewegung (Ziel)",
+        "typ": "Bevölkerungsbewegung",
+        "typ_sicherheit": "abgeleitet",
+        "layer": ["nachtlicht"],
+        "region": "Naher Osten",
+        "ort_label": "Grenzregion Kilis/Gaziantep, Türkei (Beispiel)",
+        "start": "2023-02",
+        "ende": "2023-08",
+        "richtung": "Anstieg",
+        "staerke_band": "auffällig",
+        "datenlage": "mittel",
+        "evidenzstufe": "beobachtet",
+        "fokusgebiet": false,
+        "verknuepfungen": [
+          { "typ": "bewegung", "herkunft": "bm-009", "ziel": "bm-020", "richtung": "Herkunft → Ziel", "evidenzstufe": "beobachtet", "hinweis": "Satellitendaten zeigen Rückgang hier und Anstieg dort. Die Verbindung ist eine Hypothese und wird erst durch Vertreibungsdaten (IDMC/UNHCR) geprüft." }
+        ],
+        "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
+        "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
+        "version": "beispiel-v0"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[37.55,37.1286],[37.7657,36.9878],[37.9572,36.856],[37.9547,36.6446],[37.7538,36.5252],[37.55,36.4322],[37.2767,36.4486],[37.1545,36.647],[37.0958,36.8683],[37.3523,36.968],[37.55,37.1286]]]
       }
     },
     {
@@ -444,7 +485,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
         "verknuepfungen": [
-          { "theorie": "duerre-migration", "evidenzstufe": "statistische Assoziation", "hinweis": "Gleiches Muster wie bei bereits bestätigter Verknüpfung, hier erstmals beobachtet (Beispiel)." }
+          { "typ": "theorie", "theorie": "duerre-migration", "evidenzstufe": "statistische Assoziation", "hinweis": "Gleiches Muster wie bei bereits bestätigter Verknüpfung, hier erstmals beobachtet (Beispiel)." }
         ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",

@@ -571,13 +571,11 @@
     filterPanel.classList.add("is-open");
     filterPanel.setAttribute("aria-hidden", "false");
     filterToggle.setAttribute("aria-expanded", "true");
-    updateTimelineBounds();
   }
   function closeFilter() {
     filterPanel.classList.remove("is-open");
     filterPanel.setAttribute("aria-hidden", "true");
     filterToggle.setAttribute("aria-expanded", "false");
-    updateTimelineBounds();
   }
   filterToggle.addEventListener("click", function () {
     if (filterPanel.classList.contains("is-open")) closeFilter(); else openFilter();
@@ -909,7 +907,6 @@
     investigation.classList.toggle("is-open", offen);
     investigation.setAttribute("aria-hidden", offen ? "false" : "true");
     invReopenBtn.hidden = offen;
-    updateTimelineBounds();
   }
 
   function verlasseVollbild() {
@@ -946,7 +943,6 @@
     investigation.classList.toggle("is-fullscreen", invFullscreen);
     invFullscreenBtn.textContent = invFullscreen ? "⤡" : "⤢";
     invFullscreenBtn.title = invFullscreen ? "Vollbild verlassen" : "Vollbild";
-    updateTimelineBounds();
   });
 
   // ---------- Mehrfachauswahl ----------
@@ -1062,7 +1058,7 @@
 
     investigationContent.innerHTML =
       '<div class="inv-liste-head"><h2>Sichtbare Anomalien</h2>' +
-      '<p class="inv-liste-count">' + sortiert.length + ' von 18 Beispiel-Anomalien, sortiert nach Stärke</p></div>' +
+      '<p class="inv-liste-count">' + sortiert.length + ' von ' + anomalien.features.length + ' Beispiel-Anomalien, sortiert nach Stärke</p></div>' +
       chips +
       '<div class="inv-liste">' + rows + "</div>";
 
@@ -1102,6 +1098,18 @@
       return '<div class="inv-field-value" style="color:var(--paper-ink-dim); font-size:12.5px;">Noch keine Verknüpfung – entsteht erst mit aleph/link/ (Abschnitt 8).</div>';
     }
     return verknuepfungen.map(function (v) {
+      if (v.typ === "bewegung") {
+        var herkunftF = anomalien.features.filter(function (f) { return f.properties.id === v.herkunft; })[0];
+        var zielF = anomalien.features.filter(function (f) { return f.properties.id === v.ziel; })[0];
+        var herkunftName = herkunftF ? herkunftF.properties.ort_label : v.herkunft;
+        var zielName = zielF ? zielF.properties.ort_label : v.ziel;
+        return '<div class="inv-verknuepfung inv-verknuepfung--bewegung">' +
+          '<div class="inv-verknuepfung-titel">' + escapeHtml(herkunftName) + ' <span class="inv-verknuepfung-pfeil">→</span> ' + escapeHtml(zielName) + "</div>" +
+          '<div class="inv-verknuepfung-stufe">Evidenzstufe: ' + escapeHtml(v.evidenzstufe) + "</div>" +
+          '<div class="inv-verknuepfung-text">' + escapeHtml(EVIDENZ_TEXT[v.evidenzstufe] || "") + "</div>" +
+          (v.hinweis ? '<div class="inv-verknuepfung-text">' + escapeHtml(v.hinweis) + "</div>" : "") +
+          "</div>";
+      }
       var t = findTheorie(v.theorie);
       var titel = t ? t.titel : v.theorie;
       return '<div class="inv-verknuepfung">' +
@@ -1304,17 +1312,6 @@
   }
   renderVerfuegbarkeitStreifen([]);
 
-  // ---------- Zeitachse nie von Filter-/Detailleiste verdeckt ----------
-
-  var timelineDock = byId("timeline-dock");
-  function updateTimelineBounds() {
-    var left = filterPanel.classList.contains("is-open") ? filterPanel.offsetWidth : 0;
-    var right = investigation.classList.contains("is-open") ? investigation.offsetWidth : 0;
-    timelineDock.style.left = left + "px";
-    timelineDock.style.right = right + "px";
-  }
-  window.addEventListener("resize", updateTimelineBounds);
-
   // ---------- Suche ----------
 
   var searchInput = byId("search-input");
@@ -1404,5 +1401,4 @@
   // ---------- Start: Liste sofort sichtbar, auch bevor die Karte geladen ist ----------
 
   showListe();
-  updateTimelineBounds();
 })();

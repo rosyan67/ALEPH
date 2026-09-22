@@ -27,6 +27,9 @@
   --projektion: #8f7fc9;
   --projektion-soft: #cabfe6;
 
+  --bewegung: #35a79c;
+  --bewegung-soft: #bfe6e1;
+
   --paper: #e7e0cb;
   --paper-2: #f2ecdd;
   --paper-ink: #241f14;
@@ -718,6 +721,34 @@ button {
   border-color: var(--projektion);
 }
 
+.inv-liste-zuklein {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.inv-liste-zuklein-badge {
+  font-size: 10px;
+  color: var(--paper-ink-dim);
+  background: var(--paper-2);
+  border: 1px dashed var(--paper-line);
+  border-radius: var(--radius);
+  padding: 1px 5px;
+}
+
+.inv-liste-hinzoom {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--paper-ink);
+  background: var(--paper);
+  border: 1px solid var(--paper-ink-dim);
+  border-radius: var(--radius);
+  padding: 1px 6px;
+  cursor: pointer;
+}
+.inv-liste-hinzoom:hover { background: var(--bewegung-soft); }
+
 /* ---------- Detail (Dossier-Inhalte) ---------- */
 
 .inv-badge {
@@ -815,7 +846,8 @@ button {
   background: var(--paper-2);
 }
 
-.inv-theorie-link {
+.inv-theorie-link,
+.inv-anomalie-link {
   display: inline-block;
   font-size: 13px;
   font-weight: 500;
@@ -833,6 +865,23 @@ button {
   background: var(--paper-2);
   padding: 10px 12px;
   margin-bottom: 8px;
+}
+
+.inv-verknuepfung--bewegung {
+  border-left: 3px solid var(--bewegung);
+}
+
+.inv-verknuepfung-titel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  color: var(--bewegung);
+  margin-bottom: 4px;
+}
+
+.inv-verknuepfung-pfeil {
+  color: var(--paper-ink-dim);
+  margin: 0 4px;
 }
 
 .inv-verknuepfung-stufe {
@@ -917,18 +966,23 @@ button {
 
 /* ---------- Timeline dock ---------- */
 
+/* Fest mittig, feste Breite (Rückmeldung 2026-09-23): wandert absichtlich
+   NICHT mehr mit, wenn Filter- oder Detailleiste öffnen/schließen – anders
+   als noch in der vorigen Fassung. */
 .timeline-dock {
   position: fixed;
-  left: 0; right: 0; bottom: 0;
+  bottom: 0;
+  left: 50%;
+  width: min(680px, calc(100vw - 32px));
+  transform: translateX(-50%);
   z-index: 20;
   background: linear-gradient(to top, rgba(5,7,13,0.94) 0%, rgba(5,7,13,0.6) 75%, rgba(5,7,13,0) 100%);
   padding: 6px 20px 10px;
-  transition: left 0.3s ease, right 0.3s ease;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .tl-availability {
-  max-width: 680px;
-  margin: 0 auto 4px;
+  margin: 0 0 4px;
 }
 
 .tl-availability-toggle {
@@ -978,8 +1032,6 @@ button {
 }
 
 .tl-main {
-  max-width: 680px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1140,8 +1192,7 @@ button {
 }
 
 .tl-pin-readout {
-  max-width: 680px;
-  margin: 3px auto 0;
+  margin: 3px 0 0;
   font-size: 10px;
   color: var(--text-faint);
   text-align: center;
