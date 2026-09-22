@@ -6,6 +6,7 @@
 <title>ALEPH – Oberflächen-Gerüst (Beispieldaten)</title>
 <meta name="description" content="ALEPH erkennt außergewöhnliche Entwicklungen in globalen Daten und zeigt sie mit Evidenzstufe und Unsicherheit auf einer filterbaren Karte. Diese Ansicht zeigt ausschließlich Beispieldaten." />
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.3.1/ol.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340..600&family=Fraunces:ital,opsz,wght@1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -14,6 +15,7 @@
 <body>
 
   <div id="map" aria-label="Globus mit Beispiel-Anomalien"></div>
+  <div id="map-flat" class="map-flat" aria-label="Flache Karte (Equal-Earth-Projektion) mit Beispiel-Anomalien" hidden></div>
 
   <div class="vignette" aria-hidden="true"></div>
 
@@ -38,9 +40,14 @@
       </div>
     </div>
 
-    <button id="basemap-toggle" class="corner-btn corner-btn--right" aria-pressed="false" title="Grundkarte umschalten: Nachtlicht (Black Marble) oder Tag (Blue Marble)">
-      Tagkarte
-    </button>
+    <div class="corner-group corner-group--right">
+      <button id="view-toggle" class="corner-btn" aria-pressed="false" title="Ansicht umschalten: Globus oder flache Karte (Equal Earth, UN 2026)">
+        Flache Karte
+      </button>
+      <button id="basemap-toggle" class="corner-btn" aria-pressed="false" title="Grundkarte umschalten: Nachtlicht (Black Marble) oder Tag (Blue Marble)">
+        Tagkarte
+      </button>
+    </div>
   </header>
 
   <aside id="filter-panel" class="filter-panel" aria-hidden="true">
@@ -167,6 +174,7 @@
   <script src="beispieldaten/beispiel_projektionen.js"></script>
   <script src="beispieldaten/beispiel_datenverfuegbarkeit.js"></script>
   <script src="https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ol@10.3.1/dist/ol.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

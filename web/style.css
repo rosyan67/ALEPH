@@ -55,11 +55,40 @@ html, body {
   line-height: 1.45;
 }
 
-#map {
+#map,
+.map-flat {
   position: fixed;
   inset: 0;
   background: var(--bg-void);
 }
+
+/* ---------- Flache Karte (OpenLayers, Equal Earth) ---------- */
+
+.ol-zoom {
+  top: 84px !important;
+  left: auto !important;
+  right: 16px !important;
+}
+
+.ol-zoom .ol-zoom-in,
+.ol-zoom .ol-zoom-out {
+  background: rgba(13,18,32,0.9) !important;
+  color: var(--text) !important;
+}
+
+.ol-zoom .ol-zoom-in:hover,
+.ol-zoom .ol-zoom-out:hover {
+  background: rgba(217,164,65,0.25) !important;
+}
+
+.ol-attribution {
+  background: rgba(7,10,18,0.7) !important;
+  color: var(--text-faint) !important;
+}
+
+.ol-attribution a { color: var(--text-dim) !important; }
+
+.ol-attribution:not(.ol-collapsed) { max-width: 60vw; }
 
 .vignette {
   position: fixed;
@@ -137,7 +166,15 @@ button {
 }
 
 .corner-btn--left { grid-column: 1; justify-self: start; }
-.corner-btn--right { grid-column: 3; justify-self: end; }
+
+.corner-group {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
 
 .corner-btn[aria-expanded="true"],
 .corner-btn[aria-pressed="true"] {
@@ -1171,7 +1208,7 @@ button {
     order: 3;
   }
   .corner-btn--left { grid-column: 1; }
-  .corner-btn--right { grid-column: 2; }
+  .corner-group { grid-column: 2; flex-direction: row; }
   .search-wrap { width: 100%; }
 
   .filter-panel { width: 100%; max-width: 100%; }

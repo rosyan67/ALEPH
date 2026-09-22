@@ -3,8 +3,8 @@
  *
  * Alles auf dieser Seite ist Beispieldaten (web/beispieldaten/*.js). Es gibt
  * noch keine echte Anomalieerkennung – dieses Skript testet nur, ob Globus,
- * Suche, Filter, Liste/Detailansicht und Mehrfachauswahl wie vorgesehen
- * funktionieren.
+ * flache Karte, Suche, Filter, Liste/Detailansicht und Mehrfachauswahl wie
+ * vorgesehen funktionieren.
  *
  * Wichtige Regel (Rückmeldung 2026-09-22): Eine Anomalie ist immer
  * "beobachtet" (Abschnitt 7). Höhere Evidenzstufen gehören zu Verknüpfungen
@@ -15,9 +15,14 @@
  * Datenquellen ist KEINE geprüfte Verknüpfung, sondern nur ein zeitliches
  * und räumliches Zusammenfallen – Evidenzstufe "beobachtet" (Koinzidenz,
  * Abschnitt 8). Zeitfenster und räumliche Regel sind Einstellungen
- * (#komb-fenster, #komb-regel), nicht im Code fest verdrahtet. Die
- * räumliche Regel ist hier eine Näherung (Bounding-Kreis der Polygone) –
- * eine echte "gleiche Gitterzelle" gibt es erst mit den Analyse-Würfeln.
+ * (#komb-fenster, #komb-regel), nicht im Code fest verdrahtet.
+ *
+ * Flache Karte / Equal Earth (Rückmeldung 2026-09-23): MapLibre GL JS kennt
+ * nur "mercator" und "globe" (beide auf Web-Mercator-Kacheln aufgebaut) –
+ * keine Equal-Earth-Unterstützung. Die flache Ansicht läuft deshalb über
+ * OpenLayers, das Rasterquellen automatisch in eine andere Projektion
+ * umrechnen kann (siehe "Flache Karte" weiter unten). Der Globus bleibt
+ * unverändert MapLibre.
  */
 (function () {
   "use strict";
@@ -127,7 +132,7 @@
   var now = new Date();
   var HEUTE_INDEX = (now.getFullYear() - EPOCH_YEAR) * 12 + now.getMonth();
 
-  // ---------- Karte ----------
+  // ---------- Karte (Globus, MapLibre) ----------
 
   var map = new maplibregl.Map({
     container: "map",
@@ -180,8 +185,11 @@
     }
   });
 
+  // Kein GlobeControl (MapLibre-eigener Globus/Mercator-Umschalter) mehr:
+  // Die flache Ansicht läuft jetzt über die eigene "Flache Karte" (Equal
+  // Earth, siehe unten), nicht über MapLibres Mercator-Modus. Der Globus
+  // bleibt fest auf "globe".
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
-  map.addControl(new maplibregl.GlobeControl(), "bottom-right");
 
   // ---------- Basiskarte umschalten (Nachtlicht / Tag) ----------
 
@@ -194,6 +202,10 @@
     if (map.getLayer("basemap-night")) {
       map.setLayoutProperty("basemap-night", "visibility", mode === "nacht" ? "visible" : "none");
       map.setLayoutProperty("basemap-day", "visibility", mode === "tag" ? "visible" : "none");
+    }
+    if (olLayerNight) {
+      olLayerNight.setVisible(mode === "nacht");
+      olLayerDay.setVisible(mode === "tag");
     }
     basemapToggle.textContent = mode === "nacht" ? "Tagkarte" : "Nachtkarte";
     basemapToggle.setAttribute("aria-pressed", mode === "tag" ? "true" : "false");
@@ -208,7 +220,7 @@
   var hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8 });
 
   // Aktuell sichtbare (gefilterte) Features und Kombinationsfilter-Infos –
-  // von applyFilters() gepflegt, von der Liste und der Karte gelesen.
+  // von applyFilters() gepflegt, von der Liste und beiden Karten gelesen.
   var aktuellGefiltert = anomalien.features.slice();
   var aktuellKombInfo = {};
   var ausgewaehlt = []; // ids, für die Mehrfachauswahl/den Vergleich
@@ -334,6 +346,219 @@
       }
     });
     return out;
+  }
+
+  // ---------- Flache Karte (OpenLayers, Equal-Earth-Projektion) ----------
+  //
+  // MapLibre kennt nur "mercator"/"globe" (beide Web-Mercator-Kacheln).
+  // OpenLayers kann eine Rasterquelle dagegen automatisch in eine andere
+  // Projektion umrechnen (siehe OpenLayers-Tutorial "raster-reprojection"),
+  // wenn man ihr die Formel für diese Projektion gibt. Die Formel für Equal
+  // Earth (Šavrič/Jenny/Jenny 2018) ist unten von Hand eingetragen und
+  // eigenständig auf Rundreise-Genauigkeit getestet (siehe LOG.md).
+
+  var EE_A1 = 1.340264, EE_A2 = -0.081106, EE_A3 = 0.000893, EE_A4 = 0.003796;
+  var EE_M = Math.sqrt(3) / 2;
+  var EE_ITER = 20;
+  var EE_R = 6378137; // gleicher Kugelradius wie Web Mercator – nur für eine vertraute Größenordnung
+
+  function equalEarthForward(lonLat) {
+    var lambda = (lonLat[0] * Math.PI) / 180;
+    var phi = (lonLat[1] * Math.PI) / 180;
+    var theta = Math.asin(EE_M * Math.sin(phi));
+    var theta2 = theta * theta;
+    var theta6 = theta2 * theta2 * theta2;
+    var denom = EE_M * (EE_A1 + 3 * EE_A2 * theta2 + theta6 * (7 * EE_A3 + 9 * EE_A4 * theta2));
+    var x = (lambda * Math.cos(theta)) / denom;
+    var y = theta * (EE_A1 + EE_A2 * theta2 + theta6 * (EE_A3 + EE_A4 * theta2));
+    return [x * EE_R, y * EE_R];
+  }
+
+  function equalEarthInverse(xy) {
+    var x = xy[0] / EE_R, y = xy[1] / EE_R;
+    var theta = y;
+    for (var i = 0; i < EE_ITER; i++) {
+      var theta2 = theta * theta;
+      var theta6 = theta2 * theta2 * theta2;
+      var fTheta = theta * (EE_A1 + EE_A2 * theta2 + theta6 * (EE_A3 + EE_A4 * theta2)) - y;
+      var fPrime = EE_A1 + 3 * EE_A2 * theta2 + theta6 * (7 * EE_A3 + 9 * EE_A4 * theta2);
+      var delta = fTheta / fPrime;
+      theta -= delta;
+      if (Math.abs(delta) < 1e-12) break;
+    }
+    var theta2 = theta * theta;
+    var theta6 = theta2 * theta2 * theta2;
+    var denom = EE_M * (EE_A1 + 3 * EE_A2 * theta2 + theta6 * (7 * EE_A3 + 9 * EE_A4 * theta2));
+    var lambda = (x * denom) / Math.cos(theta);
+    var phi = Math.asin(Math.sin(theta) / EE_M);
+    return [(lambda * 180) / Math.PI, (phi * 180) / Math.PI];
+  }
+
+  var aktiveAnsicht = "globus"; // "globus" | "flach"
+  var olMap = null;
+  var olEqualEarthProj = null;
+  var olAnomalienSource = null;
+  var olAuswahlSource = null;
+  var olLayerNight = null, olLayerDay = null;
+  var olGeoJsonFormat = null;
+
+  function ensureFlatMap() {
+    if (olMap) return;
+
+    var eeExtent = (function () {
+      var xMax = equalEarthForward([180, 0])[0];
+      var yMax = equalEarthForward([0, 90])[1];
+      return [-xMax, -yMax, xMax, yMax];
+    })();
+
+    olEqualEarthProj = new ol.proj.Projection({
+      code: "ALEPH:equalearth",
+      units: "m",
+      extent: eeExtent
+    });
+    ol.proj.addProjection(olEqualEarthProj);
+    ol.proj.addCoordinateTransforms(
+      "EPSG:4326",
+      olEqualEarthProj,
+      function (coord) { return equalEarthForward(coord); },
+      function (coord) { return equalEarthInverse(coord); }
+    );
+
+    olLayerNight = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: "https://tiles.maps.eox.at/wmts/1.0.0/blackmarble_3857/default/g/{z}/{y}/{x}.jpg",
+        projection: "EPSG:3857",
+        attributions: '© EOX IT Services – Nachtlicht-Komposit: NASA Black Marble (VIIRS)'
+      }),
+      visible: basemapMode === "nacht"
+    });
+    olLayerDay = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: "https://tiles.maps.eox.at/wmts/1.0.0/bluemarble_3857/default/g/{z}/{y}/{x}.jpg",
+        projection: "EPSG:3857",
+        attributions: '© EOX IT Services – Tageskomposit: NASA Blue Marble'
+      }),
+      visible: basemapMode === "tag"
+    });
+    var olLayerOverlay = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: "https://tiles.maps.eox.at/wmts/1.0.0/overlay_3857/default/g/{z}/{y}/{x}.png",
+        projection: "EPSG:3857"
+      }),
+      opacity: 0.5
+    });
+
+    olGeoJsonFormat = new ol.format.GeoJSON();
+    olAnomalienSource = new ol.source.Vector();
+    olAuswahlSource = new ol.source.Vector();
+
+    function olStaerkeFarbe(feature) {
+      return STAERKE_FARBE[feature.get("staerke_band")] || "#e2b04f";
+    }
+
+    var olLayerAnomalien = new ol.layer.Vector({
+      source: olAnomalienSource,
+      style: function (feature) {
+        var farbe = olStaerkeFarbe(feature);
+        var styles = [new ol.style.Style({
+          fill: new ol.style.Fill({ color: farbe + "61" }), // ~38% Deckkraft, wie auf dem Globus
+          stroke: new ol.style.Stroke({ color: farbe, width: 1.4 })
+        })];
+        if (feature.get("fokusgebiet")) {
+          styles.push(new ol.style.Style({
+            stroke: new ol.style.Stroke({ color: "#f0c876", width: 2.2, lineDash: [5, 5] })
+          }));
+        }
+        return styles;
+      }
+    });
+
+    var olLayerAuswahl = new ol.layer.Vector({
+      source: olAuswahlSource,
+      style: function (feature) {
+        return new ol.style.Style({
+          stroke: new ol.style.Stroke({ color: feature.get("auswahlFarbe"), width: 4 }),
+          text: new ol.style.Text({
+            text: String(feature.get("auswahlNummer")),
+            font: "bold 13px 'IBM Plex Sans', sans-serif",
+            fill: new ol.style.Fill({ color: "#111318" }),
+            stroke: new ol.style.Stroke({ color: "#ffffff", width: 3 })
+          })
+        });
+      }
+    });
+
+    olMap = new ol.Map({
+      target: "map-flat",
+      layers: [olLayerNight, olLayerDay, olLayerOverlay, olLayerAnomalien, olLayerAuswahl],
+      view: new ol.View({
+        projection: olEqualEarthProj,
+        center: [0, 0],
+        extent: eeExtent,
+        zoom: 2
+      })
+    });
+    olMap.getView().fit(eeExtent, { size: olMap.getSize(), padding: [90, 24, 132, 24] });
+
+    olMap.on("pointermove", function (e) {
+      if (e.dragging) return;
+      var hit = olMap.hasFeatureAtPixel(e.pixel, { layerFilter: function (l) { return l === olLayerAnomalien; } });
+      olMap.getTargetElement().style.cursor = hit ? "pointer" : "";
+    });
+    olMap.on("click", function (e) {
+      olMap.forEachFeatureAtPixel(e.pixel, function (feature) {
+        showDetail(feature.getProperties().__props);
+        return true;
+      }, { layerFilter: function (l) { return l === olLayerAnomalien; } });
+    });
+
+    syncFlacheKarteFeatures();
+    updateAuswahlLayer();
+  }
+
+  function syncFlacheKarteFeatures() {
+    if (!olAnomalienSource) return;
+    olAnomalienSource.clear();
+    aktuellGefiltert.forEach(function (f) {
+      var geom = new ol.geom.Polygon(f.geometry.coordinates).transform("EPSG:4326", olEqualEarthProj);
+      var feature = new ol.Feature({ geometry: geom });
+      feature.setProperties(Object.assign({}, f.properties, { __props: f.properties }));
+      olAnomalienSource.addFeature(feature);
+    });
+  }
+
+  function panTo(lonLat, globusZoom) {
+    if (aktiveAnsicht === "globus") {
+      map.flyTo({ center: lonLat, zoom: globusZoom, duration: 1400 });
+    } else {
+      ensureFlatMap();
+      olMap.getView().animate({ center: equalEarthForward(lonLat), zoom: 5, duration: 1400 });
+    }
+  }
+
+  var viewToggle = byId("view-toggle");
+  var mapGlobus = byId("map");
+  var mapFlach = byId("map-flat");
+  viewToggle.addEventListener("click", function () {
+    setAnsicht(aktiveAnsicht === "globus" ? "flach" : "globus");
+  });
+
+  function setAnsicht(modus) {
+    aktiveAnsicht = modus;
+    if (modus === "flach") {
+      mapGlobus.hidden = true;
+      mapFlach.hidden = false;
+      ensureFlatMap();
+      olMap.updateSize();
+      viewToggle.textContent = "Globus";
+      viewToggle.setAttribute("aria-pressed", "true");
+    } else {
+      mapFlach.hidden = true;
+      mapGlobus.hidden = false;
+      viewToggle.textContent = "Flache Karte";
+      viewToggle.setAttribute("aria-pressed", "false");
+      map.resize();
+    }
   }
 
   // ---------- Filter ----------
@@ -660,6 +885,7 @@
     aktuellKombInfo = kombInfo;
 
     map.getSource("anomalien").setData({ type: "FeatureCollection", features: finalFeatures });
+    syncFlacheKarteFeatures();
     byId("filter-count").textContent = String(finalFeatures.length);
 
     renderVerfuegbarkeitStreifen(state.kombQuellen);
@@ -733,25 +959,39 @@
   }
 
   function updateAuswahlLayer() {
-    if (!map.getLayer("anomalien-auswahl-linie")) return;
-    if (!ausgewaehlt.length) {
-      map.setFilter("anomalien-auswahl-linie", ["in", ["get", "id"], ["literal", []]]);
-      map.setFilter("anomalien-auswahl-label", ["in", ["get", "id"], ["literal", []]]);
-      return;
+    if (map.getLayer("anomalien-auswahl-linie")) {
+      if (!ausgewaehlt.length) {
+        map.setFilter("anomalien-auswahl-linie", ["in", ["get", "id"], ["literal", []]]);
+        map.setFilter("anomalien-auswahl-label", ["in", ["get", "id"], ["literal", []]]);
+      } else {
+        var farbAusdruck = ["match", ["get", "id"]];
+        var nummerAusdruck = ["match", ["get", "id"]];
+        ausgewaehlt.forEach(function (id, i) {
+          var farbe = AUSWAHL_FARBEN[i % AUSWAHL_FARBEN.length];
+          farbAusdruck.push(id, farbe);
+          nummerAusdruck.push(id, String(i + 1));
+        });
+        farbAusdruck.push("#ffffff");
+        nummerAusdruck.push("");
+        map.setFilter("anomalien-auswahl-linie", ["in", ["get", "id"], ["literal", ausgewaehlt]]);
+        map.setFilter("anomalien-auswahl-label", ["in", ["get", "id"], ["literal", ausgewaehlt]]);
+        map.setPaintProperty("anomalien-auswahl-linie", "line-color", farbAusdruck);
+        map.setLayoutProperty("anomalien-auswahl-label", "text-field", nummerAusdruck);
+      }
     }
-    var farbAusdruck = ["match", ["get", "id"]];
-    var nummerAusdruck = ["match", ["get", "id"]];
-    ausgewaehlt.forEach(function (id, i) {
-      var farbe = AUSWAHL_FARBEN[i % AUSWAHL_FARBEN.length];
-      farbAusdruck.push(id, farbe);
-      nummerAusdruck.push(id, String(i + 1));
-    });
-    farbAusdruck.push("#ffffff");
-    nummerAusdruck.push("");
-    map.setFilter("anomalien-auswahl-linie", ["in", ["get", "id"], ["literal", ausgewaehlt]]);
-    map.setFilter("anomalien-auswahl-label", ["in", ["get", "id"], ["literal", ausgewaehlt]]);
-    map.setPaintProperty("anomalien-auswahl-linie", "line-color", farbAusdruck);
-    map.setLayoutProperty("anomalien-auswahl-label", "text-field", nummerAusdruck);
+
+    if (olAuswahlSource) {
+      olAuswahlSource.clear();
+      ausgewaehlt.forEach(function (id, i) {
+        var f = anomalien.features.filter(function (ff) { return ff.properties.id === id; })[0];
+        if (!f) return;
+        var geom = new ol.geom.Polygon(f.geometry.coordinates).transform("EPSG:4326", olEqualEarthProj);
+        var feature = new ol.Feature({ geometry: geom });
+        feature.set("auswahlFarbe", AUSWAHL_FARBEN[i % AUSWAHL_FARBEN.length]);
+        feature.set("auswahlNummer", i + 1);
+        olAuswahlSource.addFeature(feature);
+      });
+    }
   }
 
   // ---------- Liste ----------
@@ -1084,7 +1324,7 @@
 
   function flyToFeature(f) {
     var c = centroid(f.geometry.coordinates);
-    map.flyTo({ center: c, zoom: 4.2, duration: 1400 });
+    panTo(c, 4.2);
   }
 
   function renderSearch(query) {
@@ -1131,7 +1371,7 @@
       btn.addEventListener("click", function () {
         var kind = btn.getAttribute("data-kind");
         if (kind === "ort") {
-          map.flyTo({ center: [parseFloat(btn.getAttribute("data-lon")), parseFloat(btn.getAttribute("data-lat"))], zoom: 5, duration: 1400 });
+          panTo([parseFloat(btn.getAttribute("data-lon")), parseFloat(btn.getAttribute("data-lat"))], 5);
         } else if (kind === "anomalie") {
           var f = anomalien.features.filter(function (ff) { return ff.properties.id === btn.getAttribute("data-id"); })[0];
           if (f) { flyToFeature(f); showDetail(f.properties); }
