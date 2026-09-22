@@ -284,6 +284,7 @@ Die Erkennung in Abschnitt 6 ist eine bewusst einfache **Basislinie**. Sie wird 
 - **Untersuchungsansicht pro Anomalie:** Zeitreihe mit Basislinie, Datenlage, verknüpfte Anomalien, betroffene Theorien mit Prüfstatus, Nachrichten (GDELT) und Konfliktereignisse (ACLED) für Region und Zeitraum.
 - Die Oberfläche wird **ab Woche 2** gebaut, zuerst mit Beispieldaten, und wächst mit jedem fertigen Layer mit. So gibt es jederzeit einen vorzeigbaren Prototyp.
 - Später: Veröffentlichung über GitHub Pages.
+- **Vorschlag, noch nicht bestätigt (aus der Arbeit am Oberflächen-Gerüst, 2026-09-22):** Analyse-Würfel haben über den gesamten Zeitraum dieselbe Auflösung. Nur Kartenbilder für die Anzeige dürfen für ältere Zeiträume gröber gespeichert werden. Grund: Die Erkennung (Abschnitt 6) muss ältere und neuere Monate gleich behandeln, sonst verzerrt das den Vergleich mit der saisonalen Basislinie; die Oberfläche darf trotzdem ältere Kartenbilder kleiner/gröber vorhalten, um Ladezeit und Speicher zu sparen. Bitte bestätigen oder verwerfen, bevor Kartenbilder pro Monat erzeugt werden.
 
 ## 10a. Live-Kanal (zurückgestellt)
 

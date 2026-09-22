@@ -17,21 +17,29 @@
 
   <div class="vignette" aria-hidden="true"></div>
 
+  <div id="basemap-hint" class="basemap-hint">Nachtlicht-Komposit (Jahresmittel), keine Echtzeit</div>
+
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">ALEPH</span>
-      <span class="brand-badge" title="Alle Anomalien, Orte und Zahlen auf dieser Seite sind erfunden und dienen nur dem Test der Oberfläche.">Beispieldaten</span>
-    </div>
-
-    <div class="search-wrap">
-      <label class="sr-only" for="search-input">Ort, Anomalie oder Theorie suchen</label>
-      <input id="search-input" type="text" autocomplete="off"
-             placeholder="Ort, Anomalie oder Theorie suchen …" />
-      <div id="search-results" class="search-results" hidden role="listbox"></div>
-    </div>
-
-    <button id="filter-toggle" class="chip-btn" aria-expanded="false" aria-controls="filter-panel">
+    <button id="filter-toggle" class="corner-btn corner-btn--left" aria-expanded="false" aria-controls="filter-panel">
       Filter
+    </button>
+
+    <div class="topbar-center">
+      <div class="brand">
+        <span class="brand-mark">ALEPH</span>
+        <span class="brand-badge" title="Alle Anomalien, Orte und Zahlen auf dieser Seite sind erfunden und dienen nur dem Test der Oberfläche.">Beispieldaten</span>
+      </div>
+
+      <div class="search-wrap">
+        <label class="sr-only" for="search-input">Ort, Anomalie oder Theorie suchen</label>
+        <input id="search-input" type="text" autocomplete="off"
+               placeholder="Ort, Anomalie oder Theorie suchen …" />
+        <div id="search-results" class="search-results" hidden role="listbox"></div>
+      </div>
+    </div>
+
+    <button id="basemap-toggle" class="corner-btn corner-btn--right" aria-pressed="false" title="Grundkarte umschalten: Nachtlicht (Black Marble) oder Tag (Blue Marble)">
+      Tagkarte
     </button>
   </header>
 
@@ -60,6 +68,7 @@
 
     <section class="filter-group">
       <span class="group-label">Evidenzstufe</span>
+      <p class="group-hint">Zeigt Anomalien, deren eigene Stufe (immer „beobachtet") oder deren Verknüpfung die angehakte Stufe trägt.</p>
       <div class="check-list" id="f-evidenz">
         <label class="check-row"><input type="checkbox" value="beobachtet" checked> beobachtet</label>
         <label class="check-row"><input type="checkbox" value="statistische Assoziation" checked> statistische Assoziation</label>
@@ -96,17 +105,28 @@
     <div id="theorie-content" class="theorie-content"></div>
   </div>
 
-  <footer class="timeline-dock">
-    <div class="timeline-top">
-      <span class="timeline-label">Zeitraum</span>
-      <span class="timeline-readout"><span id="time-readout-start">2013-01</span> – <span id="time-readout-end">2027-12</span></span>
+  <footer class="timeline-dock" id="timeline-dock">
+    <div class="tl-availability" id="tl-availability" title="Datenverfügbarkeit je Quelle – Beispielzeiträume, kommen später aus layers.yaml"></div>
+
+    <div class="tl-main">
+      <span class="tl-label">Zeitraum</span>
+      <input id="time-start-text" class="tl-text" type="text" inputmode="numeric" value="2013-01" aria-label="Zeitraum, Beginn, Format JJJJ-MM">
+      <span class="tl-sep">–</span>
+      <input id="time-end-text" class="tl-text" type="text" inputmode="numeric" value="2027-12" aria-label="Zeitraum, Ende, Format JJJJ-MM">
+
+      <div class="range-dual" id="range-dual">
+        <div class="range-track"></div>
+        <div class="range-projection" id="range-projection"></div>
+        <div class="range-today" id="range-today"><span class="range-today-label">heute</span></div>
+        <div id="range-fill" class="range-fill"></div>
+        <div class="tl-proj-dots" id="tl-proj-dots"></div>
+        <input id="time-start" type="range" min="0" max="179" value="0" step="1" aria-label="Zeitraum-Schieber, Beginn">
+        <input id="time-end" type="range" min="0" max="179" value="179" step="1" aria-label="Zeitraum-Schieber, Ende">
+        <input id="time-pin" type="range" min="0" max="179" value="164" step="1" class="pin-range" aria-label="Monat für das angezeigte Kartenbild">
+      </div>
     </div>
-    <div class="range-dual">
-      <div class="range-track"></div>
-      <div id="range-fill" class="range-fill"></div>
-      <input id="time-start" type="range" min="0" max="179" value="0" step="1" aria-label="Zeitraum, Beginn">
-      <input id="time-end" type="range" min="0" max="179" value="179" step="1" aria-label="Zeitraum, Ende">
-    </div>
+
+    <div class="tl-pin-readout" id="tl-pin-readout"></div>
   </footer>
 
   <div id="toast" class="toast" role="status" hidden></div>
@@ -114,6 +134,8 @@
   <script src="beispieldaten/orte.js"></script>
   <script src="beispieldaten/beispiel_theorien.js"></script>
   <script src="beispieldaten/beispiel_anomalien.js"></script>
+  <script src="beispieldaten/beispiel_projektionen.js"></script>
+  <script src="beispieldaten/beispiel_datenverfuegbarkeit.js"></script>
   <script src="https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.js"></script>
   <script src="app.js"></script>
 </body>

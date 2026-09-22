@@ -3,13 +3,20 @@
  * Die vollständigen Einträge liegen später als YAML unter theories/. Diese Datei
  * dient nur dazu, die Suche und die Untersuchungsansicht im Oberflächen-Gerüst
  * zu testen, solange theories/ noch nicht existiert.
+ *
+ * Zwei Theorien haben hier den Status "bestätigt", damit sich Verknüpfungen
+ * mit Evidenzstufe "statistische Assoziation" in der Untersuchungsansicht
+ * überhaupt zeigen und testen lassen. Das ist erfunden: Es gab noch keinen
+ * echten Permutationstest gegen Testdaten (Abschnitt 8, Schritt 3). Im echten
+ * Theorie-Register steht hier "ungeprüft", bis Woche 5/6 das tatsächlich prüft.
  */
 window.ALEPH_BEISPIEL_THEORIEN = [
   {
     "id": "duerre-migration",
     "titel": "Dürre verstärkt Abwanderung aus ländlichen Regionen",
     "disziplin": "Umweltökonomie / Migrationsforschung",
-    "status": "ungeprüft",
+    "status": "bestätigt",
+    "status_hinweis": "Status hier nur beispielhaft gesetzt (Beispieldaten) – ein echter Permutationstest wurde noch nicht durchgeführt.",
     "beschreibung": "Ernteausfälle senken Einkommen, betroffene Haushalte wandern in Städte ab. Prüfbar mit Niederschlag, Vegetation, Nachtlicht, IDMC."
   },
   {
@@ -37,7 +44,8 @@ window.ALEPH_BEISPIEL_THEORIEN = [
     "id": "konflikt-vertreibung",
     "titel": "Gewalt führt zu Abwanderung, sichtbar an Nachtlicht und Vertreibungszahlen",
     "disziplin": "Konfliktforschung / Migrationsforschung",
-    "status": "ungeprüft",
+    "status": "bestätigt",
+    "status_hinweis": "Status hier nur beispielhaft gesetzt (Beispieldaten) – ein echter Permutationstest wurde noch nicht durchgeführt.",
     "beschreibung": "Bewaffnete Gewalt führt zu Bevölkerungsbewegung, messbar über Nachtlicht-Rückgang am Herkunftsort. Prüfbar mit ACLED, Nachtlicht, IDMC/UNHCR."
   }
 ];

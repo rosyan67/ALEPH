@@ -6,6 +6,19 @@
  * typ_sicherheit, layer, gebiet (= Polygon-Geometrie), start, ende, richtung,
  * staerke_band, datenlage, evidenzstufe, zeitreihe (Verweis), version.
  *
+ * Wichtig (Rückmeldung vom 2026-09-22): Eine einzelne Anomalie ist laut
+ * Abschnitt 7 immer "beobachtet" – sie ist eine direkte Messung. Höhere
+ * Evidenzstufen (statistische Assoziation, Modellprojektion, hypothetisches
+ * Szenario) gehören nicht zur Anomalie selbst, sondern zu einer VERKNÜPFUNG
+ * mit einer Theorie (Abschnitt 8). Deshalb trägt jedes Feature zusätzlich
+ * `verknuepfungen`: eine Liste von { theorie, evidenzstufe, hinweis }. Das ist
+ * eine für die Oberfläche vereinfachte, geglättete Sicht auf das, was später
+ * aus aleph/link/ und data/events/links.parquet kommt – kein eigenes Format.
+ *
+ * Modellprojektion und hypothetisches Szenario kommen in diesem Gerüst nie in
+ * dieser Datei vor (auch nicht über verknuepfungen) – dafür gibt es
+ * beispiel_projektionen.js, die auf der Zeitachse rechts von "heute" liegen.
+ *
  * Diese 18 Einträge dienen ausschließlich dazu, das Oberflächen-Gerüst
  * (Woche 2) zu testen: Globus, Suchleiste, Filter, Untersuchungsansicht.
  * Sobald echte Layer und die Erkennung (Abschnitt 6) laufen, wird diese
@@ -32,7 +45,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "gut",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -60,7 +73,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "mittel",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": true,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -86,9 +99,11 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "richtung": "Rückgang",
         "staerke_band": "extrem",
         "datenlage": "mittel",
-        "evidenzstufe": "statistische Assoziation",
+        "evidenzstufe": "beobachtet",
         "fokusgebiet": true,
-        "theorie": "konflikt-vertreibung",
+        "verknuepfungen": [
+          { "theorie": "konflikt-vertreibung", "evidenzstufe": "statistische Assoziation", "hinweis": "Nachtlicht-Rückgang zeitnah zu ACLED-Ereignissen, Muster an Testdaten bestätigt (Beispiel)." }
+        ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -114,9 +129,11 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "richtung": "Rückgang",
         "staerke_band": "stark",
         "datenlage": "gut",
-        "evidenzstufe": "statistische Assoziation",
+        "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": "duerre-migration",
+        "verknuepfungen": [
+          { "theorie": "duerre-migration", "evidenzstufe": "statistische Assoziation", "hinweis": "Niederschlagsdefizit und Vegetationsrückgang, Muster an Testdaten bestätigt (Beispiel)." }
+        ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -144,7 +161,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "mittel",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -172,7 +189,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "gut",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -200,7 +217,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "dünn",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -228,7 +245,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "dünn",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": true,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -254,9 +271,11 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "richtung": "Rückgang",
         "staerke_band": "stark",
         "datenlage": "mittel",
-        "evidenzstufe": "statistische Assoziation",
+        "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": "konflikt-vertreibung",
+        "verknuepfungen": [
+          { "theorie": "konflikt-vertreibung", "evidenzstufe": "statistische Assoziation", "hinweis": "Nachtlicht-Rückgang am Herkunftsort, Muster an Testdaten bestätigt (Beispiel)." }
+        ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -284,7 +303,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "mittel",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -312,7 +331,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "gut",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": "duerre-migration",
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -340,7 +359,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "gut",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -368,7 +387,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "dünn",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -396,7 +415,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "mittel",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -422,9 +441,11 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "richtung": "Rückgang",
         "staerke_band": "stark",
         "datenlage": "mittel",
-        "evidenzstufe": "Modellprojektion",
+        "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": "duerre-migration",
+        "verknuepfungen": [
+          { "theorie": "duerre-migration", "evidenzstufe": "statistische Assoziation", "hinweis": "Gleiches Muster wie bei bereits bestätigter Verknüpfung, hier erstmals beobachtet (Beispiel)." }
+        ],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -452,7 +473,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "gut",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -460,34 +481,6 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
       "geometry": {
         "type": "Polygon",
         "coordinates": [[[98.5,3.7926],[98.6833,3.7519],[98.7871,3.5931],[98.7916,3.4054],[98.6768,3.2571],[98.5,3.1608],[98.3372,3.2763],[98.1802,3.3963],[98.2738,3.5734],[98.3332,3.7292],[98.5,3.7926]]]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "bm-017",
-        "beispiel": true,
-        "name": "Anomalie: Bevölkerungsbewegung",
-        "typ": "Bevölkerungsbewegung",
-        "typ_sicherheit": "abgeleitet",
-        "layer": ["nachtlicht"],
-        "region": "Afrika",
-        "ort_label": "Sahelrand, Niger (Beispiel, hypothetisches Szenario)",
-        "start": "2026-01",
-        "ende": "2026-12",
-        "richtung": "Rückgang",
-        "staerke_band": "stark",
-        "datenlage": "dünn",
-        "evidenzstufe": "hypothetisches Szenario",
-        "fokusgebiet": false,
-        "theorie": "duerre-migration",
-        "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
-        "nachrichten": "Kein Nachrichtenkontext – hypothetisches Szenario, ausdrücklich keine Vorhersage",
-        "version": "beispiel-v0"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [[[12.6,14.1357],[13.0384,14.0867],[13.3566,13.7391],[13.1503,13.3261],[13.0307,12.9236],[12.6,12.807],[12.1892,12.9502],[12.1048,13.3436],[12.1304,13.6484],[12.2419,13.9793],[12.6,14.1357]]]
       }
     },
     {
@@ -508,7 +501,7 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
         "datenlage": "mittel",
         "evidenzstufe": "beobachtet",
         "fokusgebiet": false,
-        "theorie": null,
+        "verknuepfungen": [],
         "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
         "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
         "version": "beispiel-v0"
@@ -516,6 +509,35 @@ window.ALEPH_BEISPIEL_ANOMALIEN = {
       "geometry": {
         "type": "Polygon",
         "coordinates": [[[24.5,-0.4714],[24.8995,-0.4502],[25.0487,-0.8218],[25.0078,-1.165],[24.8677,-1.5061],[24.5,-1.6269],[24.1341,-1.5036],[23.9143,-1.1903],[23.9723,-0.8286],[24.1758,-0.5539],[24.5,-0.4714]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "bm-019",
+        "beispiel": true,
+        "name": "Anomalie: Stromausfall",
+        "typ": "Stromausfall",
+        "typ_sicherheit": "abgeleitet",
+        "layer": ["nachtlicht"],
+        "region": "Europa",
+        "ort_label": "Berlin-Südwest (Fokusgebiet, Beispiel)",
+        "start": "2026-01",
+        "ende": "2026-01",
+        "richtung": "Rückgang",
+        "staerke_band": "auffällig",
+        "datenlage": "mittel",
+        "evidenzstufe": "beobachtet",
+        "fokusgebiet": true,
+        "verknuepfungen": [],
+        "hinweis": "Prüffall für den Blindtest",
+        "zeitreihe": "Platzhalter – wird mit echtem Layer-Export befüllt",
+        "nachrichten": "Platzhalter – GDELT-Anbindung folgt in Woche 5/6",
+        "version": "beispiel-v0"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[13.28,52.7823],[13.6263,52.7306],[13.7755,52.5382],[13.7733,52.3423],[13.567,52.1992],[13.28,52.0475],[13.0088,52.2124],[12.8757,52.3599],[12.8481,52.5256],[13.0132,52.6639],[13.28,52.7823]]]
       }
     }
   ]

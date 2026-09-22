@@ -1,9 +1,14 @@
 /*
  * ALEPH – Oberflächen-Gerüst (Woche 2, ARCHITECTURE.md Abschnitt 10)
  *
- * Alles auf dieser Seite ist Beispieldaten (web/data/*.js). Es gibt noch
- * keine echte Anomalieerkennung – dieses Skript testet nur, ob Globus,
+ * Alles auf dieser Seite ist Beispieldaten (web/beispieldaten/*.js). Es gibt
+ * noch keine echte Anomalieerkennung – dieses Skript testet nur, ob Globus,
  * Suche, Filter und Untersuchungsansicht wie vorgesehen funktionieren.
+ *
+ * Wichtige Regel (Rückmeldung 2026-09-22): Eine Anomalie ist immer
+ * "beobachtet" (Abschnitt 7). Höhere Evidenzstufen gehören zu Verknüpfungen
+ * mit einer Theorie (Abschnitt 8) oder zu Projektionen (eigene Datei,
+ * niemals Anomalien) – siehe beispiel_projektionen.js.
  */
 (function () {
   "use strict";
@@ -15,10 +20,24 @@
     "stark": "#d9822f",
     "extrem": "#c14a34"
   };
+  var DATENLAGE_INFO = {
+    "gut": { text: "gut – Basislinie und Beobachtungen ausreichend", farbe: "#4a8f89" },
+    "mittel": { text: "mittel – eingeschränkte Basislinie oder lückenhafte Beobachtungen", farbe: "#d9a441" },
+    "dünn": { text: "dünn – Aussage unsicher, wenige gültige Beobachtungen", farbe: "#8a5a52" }
+  };
+  var EVIDENZ_TEXT = {
+    "beobachtet": "Ereignisse fallen zeitlich/räumlich zusammen, Theorie dazu noch nicht geprüft (Koinzidenz).",
+    "statistische Assoziation": "Theorie an unabhängigen Testdaten bestätigt (Abschnitt 8).",
+    "Modellprojektion": "Aus bestätigten Zusammenhängen abgeleitete Entwicklung, mit dokumentierten Annahmen.",
+    "hypothetisches Szenario": "Was-wäre-wenn – Annahme über die Zukunft, ausdrücklich keine Vorhersage."
+  };
+  var PROJEKTION_FARBE = "#8f7fc9";
 
   var anomalien = window.ALEPH_BEISPIEL_ANOMALIEN;
   var theorien = window.ALEPH_BEISPIEL_THEORIEN;
   var orte = window.ALEPH_ORTE;
+  var projektionen = window.ALEPH_BEISPIEL_PROJEKTIONEN;
+  var datenverfuegbarkeit = window.ALEPH_BEISPIEL_DATENVERFUEGBARKEIT;
 
   function monthIndex(ym) {
     var parts = ym.split("-");
@@ -33,6 +52,14 @@
     return y + "-" + String(m).padStart(2, "0");
   }
 
+  function parseMonthInput(str) {
+    var m = /^\s*(\d{4})-(\d{2})\s*$/.exec(String(str));
+    if (!m) return null;
+    var mo = parseInt(m[2], 10);
+    if (mo < 1 || mo > 12) return null;
+    return monthIndex(m[1] + "-" + m[2]);
+  }
+
   function centroid(polygonCoords) {
     var ring = polygonCoords[0];
     var sx = 0, sy = 0;
@@ -45,6 +72,18 @@
   }
 
   function byId(id) { return document.getElementById(id); }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // "Heute" wird beim Laden aus dem tatsächlichen Datum berechnet, nicht
+  // fest eingetragen – damit die Zeitachse auch später noch richtig teilt.
+  var now = new Date();
+  var HEUTE_INDEX = (now.getFullYear() - EPOCH_YEAR) * 12 + now.getMonth();
 
   // ---------- Karte ----------
 
@@ -58,15 +97,27 @@
     style: {
       version: 8,
       projection: { type: "globe" },
+      // Kein "light"/"sky" mit Richtung, damit keine Beleuchtung einen
+      // Sonnenstand andeutet (Rückmeldung 2026-09-22) – beide Basiskarten
+      // sind fertige Kompositen, keine in Echtzeit beleuchtete 3D-Szene.
       sources: {
-        "eox-blackmarble": {
+        "eox-night": {
           type: "raster",
           tiles: [
             "https://tiles.maps.eox.at/wmts/1.0.0/blackmarble_3857/default/g/{z}/{y}/{x}.jpg"
           ],
           tileSize: 256,
           attribution:
-            '© <a href="https://maps.eox.at" target="_blank" rel="noopener">EOX IT Services</a> – Nachtlicht-Basiskarte: NASA Black Marble (VIIRS)'
+            '© <a href="https://maps.eox.at" target="_blank" rel="noopener">EOX IT Services</a> – Nachtlicht-Komposit: NASA Black Marble (VIIRS)'
+        },
+        "eox-day": {
+          type: "raster",
+          tiles: [
+            "https://tiles.maps.eox.at/wmts/1.0.0/bluemarble_3857/default/g/{z}/{y}/{x}.jpg"
+          ],
+          tileSize: 256,
+          attribution:
+            '© <a href="https://maps.eox.at" target="_blank" rel="noopener">EOX IT Services</a> – Tageskomposit: NASA Blue Marble'
         },
         "eox-overlay": {
           type: "raster",
@@ -78,23 +129,43 @@
       },
       layers: [
         { id: "void", type: "background", paint: { "background-color": "#070a12" } },
-        { id: "blackmarble", type: "raster", source: "eox-blackmarble" },
+        { id: "basemap-night", type: "raster", source: "eox-night" },
+        { id: "basemap-day", type: "raster", source: "eox-day", layout: { visibility: "none" } },
         { id: "overlay", type: "raster", source: "eox-overlay", paint: { "raster-opacity": 0.5 } }
-      ],
-      sky: {
-        "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0]
-      },
-      light: { anchor: "map", position: [1.5, 90, 80] }
+      ]
     }
   });
 
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
   map.addControl(new maplibregl.GlobeControl(), "bottom-right");
 
+  // ---------- Basiskarte umschalten (Nachtlicht / Tag) ----------
+
+  var basemapToggle = byId("basemap-toggle");
+  var basemapHint = byId("basemap-hint");
+  var basemapMode = "nacht";
+
+  function setBasemap(mode) {
+    basemapMode = mode;
+    if (map.getLayer("basemap-night")) {
+      map.setLayoutProperty("basemap-night", "visibility", mode === "nacht" ? "visible" : "none");
+      map.setLayoutProperty("basemap-day", "visibility", mode === "tag" ? "visible" : "none");
+    }
+    basemapToggle.textContent = mode === "nacht" ? "Tagkarte" : "Nachtkarte";
+    basemapToggle.setAttribute("aria-pressed", mode === "tag" ? "true" : "false");
+    basemapHint.textContent = mode === "nacht"
+      ? "Nachtlicht-Komposit (Jahresmittel), keine Echtzeit"
+      : "Tageskomposit (NASA Blue Marble, Jahresmittel), keine Echtzeit";
+  }
+  basemapToggle.addEventListener("click", function () {
+    setBasemap(basemapMode === "nacht" ? "tag" : "nacht");
+  });
+
   var hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8 });
 
   map.on("load", function () {
     map.setProjection({ type: "globe" });
+    setBasemap("nacht");
 
     map.addSource("anomalien", {
       type: "geojson",
@@ -174,21 +245,18 @@
   });
 
   function normalizeProps(props) {
-    // GeoJSON properties come back from MapLibre with arrays JSON-stringified.
+    // GeoJSON properties kommen von MapLibre mit JSON-stringifizierten
+    // Arrays/Objekten zurück (layer, verknuepfungen).
     var out = {};
     for (var k in props) {
       out[k] = props[k];
     }
-    if (typeof out.layer === "string") {
-      try { out.layer = JSON.parse(out.layer); } catch (e) { out.layer = [out.layer]; }
-    }
-    return out;
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    ["layer", "verknuepfungen"].forEach(function (key) {
+      if (typeof out[key] === "string") {
+        try { out[key] = JSON.parse(out[key]); } catch (e) { out[key] = []; }
+      }
     });
+    return out;
   }
 
   // ---------- Filter ----------
@@ -201,11 +269,13 @@
     filterPanel.classList.add("is-open");
     filterPanel.setAttribute("aria-hidden", "false");
     filterToggle.setAttribute("aria-expanded", "true");
+    updateTimelineBounds();
   }
   function closeFilter() {
     filterPanel.classList.remove("is-open");
     filterPanel.setAttribute("aria-hidden", "true");
     filterToggle.setAttribute("aria-expanded", "false");
+    updateTimelineBounds();
   }
   filterToggle.addEventListener("click", function () {
     if (filterPanel.classList.contains("is-open")) closeFilter(); else openFilter();
@@ -253,25 +323,32 @@
   regionSelect.addEventListener("change", applyFilters);
   typSelect.addEventListener("change", applyFilters);
 
-  // Zeitschieber
+  // Zeitschieber (von/bis) + Text-Felder + Kartenbild-Pin
   var timeStartInput = byId("time-start");
   var timeEndInput = byId("time-end");
+  var timeStartText = byId("time-start-text");
+  var timeEndText = byId("time-end-text");
+  var timePin = byId("time-pin");
+  var pinReadout = byId("tl-pin-readout");
   var rangeFill = byId("range-fill");
-  var readoutStart = byId("time-readout-start");
-  var readoutEnd = byId("time-readout-end");
+  var rangeProjection = byId("range-projection");
+  var rangeToday = byId("range-today");
+  var rangeDual = byId("range-dual");
+
+  var TL_MIN = parseInt(timeStartInput.min, 10);
+  var TL_MAX = parseInt(timeStartInput.max, 10);
+
+  function pct(idx) { return ((clamp(idx, TL_MIN, TL_MAX) - TL_MIN) / (TL_MAX - TL_MIN)) * 100; }
 
   function updateRangeUi() {
-    var min = parseInt(timeStartInput.min, 10);
-    var max = parseInt(timeStartInput.max, 10);
     var s = parseInt(timeStartInput.value, 10);
     var e = parseInt(timeEndInput.value, 10);
     if (s > e) { s = e; timeStartInput.value = String(s); }
-    var pctS = ((s - min) / (max - min)) * 100;
-    var pctE = ((e - min) / (max - min)) * 100;
+    var pctS = pct(s), pctE = pct(e);
     rangeFill.style.left = pctS + "%";
     rangeFill.style.width = (pctE - pctS) + "%";
-    readoutStart.textContent = monthLabel(s);
-    readoutEnd.textContent = monthLabel(e);
+    timeStartText.value = monthLabel(s);
+    timeEndText.value = monthLabel(e);
   }
 
   timeStartInput.addEventListener("input", function () {
@@ -288,7 +365,50 @@
     updateRangeUi();
     applyFilters();
   });
+
+  function onTimeTextChange(textInput, rangeInput, otherRangeInput, isStart) {
+    var idx = parseMonthInput(textInput.value);
+    if (idx === null) {
+      textInput.value = monthLabel(parseInt(rangeInput.value, 10));
+      return;
+    }
+    idx = clamp(idx, TL_MIN, TL_MAX);
+    var other = parseInt(otherRangeInput.value, 10);
+    if (isStart && idx > other) idx = other;
+    if (!isStart && idx < other) idx = other;
+    rangeInput.value = String(idx);
+    updateRangeUi();
+    applyFilters();
+  }
+  timeStartText.addEventListener("change", function () { onTimeTextChange(timeStartText, timeStartInput, timeEndInput, true); });
+  timeEndText.addEventListener("change", function () { onTimeTextChange(timeEndText, timeEndInput, timeStartInput, false); });
+
   updateRangeUi();
+
+  // "heute" und der schraffierte Projektionsbereich (nur Modellprojektion /
+  // hypothetisches Szenario, nie Anomalien)
+  (function setupTodayAndProjectionZone() {
+    var todayPct = pct(HEUTE_INDEX);
+    rangeToday.style.left = todayPct + "%";
+    if (HEUTE_INDEX < TL_MAX) {
+      rangeProjection.style.left = todayPct + "%";
+      rangeProjection.style.width = (100 - todayPct) + "%";
+      rangeProjection.hidden = false;
+    } else {
+      rangeProjection.hidden = true;
+    }
+  })();
+
+  // Kartenbild-Pin: unabhängig vom Zeitraum-Filter, wählt nur, welcher
+  // Monat als Hinweistext angezeigt wird. Es gibt noch keine echten
+  // Monatsbilder – vorerst bleibt das Kartenbild selbst unverändert.
+  function updatePinUi() {
+    var idx = parseInt(timePin.value, 10);
+    pinReadout.textContent = "Kartenbild-Monat: " + monthLabel(idx) + " – Monatsbilder mit echten Daten folgen; angezeigt wird weiterhin das vorhandene Komposit.";
+  }
+  timePin.value = String(clamp(HEUTE_INDEX, TL_MIN, TL_MAX));
+  timePin.addEventListener("input", updatePinUi);
+  updatePinUi();
 
   byId("filter-reset").addEventListener("click", function () {
     regionSelect.value = "alle";
@@ -316,10 +436,23 @@
     };
   }
 
+  // Evidenzstufe einer Anomalie ist immer "beobachtet" (Abschnitt 7). Der
+  // Filter prüft deshalb die eigene Stufe UND die Stufen aller
+  // Verknüpfungen – nur so bleibt "statistische Assoziation" im Filter
+  // sinnvoll nutzbar. "Modellprojektion"/"hypothetisches Szenario" treffen
+  // hier bewusst nie zu: die kommen nur bei Projektionen vor.
+  function evidenzstufenVon(props) {
+    var werte = [props.evidenzstufe];
+    (props.verknuepfungen || []).forEach(function (v) { werte.push(v.evidenzstufe); });
+    return werte;
+  }
+
   function featurePasses(props, state) {
     if (state.region !== "alle" && props.region !== state.region) return false;
     if (state.typ !== "alle" && props.typ !== state.typ) return false;
-    if (state.evidenzstufen.indexOf(props.evidenzstufe) === -1) return false;
+    var stufen = evidenzstufenVon(props);
+    var passtEvidenz = stufen.some(function (s) { return state.evidenzstufen.indexOf(s) !== -1; });
+    if (!passtEvidenz) return false;
     if (STAERKE_RANK[props.staerke_band] < STAERKE_RANK[state.minStaerke]) return false;
     if (state.onlyFocus && !props.fokusgebiet) return false;
     var fStart = monthIndex(props.start);
@@ -341,12 +474,6 @@
   var investigation = byId("investigation");
   var investigationContent = byId("investigation-content");
 
-  var DATENLAGE_TEXT = {
-    "gut": "gut – Basislinie und Beobachtungen ausreichend",
-    "mittel": "mittel – eingeschränkte Basislinie oder lückenhafte Beobachtungen",
-    "dünn": "dünn – Aussage unsicher, wenige gültige Beobachtungen"
-  };
-
   function findTheorie(id) {
     for (var i = 0; i < theorien.length; i++) {
       if (theorien[i].id === id) return theorien[i];
@@ -354,29 +481,35 @@
     return null;
   }
 
+  function renderVerknuepfungen(verknuepfungen) {
+    if (!verknuepfungen || !verknuepfungen.length) {
+      return '<div class="inv-field-value" style="color:var(--paper-ink-dim); font-size:12.5px;">Noch keine Verknüpfung – entsteht erst mit aleph/link/ (Abschnitt 8).</div>';
+    }
+    return verknuepfungen.map(function (v) {
+      var t = findTheorie(v.theorie);
+      var titel = t ? t.titel : v.theorie;
+      return '<div class="inv-verknuepfung">' +
+        '<button class="inv-theorie-link" data-theorie="' + escapeHtml(v.theorie) + '">' + escapeHtml(titel) + "</button>" +
+        '<div class="inv-verknuepfung-stufe">Evidenzstufe: ' + escapeHtml(v.evidenzstufe) + "</div>" +
+        '<div class="inv-verknuepfung-text">' + escapeHtml(EVIDENZ_TEXT[v.evidenzstufe] || "") + "</div>" +
+        (v.hinweis ? '<div class="inv-verknuepfung-text">' + escapeHtml(v.hinweis) + "</div>" : "") +
+        "</div>";
+    }).join("");
+  }
+
   function openInvestigation(props) {
     var bandColor = STAERKE_FARBE[props.staerke_band] || "#e2b04f";
-    var theorieHtml = "";
-    if (props.theorie) {
-      var t = findTheorie(props.theorie);
-      if (t) {
-        theorieHtml =
-          '<button class="inv-theorie-link" data-theorie="' + escapeHtml(t.id) + '">' +
-          "Betroffene Theorie ansehen: " + escapeHtml(t.titel) +
-          "</button>";
-      }
-    } else {
-      theorieHtml = '<div class="inv-field-value" style="color:var(--paper-ink-dim); font-size:12.5px;">Noch keine Theorie verknüpft – Verknüpfung entsteht erst mit aleph/link/.</div>';
-    }
+    var datenlageInfo = DATENLAGE_INFO[props.datenlage];
 
     investigationContent.innerHTML =
       '<span class="inv-badge">Beispieldaten</span>' +
+      (props.hinweis ? '<span class="inv-badge inv-badge--hinweis">' + escapeHtml(props.hinweis) + "</span>" : "") +
       '<h2 class="inv-title">' + escapeHtml(props.name) + "</h2>" +
       '<p class="inv-sub">' + escapeHtml(props.ort_label) + " · " + escapeHtml(props.start) + (props.start !== props.ende ? " bis " + escapeHtml(props.ende) : "") + "</p>" +
 
-      '<div class="inv-field"><div class="inv-field-label">Evidenzstufe</div><div class="inv-field-value">' + escapeHtml(props.evidenzstufe) + "</div></div>" +
+      '<div class="inv-field"><div class="inv-field-label">Evidenzstufe der Anomalie</div><div class="inv-field-value">' + escapeHtml(props.evidenzstufe) + ' <span class="inv-field-note">– jede Anomalie ist eine direkte Messung (Abschnitt 7)</span></div></div>' +
       '<div class="inv-field"><div class="inv-field-label">Typ-Sicherheit</div><div class="inv-field-value">' + escapeHtml(props.typ_sicherheit) + (props.typ_sicherheit === "abgeleitet" ? " – vermutlich, aus indirekten Signalen erschlossen" : "") + "</div></div>" +
-      '<div class="inv-field"><div class="inv-field-label">Datenlage</div><div class="inv-field-value">' + escapeHtml(DATENLAGE_TEXT[props.datenlage] || props.datenlage) + "</div></div>" +
+      '<div class="inv-field"><div class="inv-field-label">Datenlage</div><div class="inv-field-value">' + escapeHtml(datenlageInfo ? datenlageInfo.text : props.datenlage) + "</div></div>" +
       '<div class="inv-field"><div class="inv-field-label">Stärke und Richtung</div><div class="inv-field-value"><span class="band-dot" style="background:' + bandColor + '"></span>' + escapeHtml(props.staerke_band) + ", " + escapeHtml(props.richtung) + "</div></div>" +
       '<div class="inv-field"><div class="inv-field-label">Beteiligte Layer</div><div class="inv-field-value">' + escapeHtml((props.layer || []).join(", ")) + "</div></div>" +
       '<div class="inv-field"><div class="inv-field-label">Fokusgebiet</div><div class="inv-field-value">' + (props.fokusgebiet ? "ja – feinere Analyse vorgesehen (Abschnitt 4a)" : "nein – globales Monatsraster") + "</div></div>" +
@@ -386,48 +519,56 @@
       '<div class="inv-placeholder-box">' + escapeHtml(props.zeitreihe) + "</div>" +
       "<h3>Nachrichten und Konfliktereignisse</h3>" +
       '<div class="inv-placeholder-box">' + escapeHtml(props.nachrichten) + "</div>" +
-      "<h3>Verknüpfte Theorie</h3>" +
-      theorieHtml +
+      "<h3>Verknüpfungen</h3>" +
+      renderVerknuepfungen(props.verknuepfungen) +
       "</div>";
 
     investigation.classList.add("is-open");
     investigation.setAttribute("aria-hidden", "false");
+    updateTimelineBounds();
 
-    var link = investigationContent.querySelector(".inv-theorie-link");
-    if (link) {
+    Array.prototype.slice.call(investigationContent.querySelectorAll(".inv-theorie-link")).forEach(function (link) {
       link.addEventListener("click", function () {
         var t = findTheorie(link.getAttribute("data-theorie"));
         if (t) openTheorie(t);
       });
-    }
+    });
   }
 
   function closeInvestigation() {
     investigation.classList.remove("is-open");
     investigation.setAttribute("aria-hidden", "true");
+    updateTimelineBounds();
   }
   byId("investigation-close").addEventListener("click", closeInvestigation);
 
-  // ---------- Theorie-Panel ----------
+  // ---------- Theorie- und Projektions-Kärtchen (teilen sich ein Panel) ----------
 
   var theoriePanel = byId("theorie-panel");
   var theorieContent = byId("theorie-content");
 
   function openTheorie(t) {
-    var verknuepft = anomalien.features.filter(function (f) { return f.properties.theorie === t.id; });
+    var verknuepft = anomalien.features.filter(function (f) {
+      return (f.properties.verknuepfungen || []).some(function (v) { return v.theorie === t.id; });
+    });
     var listHtml = verknuepft.length
       ? verknuepft.map(function (f) {
+          var v = f.properties.verknuepfungen.filter(function (vv) { return vv.theorie === t.id; })[0];
           return '<button class="theorie-anomalie-link" data-id="' + escapeHtml(f.properties.id) + '">' +
             escapeHtml(f.properties.name) + " – " + escapeHtml(f.properties.ort_label) +
+            '<span class="theorie-anomalie-stufe">' + escapeHtml(v.evidenzstufe) + "</span>" +
             "</button>";
         }).join("")
       : '<div class="inv-field-value" style="font-size:12.5px; color:var(--paper-ink-dim);">Keine Beispiel-Anomalie in diesem Gerüst ist mit dieser Theorie verknüpft.</div>';
+
+    var statusHinweis = t.status_hinweis ? '<div class="inv-verknuepfung-text">' + escapeHtml(t.status_hinweis) + "</div>" : "";
 
     theorieContent.innerHTML =
       '<span class="inv-badge">Beispieldaten</span>' +
       "<h3>" + escapeHtml(t.titel) + "</h3>" +
       '<div class="inv-field-label">Disziplin</div><div class="inv-field-value">' + escapeHtml(t.disziplin) + "</div>" +
-      '<div class="inv-field-label">Status</div><div class="inv-field-value">' + escapeHtml(t.status) + " – wie jede neue Theorie, bis zur Prüfung an Daten (Abschnitt 8)</div>" +
+      '<div class="inv-field-label">Status</div><div class="inv-field-value">' + escapeHtml(t.status) + "</div>" +
+      statusHinweis +
       '<div class="inv-field-label">Kurzbeschreibung</div><div class="inv-field-value" style="font-size:13px;">' + escapeHtml(t.beschreibung) + "</div>" +
       '<div class="inv-field-label" style="margin-top:14px;">Verknüpfte Beispiel-Anomalien</div>' + listHtml;
 
@@ -445,11 +586,101 @@
       });
     });
   }
+
+  function openProjektion(p) {
+    var theorieHtml = "";
+    if (p.theorie) {
+      var t = findTheorie(p.theorie);
+      if (t) {
+        theorieHtml = '<div class="inv-field-label" style="margin-top:14px;">Aufbauend auf Theorie</div>' +
+          '<button class="inv-theorie-link" data-theorie="' + escapeHtml(t.id) + '">' + escapeHtml(t.titel) + "</button>";
+      }
+    }
+    theorieContent.innerHTML =
+      '<span class="inv-badge inv-badge--projektion">Beispiel-Projektion, keine Anomalie</span>' +
+      "<h3>" + escapeHtml(p.titel) + "</h3>" +
+      '<div class="inv-field-label">Evidenzstufe</div><div class="inv-field-value">' + escapeHtml(p.evidenzstufe) + "</div>" +
+      '<div class="inv-verknuepfung-text">' + escapeHtml(EVIDENZ_TEXT[p.evidenzstufe] || "") + "</div>" +
+      '<div class="inv-field-label" style="margin-top:10px;">Zeitraum</div><div class="inv-field-value">' + escapeHtml(p.von) + " bis " + escapeHtml(p.bis) + "</div>" +
+      '<div class="inv-field-label">Ort</div><div class="inv-field-value">' + escapeHtml(p.ort_label) + "</div>" +
+      '<div class="inv-field-label">Beschreibung</div><div class="inv-field-value" style="font-size:13px;">' + escapeHtml(p.beschreibung) + "</div>" +
+      theorieHtml;
+
+    theoriePanel.classList.add("is-open");
+    theoriePanel.setAttribute("aria-hidden", "false");
+
+    var link = theorieContent.querySelector(".inv-theorie-link");
+    if (link) {
+      link.addEventListener("click", function () {
+        var t = findTheorie(link.getAttribute("data-theorie"));
+        if (t) openTheorie(t);
+      });
+    }
+  }
+
   function closeTheorie() {
     theoriePanel.classList.remove("is-open");
     theoriePanel.setAttribute("aria-hidden", "true");
   }
   byId("theorie-close").addEventListener("click", closeTheorie);
+
+  // ---------- Projektions-Markierungen auf der Zeitachse ----------
+
+  (function renderProjektionsMarker() {
+    var container = byId("tl-proj-dots");
+    projektionen.forEach(function (p) {
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "tl-proj-dot";
+      dot.style.left = pct(monthIndex(p.von)) + "%";
+      dot.title = p.titel + " (" + p.evidenzstufe + ", Beispiel-Projektion)";
+      dot.setAttribute("aria-label", p.titel);
+      dot.addEventListener("click", function () { openProjektion(p); });
+      container.appendChild(dot);
+    });
+  })();
+
+  // ---------- Datenverfügbarkeit über der Zeitachse ----------
+
+  (function renderDatenverfuegbarkeit() {
+    var container = byId("tl-availability");
+    datenverfuegbarkeit.forEach(function (d) {
+      var row = document.createElement("div");
+      row.className = "tl-avail-row";
+
+      var label = document.createElement("span");
+      label.className = "tl-avail-label";
+      label.textContent = d.kurz;
+      row.appendChild(label);
+
+      var track = document.createElement("span");
+      track.className = "tl-avail-track";
+      var bar = document.createElement("span");
+      bar.className = "tl-avail-bar";
+      var left = pct(monthIndex(d.von));
+      var right = pct(monthIndex(d.bis));
+      bar.style.left = left + "%";
+      bar.style.width = Math.max(0.6, right - left) + "%";
+      bar.style.background = (DATENLAGE_INFO[d.datenlage] || {}).farbe || "#5c6785";
+      bar.title = d.layer + ": " + d.von + " bis " + d.bis + " (Datenlage: " + d.datenlage + ", Beispielzeitraum)";
+      track.appendChild(bar);
+      row.appendChild(track);
+
+      container.appendChild(row);
+    });
+  })();
+
+  // ---------- Zeitachse nie von Filter-/Detailleiste verdeckt ----------
+
+  var timelineDock = byId("timeline-dock");
+  function updateTimelineBounds() {
+    var left = filterPanel.classList.contains("is-open") ? filterPanel.offsetWidth : 0;
+    var right = investigation.classList.contains("is-open") ? investigation.offsetWidth : 0;
+    timelineDock.style.left = left + "px";
+    timelineDock.style.right = right + "px";
+  }
+  window.addEventListener("resize", updateTimelineBounds);
+  updateTimelineBounds();
 
   // ---------- Suche ----------
 
