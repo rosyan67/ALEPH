@@ -92,13 +92,38 @@
       </label>
     </section>
 
+    <section class="filter-group filter-group--komb">
+      <span class="group-label">Datenquellen kombinieren</span>
+      <p class="group-hint">Ein UND-Treffer heißt „zeitliches Zusammenfallen, Evidenzstufe beobachtet" – kein belegter Zusammenhang (Abschnitt 8).</p>
+      <div class="check-list" id="f-quellen"></div>
+      <div class="segmented" id="f-komb-modus" role="radiogroup" aria-label="Quellen mit UND oder ODER verknüpfen">
+        <button type="button" class="seg-btn is-active" data-value="oder">ODER</button>
+        <button type="button" class="seg-btn" data-value="und">UND</button>
+      </div>
+      <div class="komb-settings">
+        <label for="komb-fenster">Zeitfenster (± Monate)</label>
+        <input type="number" id="komb-fenster" min="0" max="12" value="1">
+        <label for="komb-regel">Räumliche Regel</label>
+        <select id="komb-regel">
+          <option value="gitterzelle-naeherung">gleiche Gitterzelle (Flächen-Näherung)</option>
+        </select>
+      </div>
+    </section>
+
     <button id="filter-reset" class="text-btn">Filter zurücksetzen</button>
   </aside>
 
-  <section id="investigation" class="investigation" aria-hidden="true" aria-label="Untersuchungsansicht">
-    <button id="investigation-close" class="icon-btn" aria-label="Untersuchungsansicht schließen">✕</button>
+  <aside id="investigation" class="investigation" aria-hidden="false" aria-label="Anomalien">
+    <div class="inv-header">
+      <button id="investigation-back" class="text-btn inv-back" hidden>← Zurück zur Liste</button>
+      <span class="inv-header-spacer"></span>
+      <button id="investigation-fullscreen" class="icon-btn" aria-label="Vollbild" hidden title="Vollbild">⤢</button>
+      <button id="investigation-close" class="icon-btn" aria-label="Schließen">✕</button>
+    </div>
     <div id="investigation-content" class="investigation-content"></div>
-  </section>
+  </aside>
+
+  <button id="investigation-reopen" class="edge-tab" hidden>Anomalien</button>
 
   <div id="theorie-panel" class="theorie-panel" aria-hidden="true">
     <button id="theorie-close" class="icon-btn" aria-label="Schließen">✕</button>
@@ -106,13 +131,16 @@
   </div>
 
   <footer class="timeline-dock" id="timeline-dock">
-    <div class="tl-availability" id="tl-availability" title="Datenverfügbarkeit je Quelle – Beispielzeiträume, kommen später aus layers.yaml"></div>
+    <div class="tl-availability">
+      <button id="tl-availability-toggle" class="tl-availability-toggle" aria-expanded="true">
+        Datenverfügbarkeit <span id="tl-availability-caret">▾</span>
+      </button>
+      <div class="tl-availability-rows" id="tl-availability-rows"></div>
+    </div>
 
     <div class="tl-main">
       <span class="tl-label">Zeitraum</span>
       <input id="time-start-text" class="tl-text" type="text" inputmode="numeric" value="2013-01" aria-label="Zeitraum, Beginn, Format JJJJ-MM">
-      <span class="tl-sep">–</span>
-      <input id="time-end-text" class="tl-text" type="text" inputmode="numeric" value="2027-12" aria-label="Zeitraum, Ende, Format JJJJ-MM">
 
       <div class="range-dual" id="range-dual">
         <div class="range-track"></div>
@@ -124,6 +152,8 @@
         <input id="time-end" type="range" min="0" max="179" value="179" step="1" aria-label="Zeitraum-Schieber, Ende">
         <input id="time-pin" type="range" min="0" max="179" value="164" step="1" class="pin-range" aria-label="Monat für das angezeigte Kartenbild">
       </div>
+
+      <input id="time-end-text" class="tl-text" type="text" inputmode="numeric" value="2027-12" aria-label="Zeitraum, Ende, Format JJJJ-MM">
     </div>
 
     <div class="tl-pin-readout" id="tl-pin-readout"></div>

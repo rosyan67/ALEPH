@@ -3,18 +3,28 @@
  *
  * Alles auf dieser Seite ist Beispieldaten (web/beispieldaten/*.js). Es gibt
  * noch keine echte Anomalieerkennung – dieses Skript testet nur, ob Globus,
- * Suche, Filter und Untersuchungsansicht wie vorgesehen funktionieren.
+ * Suche, Filter, Liste/Detailansicht und Mehrfachauswahl wie vorgesehen
+ * funktionieren.
  *
  * Wichtige Regel (Rückmeldung 2026-09-22): Eine Anomalie ist immer
  * "beobachtet" (Abschnitt 7). Höhere Evidenzstufen gehören zu Verknüpfungen
  * mit einer Theorie (Abschnitt 8) oder zu Projektionen (eigene Datei,
  * niemals Anomalien) – siehe beispiel_projektionen.js.
+ *
+ * Kombinationsfilter (Rückmeldung 2026-09-23): Ein "UND"-Treffer zwischen
+ * Datenquellen ist KEINE geprüfte Verknüpfung, sondern nur ein zeitliches
+ * und räumliches Zusammenfallen – Evidenzstufe "beobachtet" (Koinzidenz,
+ * Abschnitt 8). Zeitfenster und räumliche Regel sind Einstellungen
+ * (#komb-fenster, #komb-regel), nicht im Code fest verdrahtet. Die
+ * räumliche Regel ist hier eine Näherung (Bounding-Kreis der Polygone) –
+ * eine echte "gleiche Gitterzelle" gibt es erst mit den Analyse-Würfeln.
  */
 (function () {
   "use strict";
 
   var EPOCH_YEAR = 2013;
   var STAERKE_RANK = { "auffällig": 1, "stark": 2, "extrem": 3 };
+  var STAERKE_SORT = { "extrem": 0, "stark": 1, "auffällig": 2 };
   var STAERKE_FARBE = {
     "auffällig": "#e2b04f",
     "stark": "#d9822f",
@@ -31,7 +41,18 @@
     "Modellprojektion": "Aus bestätigten Zusammenhängen abgeleitete Entwicklung, mit dokumentierten Annahmen.",
     "hypothetisches Szenario": "Was-wäre-wenn – Annahme über die Zukunft, ausdrücklich keine Vorhersage."
   };
-  var PROJEKTION_FARBE = "#8f7fc9";
+  // Okabe-Ito-Palette: für die meisten Formen von Farbenblindheit
+  // unterscheidbar. Zusätzlich bekommt jede Auswahl eine Nummer, damit die
+  // Unterscheidung nicht allein von der Farbe abhängt.
+  var AUSWAHL_FARBEN = ["#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"];
+  var QUELLEN = [
+    { key: "nachtlicht", label: "Nachtlicht" },
+    { key: "vegetation", label: "Vegetation" },
+    { key: "brände", label: "Brände" },
+    { key: "no2", label: "Luftqualität (NO₂)" },
+    { key: "niederschlag", label: "Niederschlag" },
+    { key: "schiffsverkehr", label: "Schiffsverkehr" }
+  ];
 
   var anomalien = window.ALEPH_BEISPIEL_ANOMALIEN;
   var theorien = window.ALEPH_BEISPIEL_THEORIEN;
@@ -71,6 +92,27 @@
     return [sx / n, sy / n];
   }
 
+  function haversineKm(a, b) {
+    var R = 6371;
+    var lat1 = (a[1] * Math.PI) / 180, lat2 = (b[1] * Math.PI) / 180;
+    var dLat = ((b[1] - a[1]) * Math.PI) / 180;
+    var dLon = ((b[0] - a[0]) * Math.PI) / 180;
+    var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    var y = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    return R * y;
+  }
+
+  function polygonRadiusKm(f) {
+    var c = centroid(f.geometry.coordinates);
+    var ring = f.geometry.coordinates[0];
+    var max = 0;
+    for (var i = 0; i < ring.length - 1; i++) {
+      var d = haversineKm(c, ring[i]);
+      if (d > max) max = d;
+    }
+    return max;
+  }
+
   function byId(id) { return document.getElementById(id); }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -97,6 +139,8 @@
     style: {
       version: 8,
       projection: { type: "globe" },
+      // Für die Nummern-Beschriftung der Mehrfachauswahl nötig (Symbol-Layer).
+      glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
       // Kein "light"/"sky" mit Richtung, damit keine Beleuchtung einen
       // Sonnenstand andeutet (Rückmeldung 2026-09-22) – beide Basiskarten
       // sind fertige Kompositen, keine in Echtzeit beleuchtete 3D-Szene.
@@ -163,6 +207,12 @@
 
   var hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8 });
 
+  // Aktuell sichtbare (gefilterte) Features und Kombinationsfilter-Infos –
+  // von applyFilters() gepflegt, von der Liste und der Karte gelesen.
+  var aktuellGefiltert = anomalien.features.slice();
+  var aktuellKombInfo = {};
+  var ausgewaehlt = []; // ids, für die Mehrfachauswahl/den Vergleich
+
   map.on("load", function () {
     map.setProjection({ type: "globe" });
     setBasemap("nacht");
@@ -218,6 +268,32 @@
       }
     });
 
+    // Mehrfachauswahl: eigene Farbe pro Anomalie (Okabe-Ito, für
+    // Farbenblindheit geeignet) plus Nummer, damit nicht nur die Farbe
+    // unterscheidet.
+    map.addLayer({
+      id: "anomalien-auswahl-linie",
+      type: "line",
+      source: "anomalien",
+      filter: ["in", ["get", "id"], ["literal", []]],
+      paint: { "line-color": "#ffffff", "line-width": 4, "line-opacity": 0.95 }
+    });
+
+    map.addLayer({
+      id: "anomalien-auswahl-label",
+      type: "symbol",
+      source: "anomalien",
+      filter: ["in", ["get", "id"], ["literal", []]],
+      layout: {
+        "text-field": "",
+        "text-font": ["Noto Sans Bold"],
+        "text-size": 13,
+        "text-allow-overlap": true,
+        "text-ignore-placement": true
+      },
+      paint: { "text-color": "#111318", "text-halo-color": "#ffffff", "text-halo-width": 1.6 }
+    });
+
     map.on("mouseenter", "anomalien-fill", function () { map.getCanvas().style.cursor = "pointer"; });
     map.on("mouseleave", "anomalien-fill", function () {
       map.getCanvas().style.cursor = "";
@@ -238,9 +314,10 @@
 
     map.on("click", "anomalien-fill", function (e) {
       var props = e.features[0].properties;
-      openInvestigation(normalizeProps(props));
+      showDetail(normalizeProps(props));
     });
 
+    populateQuellenFilter();
     applyFilters();
   });
 
@@ -323,6 +400,40 @@
   regionSelect.addEventListener("change", applyFilters);
   typSelect.addEventListener("change", applyFilters);
 
+  // Kombinationsfilter über Datenquellen (UND/ODER)
+  var quellenContainer = byId("f-quellen");
+  var quellenChecks = [];
+  function populateQuellenFilter() {
+    QUELLEN.forEach(function (q) {
+      var label = document.createElement("label");
+      label.className = "check-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = q.key;
+      cb.addEventListener("change", applyFilters);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(" " + q.label));
+      quellenContainer.appendChild(label);
+      quellenChecks.push(cb);
+    });
+  }
+
+  var kombModusBtns = Array.prototype.slice.call(document.querySelectorAll("#f-komb-modus .seg-btn"));
+  var kombModus = "oder";
+  kombModusBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      kombModusBtns.forEach(function (b) { b.classList.remove("is-active"); });
+      btn.classList.add("is-active");
+      kombModus = btn.getAttribute("data-value");
+      applyFilters();
+    });
+  });
+
+  var kombFensterInput = byId("komb-fenster");
+  kombFensterInput.addEventListener("change", applyFilters);
+  var kombRegelSelect = byId("komb-regel");
+  kombRegelSelect.addEventListener("change", applyFilters);
+
   // Zeitschieber (von/bis) + Text-Felder + Kartenbild-Pin
   var timeStartInput = byId("time-start");
   var timeEndInput = byId("time-end");
@@ -333,7 +444,6 @@
   var rangeFill = byId("range-fill");
   var rangeProjection = byId("range-projection");
   var rangeToday = byId("range-today");
-  var rangeDual = byId("range-dual");
 
   var TL_MIN = parseInt(timeStartInput.min, 10);
   var TL_MAX = parseInt(timeStartInput.max, 10);
@@ -417,6 +527,10 @@
     fokusCheck.checked = false;
     minStaerke = "auffällig";
     staerkeBtns.forEach(function (b) { b.classList.toggle("is-active", b.getAttribute("data-value") === "auffällig"); });
+    quellenChecks.forEach(function (cb) { cb.checked = false; });
+    kombModus = "oder";
+    kombModusBtns.forEach(function (b) { b.classList.toggle("is-active", b.getAttribute("data-value") === "oder"); });
+    kombFensterInput.value = "1";
     timeStartInput.value = timeStartInput.min;
     timeEndInput.value = timeEndInput.max;
     updateRangeUi();
@@ -432,7 +546,11 @@
       minStaerke: minStaerke,
       onlyFocus: fokusCheck.checked,
       timeStart: parseInt(timeStartInput.value, 10),
-      timeEnd: parseInt(timeEndInput.value, 10)
+      timeEnd: parseInt(timeEndInput.value, 10),
+      kombQuellen: quellenChecks.filter(function (cb) { return cb.checked; }).map(function (cb) { return cb.value; }),
+      kombModus: kombModus,
+      kombFenster: parseInt(kombFensterInput.value, 10) || 0,
+      kombRegel: kombRegelSelect.value
     };
   }
 
@@ -461,18 +579,182 @@
     return true;
   }
 
+  // Räumliche/zeitliche Nähe zweier Anomalien für den Kombinationsfilter.
+  // "regel" ist absichtlich ein Parameter (aus #komb-regel gelesen) statt
+  // fest im Code zu stehen – aktuell ist "gitterzelle-naeherung" die einzige
+  // hinterlegte Regel: eine grobe Näherung über sich berührende
+  // Umkreise der Anomalie-Polygone. Eine echte gemeinsame Gitterzelle gibt
+  // es erst mit den Analyse-Würfeln (Abschnitt 4).
+  function raeumlichZeitlichNah(fA, fB, fensterMonate, regel) {
+    var aStart = monthIndex(fA.properties.start), aEnde = monthIndex(fA.properties.ende);
+    var bStart = monthIndex(fB.properties.start), bEnde = monthIndex(fB.properties.ende);
+    var zeitlichNah = bStart <= aEnde + fensterMonate && aStart <= bEnde + fensterMonate;
+    if (!zeitlichNah) return false;
+
+    if (regel === "gitterzelle-naeherung" || !regel) {
+      var ca = centroid(fA.geometry.coordinates), cb = centroid(fB.geometry.coordinates);
+      var d = haversineKm(ca, cb);
+      return d <= polygonRadiusKm(fA) + polygonRadiusKm(fB);
+    }
+    return false;
+  }
+
+  // Kombiniert mehrere Datenquellen mit UND/ODER. Gibt die passenden
+  // Features zurück sowie pro id einen Hinweis, ob es ein UND-Treffer war
+  // (und über welche anderen Anomalien er zustande kam).
+  function berechneKombination(features, quellen, modus, fensterMonate, regel) {
+    var deckung = features.map(function (f) {
+      var q = (f.properties.layer || []).filter(function (l) { return quellen.indexOf(l) !== -1; });
+      return { f: f, quellen: q };
+    }).filter(function (d) { return d.quellen.length > 0; });
+
+    var info = {};
+
+    if (modus === "oder") {
+      deckung.forEach(function (d) {
+        info[d.f.properties.id] = { istUnd: false, partner: [] };
+      });
+      return { treffer: deckung.map(function (d) { return d.f; }), info: info };
+    }
+
+    var treffer = [];
+    deckung.forEach(function (d) {
+      var restQuellen = quellen.filter(function (q) { return d.quellen.indexOf(q) === -1; });
+      var partner = [];
+      if (restQuellen.length) {
+        deckung.forEach(function (d2) {
+          if (d2.f === d.f) return;
+          if (!raeumlichZeitlichNah(d.f, d2.f, fensterMonate, regel)) return;
+          var deckt = d2.quellen.some(function (q) { return restQuellen.indexOf(q) !== -1; });
+          if (deckt) partner.push(d2);
+        });
+      }
+      var abgedeckt = restQuellen.every(function (q) {
+        return partner.some(function (p) { return p.quellen.indexOf(q) !== -1; });
+      });
+      if (restQuellen.length === 0 || abgedeckt) {
+        treffer.push(d.f);
+        info[d.f.properties.id] = {
+          istUnd: true,
+          partner: partner.map(function (p) { return { id: p.f.properties.id, name: p.f.properties.name, ort: p.f.properties.ort_label }; })
+        };
+      }
+    });
+    return { treffer: treffer, info: info };
+  }
+
   function applyFilters() {
     if (!map.getSource("anomalien")) return;
     var state = currentFilterState();
-    var gefiltert = anomalien.features.filter(function (f) { return featurePasses(f.properties, state); });
-    map.getSource("anomalien").setData({ type: "FeatureCollection", features: gefiltert });
-    byId("filter-count").textContent = String(gefiltert.length);
+    var attributGefiltert = anomalien.features.filter(function (f) { return featurePasses(f.properties, state); });
+
+    var finalFeatures = attributGefiltert;
+    var kombInfo = {};
+    if (state.kombQuellen.length) {
+      var ergebnis = berechneKombination(attributGefiltert, state.kombQuellen, state.kombModus, state.kombFenster, state.kombRegel);
+      finalFeatures = ergebnis.treffer;
+      kombInfo = ergebnis.info;
+    }
+
+    aktuellGefiltert = finalFeatures;
+    aktuellKombInfo = kombInfo;
+
+    map.getSource("anomalien").setData({ type: "FeatureCollection", features: finalFeatures });
+    byId("filter-count").textContent = String(finalFeatures.length);
+
+    renderVerfuegbarkeitStreifen(state.kombQuellen);
+    updateAuswahlLayer();
+    if (invState === "liste") renderListe();
   }
 
-  // ---------- Untersuchungsansicht ----------
+  // ---------- Rechte Leiste: Liste ↔ Detail ----------
 
   var investigation = byId("investigation");
   var investigationContent = byId("investigation-content");
+  var invBackBtn = byId("investigation-back");
+  var invFullscreenBtn = byId("investigation-fullscreen");
+  var invCloseBtn = byId("investigation-close");
+  var invReopenBtn = byId("investigation-reopen");
+
+  var invState = "liste"; // "liste" | "detail"
+  var invFullscreen = false;
+
+  function setPanelOpen(offen) {
+    investigation.classList.toggle("is-open", offen);
+    investigation.setAttribute("aria-hidden", offen ? "false" : "true");
+    invReopenBtn.hidden = offen;
+    updateTimelineBounds();
+  }
+
+  function verlasseVollbild() {
+    invFullscreen = false;
+    investigation.classList.remove("is-fullscreen");
+    invFullscreenBtn.textContent = "⤢";
+    invFullscreenBtn.title = "Vollbild";
+  }
+
+  function showListe() {
+    invState = "liste";
+    invBackBtn.hidden = true;
+    invFullscreenBtn.hidden = true;
+    verlasseVollbild();
+    renderListe();
+    setPanelOpen(true);
+  }
+
+  function showDetail(props) {
+    invState = "detail";
+    invBackBtn.hidden = false;
+    invFullscreenBtn.hidden = false;
+    renderDetail(props);
+    setPanelOpen(true);
+  }
+
+  invBackBtn.addEventListener("click", showListe);
+  invReopenBtn.addEventListener("click", showListe);
+  invCloseBtn.addEventListener("click", function () {
+    if (invState === "detail") showListe(); else setPanelOpen(false);
+  });
+  invFullscreenBtn.addEventListener("click", function () {
+    invFullscreen = !invFullscreen;
+    investigation.classList.toggle("is-fullscreen", invFullscreen);
+    invFullscreenBtn.textContent = invFullscreen ? "⤡" : "⤢";
+    invFullscreenBtn.title = invFullscreen ? "Vollbild verlassen" : "Vollbild";
+    updateTimelineBounds();
+  });
+
+  // ---------- Mehrfachauswahl ----------
+
+  function toggleAuswahl(id) {
+    var idx = ausgewaehlt.indexOf(id);
+    if (idx === -1) ausgewaehlt.push(id); else ausgewaehlt.splice(idx, 1);
+    updateAuswahlLayer();
+    if (invState === "liste") renderListe();
+  }
+
+  function updateAuswahlLayer() {
+    if (!map.getLayer("anomalien-auswahl-linie")) return;
+    if (!ausgewaehlt.length) {
+      map.setFilter("anomalien-auswahl-linie", ["in", ["get", "id"], ["literal", []]]);
+      map.setFilter("anomalien-auswahl-label", ["in", ["get", "id"], ["literal", []]]);
+      return;
+    }
+    var farbAusdruck = ["match", ["get", "id"]];
+    var nummerAusdruck = ["match", ["get", "id"]];
+    ausgewaehlt.forEach(function (id, i) {
+      var farbe = AUSWAHL_FARBEN[i % AUSWAHL_FARBEN.length];
+      farbAusdruck.push(id, farbe);
+      nummerAusdruck.push(id, String(i + 1));
+    });
+    farbAusdruck.push("#ffffff");
+    nummerAusdruck.push("");
+    map.setFilter("anomalien-auswahl-linie", ["in", ["get", "id"], ["literal", ausgewaehlt]]);
+    map.setFilter("anomalien-auswahl-label", ["in", ["get", "id"], ["literal", ausgewaehlt]]);
+    map.setPaintProperty("anomalien-auswahl-linie", "line-color", farbAusdruck);
+    map.setLayoutProperty("anomalien-auswahl-label", "text-field", nummerAusdruck);
+  }
+
+  // ---------- Liste ----------
 
   function findTheorie(id) {
     for (var i = 0; i < theorien.length; i++) {
@@ -480,6 +762,100 @@
     }
     return null;
   }
+
+  function renderListeZeile(f) {
+    var p = f.properties;
+    var farbe = STAERKE_FARBE[p.staerke_band];
+    var info = aktuellKombInfo[p.id];
+    var kombBadge = "";
+    if (info) {
+      kombBadge = info.istUnd
+        ? '<span class="inv-liste-komb inv-liste-komb--und">UND-Treffer – zeitliches Zusammenfallen, beobachtet</span>'
+        : '<span class="inv-liste-komb">ODER-Treffer</span>';
+    }
+    var ausgewaehltIdx = ausgewaehlt.indexOf(p.id);
+    var auswahlFarbe = ausgewaehltIdx !== -1 ? AUSWAHL_FARBEN[ausgewaehltIdx % AUSWAHL_FARBEN.length] : null;
+
+    return '<div class="inv-liste-zeile">' +
+      '<label class="inv-liste-check" title="Zum Vergleich auswählen"' + (auswahlFarbe ? ' style="border-color:' + auswahlFarbe + '"' : '') + '>' +
+      '<input type="checkbox" data-id="' + escapeHtml(p.id) + '"' + (ausgewaehltIdx !== -1 ? " checked" : "") + '>' +
+      (ausgewaehltIdx !== -1 ? '<span class="inv-liste-check-num" style="background:' + auswahlFarbe + '">' + (ausgewaehltIdx + 1) + '</span>' : '') +
+      '</label>' +
+      '<button class="inv-liste-inhalt" data-id="' + escapeHtml(p.id) + '">' +
+      '<span class="band-dot" style="background:' + farbe + '"></span>' +
+      '<span class="inv-liste-text">' +
+      '<span class="inv-liste-name">' + escapeHtml(p.name) + (p.hinweis ? ' <span class="inv-liste-hinweis">' + escapeHtml(p.hinweis) + '</span>' : '') + '</span>' +
+      '<span class="inv-liste-sub">' + escapeHtml(p.ort_label) + " · " + escapeHtml(p.start) + '</span>' +
+      kombBadge +
+      "</span>" +
+      "</button>" +
+      "</div>";
+  }
+
+  function renderListe() {
+    var sortiert = aktuellGefiltert.slice().sort(function (a, b) {
+      var sa = STAERKE_SORT[a.properties.staerke_band], sb = STAERKE_SORT[b.properties.staerke_band];
+      if (sa !== sb) return sa - sb;
+      return monthIndex(b.properties.start) - monthIndex(a.properties.start);
+    });
+
+    var chips = "";
+    if (ausgewaehlt.length) {
+      chips = '<div class="inv-auswahl-tray">' +
+        '<div class="inv-auswahl-head">Ausgewählt zum Vergleich (' + ausgewaehlt.length + ')' +
+        '<button id="inv-auswahl-leeren" class="text-btn" type="button">leeren</button></div>' +
+        ausgewaehlt.map(function (id, i) {
+          var f = anomalien.features.filter(function (ff) { return ff.properties.id === id; })[0];
+          if (!f) return "";
+          var farbe = AUSWAHL_FARBEN[i % AUSWAHL_FARBEN.length];
+          return '<button class="inv-auswahl-chip" data-id="' + escapeHtml(id) + '" style="border-color:' + farbe + '">' +
+            '<span class="inv-auswahl-num" style="background:' + farbe + '">' + (i + 1) + "</span>" +
+            escapeHtml(f.properties.name) +
+            "</button>";
+        }).join("") +
+        "</div>";
+    }
+
+    var rows = sortiert.length
+      ? sortiert.map(renderListeZeile).join("")
+      : '<div class="inv-liste-leer">Keine Beispiel-Anomalien sichtbar – Filter prüfen.</div>';
+
+    investigationContent.innerHTML =
+      '<div class="inv-liste-head"><h2>Sichtbare Anomalien</h2>' +
+      '<p class="inv-liste-count">' + sortiert.length + ' von 18 Beispiel-Anomalien, sortiert nach Stärke</p></div>' +
+      chips +
+      '<div class="inv-liste">' + rows + "</div>";
+
+    Array.prototype.slice.call(investigationContent.querySelectorAll(".inv-liste-check input")).forEach(function (cb) {
+      cb.addEventListener("click", function (e) { e.stopPropagation(); });
+      cb.addEventListener("change", function (e) {
+        e.stopPropagation();
+        toggleAuswahl(cb.getAttribute("data-id"));
+      });
+    });
+    Array.prototype.slice.call(investigationContent.querySelectorAll(".inv-liste-inhalt")).forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var f = anomalien.features.filter(function (ff) { return ff.properties.id === btn.getAttribute("data-id"); })[0];
+        if (f) { flyToFeature(f); showDetail(f.properties); }
+      });
+    });
+    Array.prototype.slice.call(investigationContent.querySelectorAll(".inv-auswahl-chip")).forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var f = anomalien.features.filter(function (ff) { return ff.properties.id === btn.getAttribute("data-id"); })[0];
+        if (f) { flyToFeature(f); showDetail(f.properties); }
+      });
+    });
+    var leerenBtn = byId("inv-auswahl-leeren");
+    if (leerenBtn) {
+      leerenBtn.addEventListener("click", function () {
+        ausgewaehlt = [];
+        updateAuswahlLayer();
+        renderListe();
+      });
+    }
+  }
+
+  // ---------- Detail ----------
 
   function renderVerknuepfungen(verknuepfungen) {
     if (!verknuepfungen || !verknuepfungen.length) {
@@ -497,7 +873,19 @@
     }).join("");
   }
 
-  function openInvestigation(props) {
+  function renderKombinationsHinweis(id) {
+    var info = aktuellKombInfo[id];
+    if (!info) return "";
+    if (!info.istUnd) {
+      return '<div class="inv-field"><div class="inv-field-label">Kombinationsfilter</div><div class="inv-field-value">ODER-Treffer – mindestens eine der gewählten Datenquellen betroffen.</div></div>';
+    }
+    var partnerText = info.partner.length
+      ? info.partner.map(function (p) { return escapeHtml(p.name) + " (" + escapeHtml(p.ort) + ")"; }).join("; ")
+      : "deckt alle gewählten Quellen bereits selbst ab";
+    return '<div class="inv-field"><div class="inv-field-label">Kombinationsfilter</div><div class="inv-field-value">UND-Treffer – zeitliches Zusammenfallen, Evidenzstufe beobachtet. <span class="inv-field-note">Kein belegter Zusammenhang, nur Koinzidenz (Abschnitt 8). Zusammen mit: ' + partnerText + '.</span></div></div>';
+  }
+
+  function renderDetail(props) {
     var bandColor = STAERKE_FARBE[props.staerke_band] || "#e2b04f";
     var datenlageInfo = DATENLAGE_INFO[props.datenlage];
 
@@ -513,6 +901,7 @@
       '<div class="inv-field"><div class="inv-field-label">Stärke und Richtung</div><div class="inv-field-value"><span class="band-dot" style="background:' + bandColor + '"></span>' + escapeHtml(props.staerke_band) + ", " + escapeHtml(props.richtung) + "</div></div>" +
       '<div class="inv-field"><div class="inv-field-label">Beteiligte Layer</div><div class="inv-field-value">' + escapeHtml((props.layer || []).join(", ")) + "</div></div>" +
       '<div class="inv-field"><div class="inv-field-label">Fokusgebiet</div><div class="inv-field-value">' + (props.fokusgebiet ? "ja – feinere Analyse vorgesehen (Abschnitt 4a)" : "nein – globales Monatsraster") + "</div></div>" +
+      renderKombinationsHinweis(props.id) +
 
       '<div class="inv-placeholder">' +
       "<h3>Zeitreihe</h3>" +
@@ -523,10 +912,6 @@
       renderVerknuepfungen(props.verknuepfungen) +
       "</div>";
 
-    investigation.classList.add("is-open");
-    investigation.setAttribute("aria-hidden", "false");
-    updateTimelineBounds();
-
     Array.prototype.slice.call(investigationContent.querySelectorAll(".inv-theorie-link")).forEach(function (link) {
       link.addEventListener("click", function () {
         var t = findTheorie(link.getAttribute("data-theorie"));
@@ -534,13 +919,6 @@
       });
     });
   }
-
-  function closeInvestigation() {
-    investigation.classList.remove("is-open");
-    investigation.setAttribute("aria-hidden", "true");
-    updateTimelineBounds();
-  }
-  byId("investigation-close").addEventListener("click", closeInvestigation);
 
   // ---------- Theorie- und Projektions-Kärtchen (teilen sich ein Panel) ----------
 
@@ -581,7 +959,7 @@
         if (f) {
           closeTheorie();
           flyToFeature(f);
-          openInvestigation(f.properties);
+          showDetail(f.properties);
         }
       });
     });
@@ -640,11 +1018,26 @@
     });
   })();
 
-  // ---------- Datenverfügbarkeit über der Zeitachse ----------
+  // ---------- Datenverfügbarkeit über der Zeitachse (einklappbar) ----------
 
-  (function renderDatenverfuegbarkeit() {
-    var container = byId("tl-availability");
-    datenverfuegbarkeit.forEach(function (d) {
+  var availToggle = byId("tl-availability-toggle");
+  var availRows = byId("tl-availability-rows");
+  var availCaret = byId("tl-availability-caret");
+  var availOffen = true;
+  availToggle.addEventListener("click", function () {
+    availOffen = !availOffen;
+    availRows.hidden = !availOffen;
+    availToggle.setAttribute("aria-expanded", String(availOffen));
+    availCaret.textContent = availOffen ? "▾" : "▸";
+  });
+
+  function renderVerfuegbarkeitStreifen(aktiveQuellen) {
+    availRows.innerHTML = "";
+    var zeigen = aktiveQuellen && aktiveQuellen.length
+      ? datenverfuegbarkeit.filter(function (d) { return aktiveQuellen.indexOf(d.quelle) !== -1; })
+      : datenverfuegbarkeit;
+
+    zeigen.forEach(function (d) {
       var row = document.createElement("div");
       row.className = "tl-avail-row";
 
@@ -666,9 +1059,10 @@
       track.appendChild(bar);
       row.appendChild(track);
 
-      container.appendChild(row);
+      availRows.appendChild(row);
     });
-  })();
+  }
+  renderVerfuegbarkeitStreifen([]);
 
   // ---------- Zeitachse nie von Filter-/Detailleiste verdeckt ----------
 
@@ -680,7 +1074,6 @@
     timelineDock.style.right = right + "px";
   }
   window.addEventListener("resize", updateTimelineBounds);
-  updateTimelineBounds();
 
   // ---------- Suche ----------
 
@@ -741,7 +1134,7 @@
           map.flyTo({ center: [parseFloat(btn.getAttribute("data-lon")), parseFloat(btn.getAttribute("data-lat"))], zoom: 5, duration: 1400 });
         } else if (kind === "anomalie") {
           var f = anomalien.features.filter(function (ff) { return ff.properties.id === btn.getAttribute("data-id"); })[0];
-          if (f) { flyToFeature(f); openInvestigation(f.properties); }
+          if (f) { flyToFeature(f); showDetail(f.properties); }
         } else if (kind === "theorie") {
           var t = findTheorie(btn.getAttribute("data-id"));
           if (t) openTheorie(t);
@@ -762,9 +1155,14 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
-    closeInvestigation();
+    if (invState === "detail") showListe();
     closeTheorie();
     closeFilter();
     searchResults.hidden = true;
   });
+
+  // ---------- Start: Liste sofort sichtbar, auch bevor die Karte geladen ist ----------
+
+  showListe();
+  updateTimelineBounds();
 })();
