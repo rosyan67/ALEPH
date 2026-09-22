@@ -18,3 +18,20 @@
   - Befund, offen: In der Probekachel hat kein gültiger Pixel Quality 0, obwohl `_Num` bis 15 reicht. Die Deutung von Quality als „mehr als 3 Nächte“ passt deshalb nicht zur Messung. Im Steckbrief korrigiert. Vorerst `_Num` und Zahl gültiger Pixel als Datenlage verwenden.
   - NASA-Mitteilung (direkt gelesen): Auslieferung von Suomi-NPP-Produkten endet am 1. November 2026, 13:00 UTC, Datum änderbar. Ob das Archiv bleibt, steht nicht in der Mitteilung. Vorsichtshalber alle benötigten Kacheln vor dem 1. November laden.
   - Noch offen: Ladeplan (Vorschlag steht im Chat, wartet auf Freigabe), Feldwahl NearNadir gegen AllAngle, Auswertung der Fehlwerte nach Land/Wasser.
+
+## 2026-09-22
+
+- Oberflächen-Gerüst (Woche 2, ARCHITECTURE.md Abschnitt 10) in `web/` gebaut, auf eigenem Branch `ui-geruest` in einem eigenen Git-Worktree, getrennt von der parallel laufenden Sitzung auf `main` (SSD, Download-Skript). Plugin `frontend-design` für die Gestaltung genutzt.
+- Globus: MapLibre GL JS 5.19.0 über CDN (unpkg, kein Konto/Schlüssel), Globus-Projektion (`projection: {type: 'globe'}`). Als Basiskarte die freien, schlüssellosen Kacheln von EOX Maps genutzt – bewusst die NASA-Black-Marble-Nachtlichtkarte (`blackmarble_3857`) plus Grenzen/Label-Überlagerung (`overlay_3857`), weil Nachtlicht der erste echte ALEPH-Layer ist. Erreichbarkeit beider Kachel-URLs und der MapLibre-CDN-Dateien mit `curl` geprüft (alle 200).
+- Suchleiste über Orte (mitgeliefertes Verzeichnis `web/beispieldaten/orte.js`, 59 Einträge, keine externe API), Beispiel-Anomalien und Beispiel-Theorien; Klick fliegt zum Ort bzw. öffnet die Untersuchungsansicht bzw. ein Theorie-Kärtchen.
+- Filter: Region, Anomalie-Typ, Zeitraum (Doppel-Schieberegler, monatlich 2013-01 bis 2027-12), Evidenzstufe (Mehrfachauswahl), Mindeststärke (auffällig/stark/extrem), nur Fokusgebiete. Anzeige „N von 18 sichtbar".
+- Untersuchungsansicht (rechte Seitenleiste, helles „Dossier" vor dem dunklen Globus): Name, Evidenzstufe, Typ-Sicherheit, Datenlage, Stärke/Richtung, Layer, Fokusgebiet, Platzhalter für Zeitreihe und Nachrichten/ACLED, Verweis auf verknüpfte Theorie.
+- 18 Beispiel-Anomalien als GeoJSON (`web/beispieldaten/beispiel_anomalien.js`, Polygone statt Punkte, entspricht „gebiet (Umriss)" aus Abschnitt 7), 5 Beispiel-Theorien aus Abschnitt 8. Alle Felder aus Abschnitt 7 befüllt. Jede Anomalie trägt `beispiel: true`; Badge „Beispieldaten" oben auf der Seite und in jeder Untersuchungsansicht, dauerhaft sichtbar, nicht nur beim Start.
+- Kein Server nötig: alle Beispieldaten liegen als `window.ALEPH_...`-Objekte in `.js`-Dateien (kein `fetch()`), `index.html` lässt sich direkt per Doppelklick öffnen. MapLibre und die Kartenkacheln brauchen weiterhin Internet, aber kein Konto.
+- Getestet:
+  - Syntaxprüfung aller vier `.js`-Dateien und Ausführung der drei Datendateien über `osascript -l JavaScript` (kein `node` auf diesem Rechner installiert): 18 Anomalien, 5 Theorien, 59 Orte geladen, keine Datenfehler (Pflichtfelder vollständig, gültige Werte für Stärke/Evidenzstufe/Typ-Sicherheit/Datenlage, Polygone geschlossen und auf der Erde, Theorie-Verweise lösen auf).
+  - Filterlogik aus `app.js` nachgebaut und gegen von Hand gezählte Erwartungswerte geprüft: 9 von 9 Tests bestehen (u. a. Mindeststärke, Region, Evidenzstufe, Zeitraum, Kombination mehrerer Filter).
+  - Dabei einen echten Fehler gefunden und behoben: Die Beispiel-Anomalie mit Evidenzstufe „hypothetisches Szenario" liegt 2026 (bewusst in der Zukunft, siehe Abschnitt 2 „Was-wäre-wenn"), der Zeitschieber reichte aber nur bis 2025-12 – sie war dadurch beim Start unsichtbar. Schieberegler-Bereich auf 2013-01 bis 2027-12 erweitert.
+  - Lokalen Server gestartet und alle sechs Dateien (`index.html`, `style.css`, `app.js`, drei Datendateien) per `curl` auf Statuscode 200 geprüft.
+  - Nicht getestet: echtes Rendern im Browser (kein Browser-Werkzeug in dieser Sitzung verfügbar) – Alexander sollte die Seite einmal selbst öffnen und auf den ersten Blick prüfen, ob der Globus wie erwartet aussieht.
+- Branch `ui-geruest` gepusht, `main` nicht angefasst.
