@@ -40,6 +40,19 @@ Sicherheitsnetz vor dem großen Lauf (nach Prüfung durch statistik-pruefer,
 - `schreibe_manifest` hält die Quelldateinamen (inkl. Erzeugungszeitstempel
   im Dateinamen) fest, bevor die Rohdaten gelöscht werden.
 
+Aufbau des Würfels (geändert 2026-09-23, damit die Monate in beliebiger
+Reihenfolge geladen werden können, z. B. erst 2018-2025, dann 2013-2017):
+Der Würfel wird beim ersten Schreiben mit der FESTEN Zeitachse
+2013-01 bis 2025-12 (Entscheidung E3, 156 Monate) angelegt, alle Zellen leer
+(Wert NaN, Zähler 0). Jeder Monat wird an seine Position auf der Zeitachse
+geschrieben, nie hinten angehängt; die Zeitachse ist damit immer sortiert,
+egal in welcher Reihenfolge geladen wird. Die Variable `monat_fertig`
+(je Monat 0 oder 1) wird erst gesetzt, nachdem die Werte zurückgelesen und mit
+den geschriebenen verglichen wurden. Nur so markierte Monate gelten als
+vorhanden (`vorhandene_monate`); ein leerer Monat der Zeitachse ist damit von
+einem Monat mit Daten unterscheidbar, und ein Absturz mitten im Schreiben
+hinterlässt keinen Monat, der fälschlich als fertig gilt.
+
 Download-Zuverlässigkeit (nach den Hängern vom 2026-09-22, behoben
 2026-09-23):
 `earthaccess.download()` lädt intern mit `requests` und OHNE jedes
@@ -69,7 +82,9 @@ stille Drosselung ohne Fehlermeldung). Deshalb:
 """
 
 import concurrent.futures
+import os
 import re
+import shutil
 import time
 import warnings
 from calendar import monthrange
@@ -126,6 +141,13 @@ GITTER_BREITE = 720  # Zeilen, 0,25°, Zeile 0 = 90°N
 GITTER_LAENGE = 1440  # Spalten, 0,25°, Spalte 0 = 180°W
 ZELLGROESSE = 0.25
 
+# Feste Zeitachse des Würfels (Entscheidung E3: 2013-2025).
+ZEITACHSE_START = (2013, 1)
+ZEITACHSE_ENDE = (2025, 12)
+FERTIG_VARIABLE = "monat_fertig"
+WUERFEL_DIMS = ("zeit", "breite", "laenge")
+WUERFEL_CHUNKS = (1, 180, 720)  # ein Monat je Chunk-Schicht
+
 # Zeitlimit für den Download eines ganzen Monats. Großzügig über der
 # beobachteten Normaldauer (92,8 Minuten für einen vollständigen Monat,
 # gemessen 2026-09-22), damit legitime Langsamkeit nicht abgebrochen wird -
@@ -176,6 +198,22 @@ class MonatUnvollstaendig(RuntimeError):
 
 class DownloadHaengt(RuntimeError):
     """Der Download hat länger als sein Zeitlimit nicht mehr reagiert."""
+
+
+class WuerfelFormat(RuntimeError):
+    """Der Würfel auf der SSD hat nicht den erwarteten Aufbau (feste Zeitachse)."""
+
+
+class MonatAusserhalbZeitachse(ValueError):
+    """Der Monat liegt nicht auf der Zeitachse des Würfels (2013-01 bis 2025-12)."""
+
+
+class MonatSchonVorhanden(RuntimeError):
+    """Der Monat ist im Würfel schon als fertig markiert und wird nicht überschrieben."""
+
+
+class WuerfelSchreibFehler(RuntimeError):
+    """Die Rückprüfung nach dem Schreiben fand Werte, die nicht den geschriebenen entsprechen."""
 
 
 def _kachel_position(pfad: Path) -> tuple[int, int, int, int]:
@@ -328,6 +366,7 @@ def lade_monat(
     monat: int,
     ziel_ordner: Path,
     gleichzeitige_downloads: int = GLEICHZEITIGE_DOWNLOADS_STANDARD,
+    melde=None,
 ) -> list[Path]:
     """Lädt alle VNP46A3-Kacheln eines Monats global nach `ziel_ordner`.
 
@@ -349,6 +388,11 @@ def lade_monat(
     nicht 536-540 wie der grobe Mehrjahres-Schnitt im Steckbrief). Der
     einzig robuste Vergleich ist gegen die Quelle selbst, nicht gegen einen
     angenommenen Erfahrungswert.
+
+    `melde` (optional) ist eine Funktion, die einen Textbaustein bekommt,
+    sobald die Zahl der bei NASA gemeldeten Kacheln feststeht (für das
+    Protokoll des Hintergrund-Laufs, damit der Fortschritt eines Monats
+    als „x von y Kacheln" sichtbar ist).
 
     Bricht außerdem mit `DownloadHaengt` ab, wenn der GANZE Monat länger
     als `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden) braucht - ein Sicherheitsnetz
@@ -374,6 +418,8 @@ def lade_monat(
         if any(_passt_zum_monat(link, jahr, monat) for link in g.data_links())
     ]
     ziel_ordner.mkdir(parents=True, exist_ok=True)
+    if melde is not None:
+        melde(f"{len(treffer)} Kacheln bei NASA gemeldet, Download beginnt.")
 
     start_zeit = time.time()
     frist = start_zeit + DOWNLOAD_TIMEOUT_SEKUNDEN
@@ -454,11 +500,31 @@ def schreibe_manifest(jahr: int, monat: int, kachel_dateien: list[Path]) -> Path
     return ziel
 
 
-def verkleinere_monat(kachel_dateien: list[Path]) -> xr.Dataset:
-    """Baut aus den Kacheln eines Monats ein globales 0,25°-Gitter (ein Zeitschritt)."""
+class MonatStimmtNicht(RuntimeError):
+    """Die Kacheln gehören nicht zum angefragten Monat oder nicht alle zum selben Monat."""
+
+
+def verkleinere_monat(kachel_dateien: list[Path], erwarteter_monat: tuple[int, int] | None = None) -> xr.Dataset:
+    """Baut aus den Kacheln eines Monats ein globales 0,25°-Gitter (ein Zeitschritt).
+
+    Prüft vorher, dass alle Kacheln im selben Monat liegen (bei
+    `erwarteter_monat`: genau in diesem), und dass keine Kachelposition
+    (h, v) doppelt vorkommt. Eine doppelte Kachel würde sonst stumm die
+    zuerst gelesene überschreiben, und die Vollständigkeitsprüfung
+    (Zahl gleich Zahl) würde es nicht bemerken.
+    """
     if not kachel_dateien:
         raise ValueError("Keine Kacheln übergeben.")
-    jahr, monat = _kachel_jahr_monat(kachel_dateien[0])
+    monate = {_kachel_jahr_monat(p) for p in kachel_dateien}
+    if len(monate) != 1 or (erwarteter_monat is not None and monate != {erwarteter_monat}):
+        raise MonatStimmtNicht(
+            f"Kacheln aus den Monaten {sorted(monate)} statt aus "
+            f"{erwarteter_monat if erwarteter_monat else 'einem einzigen Monat'}. Nichts geschrieben."
+        )
+    positionen = [_kachel_position(p)[2:] for p in kachel_dateien]
+    if len(set(positionen)) != len(positionen):
+        raise MonatStimmtNicht("Mindestens eine Kachelposition (h, v) kommt doppelt vor. Nichts geschrieben.")
+    jahr, monat = next(iter(monate))
 
     variablen: dict[str, np.ndarray] = {}
     for name in FELD_TRIPEL:
@@ -475,8 +541,7 @@ def verkleinere_monat(kachel_dateien: list[Path]) -> xr.Dataset:
         for schluessel, block in bloecke.items():
             variablen[schluessel][zeile0 : zeile0 + ZELLEN_PRO_KACHEL, spalte0 : spalte0 + ZELLEN_PRO_KACHEL] = block
 
-    breite = 90 - ZELLGROESSE / 2 - np.arange(GITTER_BREITE) * ZELLGROESSE
-    laenge = -180 + ZELLGROESSE / 2 + np.arange(GITTER_LAENGE) * ZELLGROESSE
+    breite, laenge = _gitter_koordinaten()
     zeit = [np.datetime64(f"{jahr:04d}-{monat:02d}-01")]
 
     daten_vars = {
@@ -494,27 +559,171 @@ def _wuerfel_pfad() -> Path:
     return io.wuerfel_pfad("vnp46a3.zarr")
 
 
+def zeitachse() -> np.ndarray:
+    """Die feste Zeitachse des Würfels: jeder Monat 2013-01 bis 2025-12, je der Monatserste."""
+    start = np.datetime64(f"{ZEITACHSE_START[0]:04d}-{ZEITACHSE_START[1]:02d}", "M")
+    ende = np.datetime64(f"{ZEITACHSE_ENDE[0]:04d}-{ZEITACHSE_ENDE[1]:02d}", "M")
+    return np.arange(start, ende + 1).astype("datetime64[ns]")
+
+
+def _gitter_koordinaten() -> tuple[np.ndarray, np.ndarray]:
+    breite = 90 - ZELLGROESSE / 2 - np.arange(GITTER_BREITE) * ZELLGROESSE
+    laenge = -180 + ZELLGROESSE / 2 + np.arange(GITTER_LAENGE) * ZELLGROESSE
+    return breite, laenge
+
+
+def _wuerfel_variablen() -> dict[str, str]:
+    """Alle Datenvariablen des Würfels mit ihrem Datentyp."""
+    variablen: dict[str, str] = {}
+    for name in FELD_TRIPEL:
+        variablen[f"{name}_mittel"] = "float32"
+        variablen[f"{name}_gueltige_pixel"] = "int16"
+        variablen[f"{name}_num"] = "float32"
+        variablen[f"{name}_aufgefuellt_pixel"] = "int16"
+    return variablen
+
+
+def _monat_index(jahr: int, monat: int) -> int:
+    """Position eines Monats auf der Zeitachse; bricht ab, wenn er nicht darauf liegt."""
+    ziel = np.datetime64(f"{jahr:04d}-{monat:02d}-01", "ns")
+    treffer = np.flatnonzero(zeitachse() == ziel)
+    if len(treffer) != 1:
+        raise MonatAusserhalbZeitachse(
+            f"{jahr:04d}-{monat:02d} liegt nicht auf der Zeitachse des Würfels "
+            f"({ZEITACHSE_START[0]:04d}-{ZEITACHSE_START[1]:02d} bis "
+            f"{ZEITACHSE_ENDE[0]:04d}-{ZEITACHSE_ENDE[1]:02d})."
+        )
+    return int(treffer[0])
+
+
+def _lege_wuerfel_an(pfad: Path) -> None:
+    """Legt den leeren Würfel mit fester Zeitachse an (Werte NaN, Zähler 0, nichts fertig).
+
+    Wird zuerst an einem Hilfspfad gebaut und erst am Ende umbenannt, damit
+    ein Abbruch beim Anlegen keinen halbfertigen Würfel am echten Pfad
+    hinterlässt. Nur Metadaten und leere Blöcke: dauert Sekunden, braucht
+    keinen nennenswerten Arbeitsspeicher (`np.broadcast_to` belegt keinen
+    eigenen Speicher, leere Blöcke schreibt Zarr nicht).
+    """
+    achse = zeitachse()
+    breite, laenge = _gitter_koordinaten()
+    hilfspfad = pfad.with_name(pfad.name + ".neu")
+    if hilfspfad.exists():
+        shutil.rmtree(hilfspfad)
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+
+    xr.Dataset(
+        coords={"zeit": achse, "breite": breite, "laenge": laenge},
+        attrs={"quelle": META["quelle"], "einheit_mittel": META["einheit"]},
+    ).to_zarr(hilfspfad, mode="w")
+    form = (len(achse), GITTER_BREITE, GITTER_LAENGE)
+    for name, dtyp in _wuerfel_variablen().items():
+        leerwert = np.float32(np.nan) if dtyp == "float32" else np.int16(0)
+        xr.Dataset({name: (WUERFEL_DIMS, np.broadcast_to(leerwert, form))}).to_zarr(
+            hilfspfad, mode="a", encoding={name: {"chunks": WUERFEL_CHUNKS}}
+        )
+    xr.Dataset({FERTIG_VARIABLE: (("zeit",), np.zeros(len(achse), dtype="int8"))}).to_zarr(
+        hilfspfad, mode="a"
+    )
+    os.replace(hilfspfad, pfad)
+
+
+def _pruefe_wuerfel_format(pfad: Path) -> None:
+    """Bricht mit klarer Meldung ab, wenn der Würfel nicht den festen Aufbau hat.
+
+    Fängt vor allem den alten Aufbau (Monate hinten angehängt, ohne
+    `monat_fertig`) ab: Ein solcher Würfel darf nicht stillschweigend
+    weiterbenutzt werden, sonst landen neue Monate an falscher Stelle.
+    """
+    with xr.open_zarr(pfad, chunks=None) as ds:
+        fehlend = [v for v in [*_wuerfel_variablen(), FERTIG_VARIABLE] if v not in ds]
+        achse_ok = ds.sizes.get("zeit") == len(zeitachse()) and np.array_equal(
+            ds["zeit"].values, zeitachse()
+        )
+    if fehlend or not achse_ok:
+        raise WuerfelFormat(
+            f"Der Würfel {pfad} hat nicht den erwarteten Aufbau (feste Zeitachse "
+            f"{ZEITACHSE_START[0]:04d}-{ZEITACHSE_START[1]:02d} bis "
+            f"{ZEITACHSE_ENDE[0]:04d}-{ZEITACHSE_ENDE[1]:02d} mit `{FERTIG_VARIABLE}`"
+            f"{'; fehlende Variablen: ' + ', '.join(fehlend) if fehlend else ''}"
+            f"{'; Zeitachse stimmt nicht' if not achse_ok else ''}). "
+            "Nichts wurde geschrieben. Ein Würfel im alten Aufbau muss zuerst "
+            "übernommen oder verschoben werden."
+        )
+
+
 def vorhandene_monate() -> set[tuple[int, int]]:
-    """Monate, die bereits im Würfel auf der SSD stehen (für den Neustart)."""
+    """Monate, die im Würfel auf der SSD als fertig markiert sind (für den Neustart).
+
+    Zählt nur Monate mit `monat_fertig == 1`, nicht alle Plätze der Zeitachse.
+    """
     pfad = _wuerfel_pfad()
     if not pfad.exists():
         return set()
-    ds = xr.open_zarr(pfad)
-    try:
+    _pruefe_wuerfel_format(pfad)
+    with xr.open_zarr(pfad, chunks=None) as ds:
         zeiten = ds["zeit"].values
-    finally:
-        ds.close()
-    return {(np.datetime64(z, "M").astype(object).year, np.datetime64(z, "M").astype(object).month) for z in zeiten}
+        fertig = ds[FERTIG_VARIABLE].values
+    monate = set()
+    for z, f in zip(zeiten, fertig):
+        if f == 1:
+            datum = np.datetime64(z, "M").astype(object)
+            monate.add((datum.year, datum.month))
+    return monate
 
 
 def schreibe_in_wuerfel(monatsdaten: xr.Dataset) -> None:
-    """Hängt einen Monat an den Datenwürfel auf der SSD an (oder legt ihn neu an)."""
+    """Schreibt einen Monat an seine Position auf der Zeitachse des Würfels.
+
+    Legt den Würfel beim ersten Mal an. Die Reihenfolge der Aufrufe spielt
+    keine Rolle (2018 vor 2013 ist erlaubt). Schritte:
+    1. Monat muss genau ein Zeitschritt sein und auf der Zeitachse liegen,
+       Gitterkoordinaten müssen zu denen des Würfels passen.
+    2. Ein schon als fertig markierter Monat wird nicht überschrieben.
+    3. Werte in die Position des Monats schreiben.
+    4. Zurücklesen und mit den geschriebenen Werten vergleichen.
+    5. Erst danach `monat_fertig` für diesen Monat auf 1 setzen.
+    """
+    if monatsdaten.sizes.get("zeit") != 1:
+        raise ValueError("Es muss genau ein Monat (ein Zeitschritt) übergeben werden.")
+    datum = np.datetime64(monatsdaten["zeit"].values[0], "M").astype(object)
+    index = _monat_index(datum.year, datum.month)
+
     pfad = _wuerfel_pfad()
-    if pfad.exists():
-        monatsdaten.to_zarr(pfad, mode="a", append_dim="zeit")
-    else:
-        pfad.parent.mkdir(parents=True, exist_ok=True)
-        monatsdaten.to_zarr(pfad, mode="w")
+    if not pfad.exists():
+        _lege_wuerfel_an(pfad)
+    _pruefe_wuerfel_format(pfad)
+
+    breite, laenge = _gitter_koordinaten()
+    if not (
+        np.allclose(monatsdaten["breite"].values, breite)
+        and np.allclose(monatsdaten["laenge"].values, laenge)
+    ):
+        raise WuerfelFormat("Die Gitterkoordinaten des Monats passen nicht zum Würfel. Nichts geschrieben.")
+
+    with xr.open_zarr(pfad, chunks=None) as ds:
+        if int(ds[FERTIG_VARIABLE].values[index]) == 1:
+            raise MonatSchonVorhanden(
+                f"{datum.year:04d}-{datum.month:02d} ist im Würfel schon fertig und wird nicht überschrieben."
+            )
+
+    variablen = list(_wuerfel_variablen())
+    region = {"zeit": slice(index, index + 1)}
+    monatsdaten[variablen].drop_vars(["zeit", "breite", "laenge"]).to_zarr(pfad, mode="r+", region=region)
+
+    with xr.open_zarr(pfad, chunks=None) as ds:
+        for name in variablen:
+            gelesen = ds[name].isel(zeit=index).values
+            geschrieben = monatsdaten[name].values[0]
+            if not np.array_equal(gelesen, geschrieben, equal_nan=True):
+                raise WuerfelSchreibFehler(
+                    f"{datum.year:04d}-{datum.month:02d}: Variable {name} ist nach dem Schreiben "
+                    "nicht identisch mit den geschriebenen Werten. Monat nicht als fertig markiert."
+                )
+
+    xr.Dataset({FERTIG_VARIABLE: (("zeit",), np.array([1], dtype="int8"))}).to_zarr(
+        pfad, mode="r+", region=region
+    )
 
 
 # --- Architektur-Vertrag (ARCHITECTURE.md Abschnitt 5) ----------------------

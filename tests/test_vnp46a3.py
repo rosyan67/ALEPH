@@ -5,6 +5,7 @@ Hand nachgerechnet (siehe Kommentare), nicht nur gegen den Code selbst
 geprüft.
 """
 
+import sys
 import time
 from pathlib import Path
 
@@ -347,3 +348,266 @@ def test_lade_monat_meldet_kacheln_die_auch_nach_wiederholung_scheitern(monkeypa
     monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
     with pytest.raises(vnp46a3.DownloadHaengt, match="nicht geladen"):
         vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2)
+
+
+# --- Feste Zeitachse: Monate in beliebiger Reihenfolge (2026-09-23) ---------
+#
+# Hintergrund: Der große Lauf lädt zuerst 2018-2025 und erst danach 2013-2017.
+# Ein hinten angehängter Würfel hätte dann eine unsortierte Zeitachse. Jetzt
+# hat der Würfel von Anfang an alle 156 Monate; jeder Monat wird an seine
+# Position geschrieben.
+
+
+def _monat_dataset(tmp_path, jahr, monat):
+    """Ein Monat aus einer synthetischen Kachel (Zelle [120,760] = 10, [120,761] = 4)."""
+    tag = (np.datetime64(f"{jahr:04d}-{monat:02d}-01") - np.datetime64(f"{jahr:04d}-01-01")).astype(int) + 1
+    pfad = _kachel_h19v03(tmp_path, jahr=jahr, tag=int(tag))
+    ds = vnp46a3.verkleinere_monat([pfad])
+    pfad.unlink()
+    return ds
+
+
+def test_zeitachse_hat_156_monate_2013_bis_2025():
+    achse = vnp46a3.zeitachse()
+    assert len(achse) == 156
+    assert achse[0] == np.datetime64("2013-01-01")
+    assert achse[-1] == np.datetime64("2025-12-01")
+    assert (np.diff(achse) > np.timedelta64(0, "ns")).all()
+
+
+def test_monate_in_umgekehrter_reihenfolge_landen_an_richtiger_position(tmp_path, fake_ssd):
+    # Erst spät (2018-01, 2025-12), dann früh (2013-01), dann Mitte (2016-07).
+    for jahr, monat in [(2018, 1), (2025, 12), (2013, 1), (2016, 7)]:
+        vnp46a3.schreibe_in_wuerfel(_monat_dataset(tmp_path, jahr, monat))
+
+    assert vnp46a3.vorhandene_monate() == {(2018, 1), (2025, 12), (2013, 1), (2016, 7)}
+
+    with xr.open_zarr(vnp46a3._wuerfel_pfad(), chunks=None) as ds:
+        zeit = ds["zeit"].values
+        assert (np.diff(zeit) > np.timedelta64(0, "ns")).all()  # streng aufsteigend
+        assert len(zeit) == 156
+        for jahr, monat in [(2018, 1), (2025, 12), (2013, 1), (2016, 7)]:
+            i = int(np.flatnonzero(zeit == np.datetime64(f"{jahr:04d}-{monat:02d}-01"))[0])
+            assert float(ds["near_nadir_mittel"].values[i, 120, 760]) == pytest.approx(10.0)
+            assert int(ds[vnp46a3.FERTIG_VARIABLE].values[i]) == 1
+        # Ein nicht geschriebener Monat bleibt leer und nicht fertig.
+        i_leer = int(np.flatnonzero(zeit == np.datetime64("2015-05-01"))[0])
+        assert np.isnan(ds["near_nadir_mittel"].values[i_leer]).all()
+        assert (ds["near_nadir_gueltige_pixel"].values[i_leer] == 0).all()
+        assert int(ds[vnp46a3.FERTIG_VARIABLE].values[i_leer]) == 0
+        assert int(ds[vnp46a3.FERTIG_VARIABLE].values.sum()) == 4
+
+
+def test_monat_ausserhalb_der_zeitachse_wird_abgelehnt(tmp_path, fake_ssd):
+    ds = _monat_dataset(tmp_path, 2012, 12)
+    with pytest.raises(vnp46a3.MonatAusserhalbZeitachse):
+        vnp46a3.schreibe_in_wuerfel(ds)
+    ds = _monat_dataset(tmp_path, 2026, 1)
+    with pytest.raises(vnp46a3.MonatAusserhalbZeitachse):
+        vnp46a3.schreibe_in_wuerfel(ds)
+
+
+def test_fertiger_monat_wird_nicht_ueberschrieben(tmp_path, fake_ssd):
+    vnp46a3.schreibe_in_wuerfel(_monat_dataset(tmp_path, 2020, 6))
+    with pytest.raises(vnp46a3.MonatSchonVorhanden):
+        vnp46a3.schreibe_in_wuerfel(_monat_dataset(tmp_path, 2020, 6))
+
+
+def test_absturz_vor_fertig_markierung_hinterlaesst_keinen_fertigen_monat(tmp_path, fake_ssd, monkeypatch):
+    """Simuliert einen Abbruch nach dem Schreiben der Werte, vor dem Setzen von monat_fertig.
+
+    Der Monat darf dann nicht als vorhanden gelten und muss beim nächsten
+    Versuch sauber neu geschrieben werden können.
+    """
+    ds = _monat_dataset(tmp_path, 2020, 6)
+    original = xr.Dataset.to_zarr
+    aufrufe = {"n": 0}
+
+    def zerbrochenes_to_zarr(self, *args, **kwargs):
+        aufrufe["n"] += 1
+        if vnp46a3.FERTIG_VARIABLE in self.data_vars and kwargs.get("region"):
+            raise OSError("simulierter Absturz beim Fertig-Markieren")
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(xr.Dataset, "to_zarr", zerbrochenes_to_zarr)
+    with pytest.raises(OSError, match="simulierter Absturz"):
+        vnp46a3.schreibe_in_wuerfel(ds)
+    monkeypatch.setattr(xr.Dataset, "to_zarr", original)
+
+    assert vnp46a3.vorhandene_monate() == set()
+    vnp46a3.schreibe_in_wuerfel(ds)  # zweiter Versuch klappt
+    assert vnp46a3.vorhandene_monate() == {(2020, 6)}
+
+
+def test_wuerfel_im_alten_aufbau_wird_abgelehnt(tmp_path, fake_ssd):
+    """Ein Würfel im alten Aufbau (angehängt, ohne monat_fertig) darf nicht weiterbenutzt werden."""
+    alt = _monat_dataset(tmp_path, 2024, 1)
+    pfad = vnp46a3._wuerfel_pfad()
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    alt.to_zarr(pfad, mode="w")
+    with pytest.raises(vnp46a3.WuerfelFormat):
+        vnp46a3.vorhandene_monate()
+    with pytest.raises(vnp46a3.WuerfelFormat):
+        vnp46a3.schreibe_in_wuerfel(_monat_dataset(tmp_path, 2020, 6))
+
+
+def test_werte_stimmen_nach_dem_schreiben_exakt_ueberein(tmp_path, fake_ssd):
+    ds = _monat_dataset(tmp_path, 2019, 3)
+    vnp46a3.schreibe_in_wuerfel(ds)
+    achse = vnp46a3.zeitachse()
+    i = int(np.flatnonzero(achse == np.datetime64("2019-03-01"))[0])
+    with xr.open_zarr(vnp46a3._wuerfel_pfad(), chunks=None) as gelesen:
+        for name in vnp46a3._wuerfel_variablen():
+            assert np.array_equal(gelesen[name].values[i], ds[name].values[0], equal_nan=True), name
+        assert gelesen[vnp46a3.FERTIG_VARIABLE].values.dtype == np.int8
+
+
+def test_lade_monat_meldet_kachelzahl(monkeypatch, tmp_path):
+    monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: True)
+    monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: _attrappen_granules(3))
+
+    def fake_lade_kachel(granule, ziel_ordner):
+        pfad = ziel_ordner / f"kachel_{id(granule)}.h5"
+        pfad.touch()
+        return pfad
+
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
+    meldungen = []
+    vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2, melde=meldungen.append)
+    assert meldungen == ["3 Kacheln bei NASA gemeldet, Download beginnt."]
+
+
+# --- Lauf: Reihenfolge und Protokoll ----------------------------------------
+
+from aleph.layers import vnp46a3_lauf, vnp46a3_status  # noqa: E402
+
+
+def test_reihenfolge_erst_ab_2018_dann_frueher():
+    monate = vnp46a3_lauf._monatsliste("2013-01", "2025-12")
+    ordnung = vnp46a3_lauf._reihenfolge(monate, "2018-01")
+    assert len(ordnung) == 156 and set(ordnung) == set(monate)
+    assert ordnung[0] == (2018, 1)
+    assert ordnung[95] == (2025, 12)  # 96 Monate 2018-2025
+    assert ordnung[96] == (2013, 1)
+    assert ordnung[-1] == (2017, 12)
+    assert ordnung[:96] == sorted(ordnung[:96]) and ordnung[96:] == sorted(ordnung[96:])
+
+
+def test_reihenfolge_ohne_angabe_ist_zeitlich():
+    monate = [(2020, 3), (2013, 1), (2018, 1)]
+    assert vnp46a3_lauf._reihenfolge(monate, None) == [(2013, 1), (2018, 1), (2020, 3)]
+
+
+def test_reihenfolge_nur_offene_monate_bleibt_in_der_vorgabe():
+    # Fertige Monate sind schon herausgefiltert; die Ordnung gilt für den Rest.
+    offen = [(2018, 5), (2015, 2), (2019, 1)]
+    assert vnp46a3_lauf._reihenfolge(offen, "2018-01") == [(2018, 5), (2019, 1), (2015, 2)]
+
+
+def test_verarbeite_monat_schreibt_zeitstempel_und_ordnet_richtig_ein(monkeypatch, tmp_path, fake_ssd):
+    """Ganzer Ablauf mit Attrappe statt NASA: erst 2018-01, dann 2013-01."""
+
+    def fake_lade_monat(jahr, monat, ziel_ordner, gleichzeitige_downloads=3, melde=None):
+        ziel_ordner.mkdir(parents=True, exist_ok=True)
+        if melde:
+            melde("1 Kacheln bei NASA gemeldet, Download beginnt.")
+        return [_kachel_h19v03(ziel_ordner, jahr=jahr, tag=1)]
+
+    monkeypatch.setattr(vnp46a3.io, "aleph_data_dir", lambda: fake_ssd)
+    monkeypatch.setattr(vnp46a3, "lade_monat", fake_lade_monat)
+    protokoll = vnp46a3_lauf.Protokoll(fake_ssd / "protokoll" / "vnp46a3.log")
+    protokoll.schreibe("Lauf gestartet: Test.")
+    vnp46a3_lauf.verarbeite_monat(2018, 1, protokoll, 3)
+    vnp46a3_lauf.verarbeite_monat(2013, 1, protokoll, 3)
+
+    assert vnp46a3.vorhandene_monate() == {(2018, 1), (2013, 1)}
+    with xr.open_zarr(vnp46a3._wuerfel_pfad(), chunks=None) as ds:
+        assert (np.diff(ds["zeit"].values) > np.timedelta64(0, "ns")).all()
+    # Rohdaten weg, Manifest da
+    assert not (fake_ssd / "raw" / "vnp46a3" / "2018-01").exists()
+    assert (fake_ssd / "protokoll" / "manifeste" / "vnp46a3" / "2013-01.txt").exists()
+
+    text = (fake_ssd / "protokoll" / "vnp46a3.log").read_text(encoding="utf-8")
+    assert "2018-01: Start " in text and "2013-01: Start " in text
+    assert text.index("2018-01: fertig") < text.index("2013-01: Start ")  # Reihenfolge wie aufgerufen
+    fertig_zeile = [z for z in text.splitlines() if "2018-01: fertig" in z][0]
+    for teil in ("Start 20", "Ende 20", "Dauer gesamt", "Download", "Verkleinern und Schreiben"):
+        assert teil in fertig_zeile
+
+    p = vnp46a3_status.lies_protokoll(text.splitlines())
+    assert [(a[0], a[1], a[2]) for a in p["abgeschlossen"]] == [(2018, 1, 1), (2013, 1, 1)]
+    assert p["aktuell"] is None and p["lauf_beginn"] is not None
+
+
+# --- Status: Protokoll lesen -------------------------------------------------
+
+
+def test_status_erkennt_laufenden_monat_und_phase():
+    zeilen = [
+        "2026-09-23 12:00:00 UTC  Lauf gestartet: 2013-01 bis 2025-12, gleichzeitig=3.",
+        "2026-09-23 12:00:01 UTC  2018-01: Start 2026-09-23 12:00:01 UTC.",
+        "2026-09-23 12:00:05 UTC  2018-01: 512 Kacheln bei NASA gemeldet, Download beginnt.",
+    ]
+    p = vnp46a3_status.lies_protokoll(zeilen)
+    assert p["aktuell"]["monat"] == (2018, 1)
+    assert p["aktuell"]["gemeldet"] == 512
+    assert p["aktuell"]["download_fertig"] is False
+    zeilen.append("2026-09-23 13:20:00 UTC  2018-01: Download fertig nach 80.0 Minuten.")
+    assert vnp46a3_status.lies_protokoll(zeilen)["aktuell"]["download_fertig"] is True
+
+
+def test_status_ignoriert_fehler_aus_frueheren_laeufen():
+    zeilen = [
+        "2026-09-22 10:00:00 UTC  Lauf gestartet: alt.",
+        "2026-09-22 10:05:00 UTC  FEHLER bei 2024-01: alt\nTraceback ...",
+        "2026-09-23 12:00:00 UTC  Lauf gestartet: neu.",
+    ]
+    assert vnp46a3_status.lies_protokoll(zeilen)["fehler"] == []
+
+
+# --- Schutzprüfungen nach der Prüfung durch statistik-pruefer (2026-09-23) --
+
+
+def test_verkleinere_monat_lehnt_falschen_monat_ab(tmp_path):
+    pfad = _kachel_h19v03(tmp_path, jahr=2020, tag=153)  # Juni 2020
+    with pytest.raises(vnp46a3.MonatStimmtNicht):
+        vnp46a3.verkleinere_monat([pfad], erwarteter_monat=(2020, 7))
+    assert vnp46a3.verkleinere_monat([pfad], erwarteter_monat=(2020, 6)) is not None
+
+
+def test_verkleinere_monat_lehnt_gemischte_monate_ab(tmp_path):
+    juni = _kachel_h19v03(tmp_path, jahr=2020, tag=153)
+    ordner2 = tmp_path / "zweiter"
+    ordner2.mkdir()
+    juli = _schreibe_kachel(ordner2, h=20, v=3, jahr=2020, tag_im_jahr=183)
+    with pytest.raises(vnp46a3.MonatStimmtNicht):
+        vnp46a3.verkleinere_monat([juni, juli])
+
+
+def test_verkleinere_monat_lehnt_doppelte_kachel_ab(tmp_path):
+    erste = _kachel_h19v03(tmp_path, jahr=2020, tag=153)
+    ordner2 = tmp_path / "kopie"
+    ordner2.mkdir()
+    zweite = ordner2 / erste.name.replace("2025133214434", "2025140000000")  # gleiche h/v, andere Version
+    zweite.write_bytes(erste.read_bytes())
+    with pytest.raises(vnp46a3.MonatStimmtNicht, match="doppelt"):
+        vnp46a3.verkleinere_monat([erste, zweite])
+
+
+def test_monat_argument_ist_streng():
+    import argparse
+
+    assert vnp46a3_lauf._monat_argument("2018-01") == "2018-01"
+    for falsch in ["2018", "2018-13", "2018-1", "18-01", "2018-00", ""]:
+        with pytest.raises(argparse.ArgumentTypeError):
+            vnp46a3_lauf._monat_argument(falsch)
+
+
+def test_lauf_lehnt_monate_ausserhalb_der_zeitachse_vor_dem_download_ab(monkeypatch, fake_ssd):
+    monkeypatch.setattr(vnp46a3.io, "aleph_data_dir", lambda: fake_ssd)
+    heruntergeladen = []
+    monkeypatch.setattr(vnp46a3, "lade_monat", lambda *a, **k: heruntergeladen.append(1))
+    monkeypatch.setattr(sys, "argv", ["lauf", "--start", "2012-01", "--ende", "2013-03"])
+    assert vnp46a3_lauf.main() == 1
+    assert heruntergeladen == []
+    assert "Kein Download gestartet" in (fake_ssd / "protokoll" / "vnp46a3.log").read_text(encoding="utf-8")

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Zeigt den Stand des VNP46A3-Hintergrund-Laufs: fertige Monate,
-# Restzeit-Schätzung, letzter Fehler.
+# Zeigt den Stand des VNP46A3-Hintergrund-Laufs: läuft er, fertige Monate,
+# aktueller Monat, Restzeit-Schätzung, letzter Fehler und eine Ampel (OK/ACHTUNG/HÄNGT).
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

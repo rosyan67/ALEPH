@@ -2,6 +2,11 @@
 # Startet den Hintergrund-Download für den Layer Nachtlicht (VNP46A3),
 # Zeitraum 2013-01 bis 2025-12 (Entscheidung E3).
 #
+# Reihenfolge (Entscheidung 2026-09-23): zuerst 2018-01 bis 2025-12, danach
+# 2013-01 bis 2017-12. Bricht der Lauf ab oder greift die NASA-Frist
+# (1.11.2026) früher, liegen so bereits acht vollständige Jahre vor. Ein
+# neuer Aufruf setzt bei den noch offenen Monaten in derselben Reihenfolge fort.
+#
 # Zahl gleichzeitiger Kachel-Downloads einstellbar über das erste Argument
 # (Vorschlag 2-4, Standard 3). Bei erneuten Hängern eine kleinere Zahl
 # probieren statt zu raten, z. B.:
@@ -17,9 +22,18 @@ cd "$(dirname "$0")/.."
 
 GLEICHZEITIG="${1:-3}"
 
+# Doppelstart-Sperre: zwei Läufe würden dieselben Monate laden und sich beim
+# Löschen der Rohdaten in die Quere kommen.
+LAUFENDE="$(pgrep -f '^[^ ]*python[^ ]* -m aleph[.]layers[.]vnp46a3_lauf' || true)"
+if [ -n "$LAUFENDE" ]; then
+  echo "ABGEBROCHEN: Es läuft bereits ein Lauf (Prozess-Nummer: $(echo $LAUFENDE | tr '\n' ' '))."
+  echo "Status prüfen mit: scripts/vnp46a3_status.sh"
+  exit 1
+fi
+
 mkdir -p logs
 nohup caffeinate -ims .venv/bin/python -m aleph.layers.vnp46a3_lauf \
-  --start 2013-01 --ende 2025-12 --gleichzeitig "$GLEICHZEITIG" \
+  --start 2013-01 --ende 2025-12 --zuerst-ab 2018-01 --gleichzeitig "$GLEICHZEITIG" \
   > logs/vnp46a3_absturz.log 2>&1 &
 disown
 

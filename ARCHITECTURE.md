@@ -59,7 +59,7 @@ Karte mit Filtern, Zeitreihen, Theorie-Status und Nachrichtenkontext
 - Tagesdaten werden zu Monatswerten zusammengefasst.
 - Jahresdaten (z. B. BIP) bleiben jährlich und werden nur mit Jahresaggregaten verglichen.
 
-**Speicher:** Datenwürfel als Zarr-Dateien (über `xarray`), Tabellen als Parquet-Dateien, Abfragen mit DuckDB. Kein Datenbankserver. Alle Rohdaten und Würfel liegen auf einer externen SSD; der Pfad steht in `.env` unter `ALEPH_DATA_DIR` (Vorlage ohne Wert in `.env.example`). `aleph/core/io.py` liest diesen Pfad und bricht mit klarer Meldung ab, wenn die SSD nicht angeschlossen ist.
+**Speicher:** Datenwürfel als Zarr-Dateien (über `xarray`), Tabellen als Parquet-Dateien, Abfragen mit DuckDB. Kein Datenbankserver. Jeder Datenwürfel hat von Anfang an die feste Zeitachse des Untersuchungszeitraums (E3: 2013-01 bis 2025-12, 156 Monate), leer angelegt; jeder Monat wird an seine Position geschrieben, nie hinten angehängt, damit die Zeitachse unabhängig von der Lade-Reihenfolge sortiert bleibt. Eine Variable `monat_fertig` (0/1 je Monat) wird erst nach erfolgreichem Zurücklesen gesetzt; ein leerer, nicht geladener Monat ist so von einem Monat mit Daten und einem Monat ohne Messungen unterscheidbar. Alle Rohdaten und Würfel liegen auf einer externen SSD; der Pfad steht in `.env` unter `ALEPH_DATA_DIR` (Vorlage ohne Wert in `.env.example`). `aleph/core/io.py` liest diesen Pfad und bricht mit klarer Meldung ab, wenn die SSD nicht angeschlossen ist.
 
 ## 4a. Fokusgebiete: feinere Analyse für Kriegs- und Krisengebiete
 
