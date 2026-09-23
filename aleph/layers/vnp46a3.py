@@ -39,10 +39,38 @@ Sicherheitsnetz vor dem großen Lauf (nach Prüfung durch statistik-pruefer,
   Koordinaten, statt sie nur aus dem Dateinamen (h/v) anzunehmen.
 - `schreibe_manifest` hält die Quelldateinamen (inkl. Erzeugungszeitstempel
   im Dateinamen) fest, bevor die Rohdaten gelöscht werden.
+
+Download-Zuverlässigkeit (nach den Hängern vom 2026-09-22, behoben
+2026-09-23):
+`earthaccess.download()` lädt intern mit `requests` und OHNE jedes
+Zeitlimit (`session.get(url, stream=True, ...)`, kein `timeout=`). Bleibt
+eine Verbindung stecken (beobachtet: CLOSE_WAIT-Sockets zu einem
+CloudFront-Server), wartet Python unbegrenzt, egal wie viele parallele
+Threads earthaccess intern nutzt. Vermutete Ursache der Hänger: zu viele
+gleichzeitige Verbindungen zum selben NASA/CloudFront-Server (übliche,
+stille Drosselung ohne Fehlermeldung). Deshalb:
+- Kacheln werden einzeln geladen (`_lade_kachel`), jede in einem eigenen,
+  mit `concurrent.futures` überwachten Aufruf von `earthaccess.download`
+  (weiterhin dieselbe NASA-Bibliothek, ARCHITECTURE.md Abschnitt 5 - hier
+  wird nur die Nebenläufigkeit und das Zeitlimit von außen gesteuert,
+  keine eigene HTTP-Logik geschrieben).
+- `DATEI_TIMEOUT_SEKUNDEN` (10 Minuten) ist das Zeitlimit je Kachel -
+  deutlich kürzer als `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden) für den
+  ganzen Monat, und großzügig über der beobachteten Normaldauer einer
+  einzelnen Kachel (rund 11 Sekunden im Schnitt bei einem vollständigen
+  Monat mit voller Parallelität).
+- Hängt oder scheitert eine Kachel, wird sie bis zu `KACHEL_MAX_VERSUCHE`
+  mal erneut versucht, mit wachsender Wartezeit dazwischen
+  (`KACHEL_WARTEZEIT_BASIS_SEKUNDEN`, verdoppelt sich je Versuch).
+- `GLEICHZEITIGE_DOWNLOADS_STANDARD` begrenzt, wie viele Kacheln gleichzeitig
+  angefragt werden (Vorschlag 2-4, siehe LOG.md 2026-09-23). Einstellbar je
+  Aufruf (`lade_monat`, `download`) und über `--gleichzeitig` beim
+  Hintergrund-Lauf (`vnp46a3_lauf.py`).
 """
 
 import concurrent.futures
 import re
+import time
 import warnings
 from calendar import monthrange
 from datetime import date, timedelta
@@ -102,8 +130,33 @@ ZELLGROESSE = 0.25
 # beobachteten Normaldauer (92,8 Minuten für einen vollständigen Monat,
 # gemessen 2026-09-22), damit legitime Langsamkeit nicht abgebrochen wird -
 # aber begrenzt, weil eine hängengebliebene Netzwerkverbindung sonst
-# unbegrenzt weiterlaufen würde (ebenfalls beobachtet, 2026-09-22).
+# unbegrenzt weiterlaufen würde (ebenfalls beobachtet, 2026-09-22). Dient
+# seit 2026-09-23 als Sicherheitsnetz für den GANZEN Monat; das eigentliche
+# Zeitlimit pro Kachel ist DATEI_TIMEOUT_SEKUNDEN (siehe unten).
 DOWNLOAD_TIMEOUT_SEKUNDEN = 4 * 60 * 60  # 4 Stunden
+
+# Zeitlimit je einzelner Kachel. earthaccess.download() setzt selbst kein
+# Zeitlimit für die HTTP-Anfrage (session.get ohne timeout=), eine
+# hängengebliebene Verbindung würde sonst unbegrenzt warten. 10 Minuten sind
+# großzügig über der beobachteten Normaldauer einer Kachel (~11 Sekunden im
+# Schnitt bei vollem Durchsatz), aber kurz genug, um einen echten Hänger
+# rasch zu erkennen und neu zu versuchen.
+DATEI_TIMEOUT_SEKUNDEN = 10 * 60  # 10 Minuten
+
+# Wie oft eine einzelne Kachel neu versucht wird, bevor der Monat als
+# gescheitert gilt.
+KACHEL_MAX_VERSUCHE = 4
+
+# Wartezeit vor dem ersten erneuten Versuch; verdoppelt sich je Versuch
+# (20 s, 40 s, 80 s), damit eine kurzzeitige Drosselung Zeit hat, nachzulassen.
+KACHEL_WARTEZEIT_BASIS_SEKUNDEN = 20
+
+# Zahl gleichzeitiger Kachel-Downloads. Vermutete Ursache der Hänger vom
+# 2026-09-22: zu viele gleichzeitige Verbindungen zum selben NASA/CloudFront-
+# Server (stille Drosselung ohne Fehlermeldung). Vorschlag 2-4 (LOG.md
+# 2026-09-23); bei erneuten Hängern hier eine kleinere Zahl eintragen statt
+# zu raten.
+GLEICHZEITIGE_DOWNLOADS_STANDARD = 3
 
 _KACHEL_HV = re.compile(r"\.h(\d{2})v(\d{2})\.")
 _KACHEL_DATUM = re.compile(r"\.A(\d{4})(\d{3})\.")
@@ -122,7 +175,7 @@ class MonatUnvollstaendig(RuntimeError):
 
 
 class DownloadHaengt(RuntimeError):
-    """Der Download hat länger als DOWNLOAD_TIMEOUT_SEKUNDEN nicht mehr reagiert."""
+    """Der Download hat länger als sein Zeitlimit nicht mehr reagiert."""
 
 
 def _kachel_position(pfad: Path) -> tuple[int, int, int, int]:
@@ -228,12 +281,65 @@ def _monatsspanne(jahr: int, monat: int) -> tuple[str, str]:
     return f"{jahr:04d}-{monat:02d}-01", f"{jahr:04d}-{monat:02d}-{letzter_tag:02d}"
 
 
-def lade_monat(jahr: int, monat: int, ziel_ordner: Path) -> list[Path]:
+def _lade_kachel(
+    granule,
+    ziel_ordner: Path,
+    datei_timeout_sekunden: float = DATEI_TIMEOUT_SEKUNDEN,
+    max_versuche: int = KACHEL_MAX_VERSUCHE,
+    wartezeit_basis_sekunden: float = KACHEL_WARTEZEIT_BASIS_SEKUNDEN,
+) -> Path:
+    """Lädt eine einzelne Kachel über `earthaccess.download`, mit eigenem
+    Zeitlimit und Wiederholung bei Hänger oder Fehler.
+
+    `earthaccess.download` selbst kennt kein Zeitlimit (siehe Moduldoku
+    oben). Jeder Versuch läuft deshalb in einem eigenen Thread; reagiert er
+    nicht innerhalb von `datei_timeout_sekunden`, wird dieser Thread
+    aufgegeben (er kann nicht sauber beendet werden, sein Ergebnis wird nur
+    ignoriert) und ein neuer Versuch gestartet, nach wachsender Wartezeit
+    (`wartezeit_basis_sekunden`, verdoppelt sich je Versuch). Nach
+    `max_versuche` erfolglosen Versuchen wird der letzte Fehler weitergereicht.
+    """
+    letzter_fehler: Exception | None = None
+    for versuch in range(1, max_versuche + 1):
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(earthaccess.download, [granule], str(ziel_ordner))
+        try:
+            ergebnis = future.result(timeout=datei_timeout_sekunden)
+            pool.shutdown(wait=False)
+            return Path(ergebnis[0])
+        except concurrent.futures.TimeoutError:
+            pool.shutdown(wait=False, cancel_futures=True)
+            letzter_fehler = DownloadHaengt(
+                f"Kachel reagiert seit über {datei_timeout_sekunden / 60:.0f} "
+                f"Minuten nicht mehr (Versuch {versuch}/{max_versuche})."
+            )
+        except Exception as fehler:  # bewusst breit: jeder Fehler löst einen neuen Versuch aus
+            pool.shutdown(wait=False)
+            letzter_fehler = fehler
+        if versuch < max_versuche:
+            wartezeit = wartezeit_basis_sekunden * (2 ** (versuch - 1))
+            time.sleep(wartezeit)
+    assert letzter_fehler is not None
+    raise letzter_fehler
+
+
+def lade_monat(
+    jahr: int,
+    monat: int,
+    ziel_ordner: Path,
+    gleichzeitige_downloads: int = GLEICHZEITIGE_DOWNLOADS_STANDARD,
+) -> list[Path]:
     """Lädt alle VNP46A3-Kacheln eines Monats global nach `ziel_ordner`.
 
     Meldet sich vorher bei NASA Earthdata an (dieselbe Ladelogik wie alle
     Layer, aleph/core/auth.py). Bricht mit klarer Meldung ab, wenn der
     Login fehlschlägt.
+
+    Jede Kachel wird einzeln geladen, mit eigenem Zeitlimit und
+    Wiederholung bei Hänger (`_lade_kachel`), höchstens
+    `gleichzeitige_downloads` Kacheln gleichzeitig (Vorschlag 2-4, siehe
+    Moduldoku oben - vermutete Ursache der früheren Hänger war zu viel
+    Nebenläufigkeit zum selben NASA/CloudFront-Server).
 
     Prüft danach die Vollständigkeit: die Zahl der heruntergeladenen
     Kacheln muss genau der Zahl entsprechen, die NASA für diesen Monat
@@ -244,12 +350,11 @@ def lade_monat(jahr: int, monat: int, ziel_ordner: Path) -> list[Path]:
     einzig robuste Vergleich ist gegen die Quelle selbst, nicht gegen einen
     angenommenen Erfahrungswert.
 
-    Bricht außerdem mit `DownloadHaengt` ab, wenn der Download länger als
-    `DOWNLOAD_TIMEOUT_SEKUNDEN` gar nicht mehr reagiert (beobachtet
-    2026-09-22: eine NASA/CloudFront-Verbindung blieb mit offenen
-    CLOSE_WAIT-Sockets stehen, `earthaccess.download` kennt dafür selbst
-    kein Zeitlimit und hätte sonst unbegrenzt weiter „gelaufen", ohne
-    Fortschritt und ohne Fehlermeldung).
+    Bricht außerdem mit `DownloadHaengt` ab, wenn der GANZE Monat länger
+    als `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden) braucht - ein Sicherheitsnetz
+    über der Kachel-Wiederholung, falls z. B. sehr viele Kacheln gleichzeitig
+    Probleme machen. Oder wenn einzelne Kacheln auch nach allen Versuchen
+    nicht geladen werden konnten.
     """
     if not earthdata_login():
         raise RuntimeError("NASA-Earthdata-Login fehlgeschlagen. Zugangsdaten in .env prüfen.")
@@ -270,21 +375,41 @@ def lade_monat(jahr: int, monat: int, ziel_ordner: Path) -> list[Path]:
     ]
     ziel_ordner.mkdir(parents=True, exist_ok=True)
 
-    pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-    future = pool.submit(earthaccess.download, treffer, str(ziel_ordner))
+    start_zeit = time.time()
+    frist = start_zeit + DOWNLOAD_TIMEOUT_SEKUNDEN
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=max(1, gleichzeitige_downloads))
+    future_zu_granule = {pool.submit(_lade_kachel, g, ziel_ordner): g for g in treffer}
+
+    dateien: list[Path] = []
+    fehlgeschlagen: list[tuple[object, Exception]] = []
     try:
-        rohdateien = future.result(timeout=DOWNLOAD_TIMEOUT_SEKUNDEN)
+        for future in concurrent.futures.as_completed(future_zu_granule, timeout=max(frist - time.time(), 0)):
+            granule = future_zu_granule[future]
+            try:
+                dateien.append(future.result())
+            except Exception as fehler:
+                fehlgeschlagen.append((granule, fehler))
     except concurrent.futures.TimeoutError:
         pool.shutdown(wait=False, cancel_futures=True)
         raise DownloadHaengt(
             f"{jahr:04d}-{monat:02d}: Download reagiert seit über "
-            f"{DOWNLOAD_TIMEOUT_SEKUNDEN // 60} Minuten nicht mehr (Netzwerk "
-            "vermutlich hängengeblieben). scripts/vnp46a3_start.sh erneut "
-            "ausführen - setzt beim letzten fertigen Monat fort."
+            f"{DOWNLOAD_TIMEOUT_SEKUNDEN // 60} Minuten nicht mehr "
+            f"({len(dateien)} von {len(treffer)} Kacheln fertig). "
+            "scripts/vnp46a3_start.sh erneut ausführen - setzt beim letzten "
+            "fertigen Monat fort. Hängt es wieder, eine kleinere Zahl bei "
+            "--gleichzeitig probieren."
         ) from None
     pool.shutdown(wait=False)
 
-    dateien = [Path(p) for p in rohdateien]
+    if fehlgeschlagen:
+        beispiel_fehler = fehlgeschlagen[0][1]
+        raise DownloadHaengt(
+            f"{jahr:04d}-{monat:02d}: {len(fehlgeschlagen)} von {len(treffer)} "
+            f"Kacheln auch nach je {KACHEL_MAX_VERSUCHE} Versuchen nicht geladen. "
+            f"Beispiel: {beispiel_fehler}. Eine kleinere Zahl bei --gleichzeitig "
+            "probieren, statt zu raten."
+        )
+
     pruefe_vollstaendigkeit(jahr, monat, len(treffer), dateien)
     return dateien
 
@@ -400,14 +525,18 @@ def schreibe_in_wuerfel(monatsdaten: xr.Dataset) -> None:
 # aleph/layers/vnp46a3_lauf.py.
 
 
-def download(start: str, ende: str) -> list[Path]:
+def download(
+    start: str,
+    ende: str,
+    gleichzeitige_downloads: int = GLEICHZEITIGE_DOWNLOADS_STANDARD,
+) -> list[Path]:
     """Lädt Rohdaten für den Zeitraum [start, ende] (Format 'JJJJ-MM') nach der SSD."""
     dateien: list[Path] = []
     jahr, monat = (int(t) for t in start.split("-"))
     end_jahr, end_monat = (int(t) for t in ende.split("-"))
     while (jahr, monat) <= (end_jahr, end_monat):
         ziel = io.rohdaten_pfad("vnp46a3", f"{jahr:04d}-{monat:02d}")
-        dateien += lade_monat(jahr, monat, ziel)
+        dateien += lade_monat(jahr, monat, ziel, gleichzeitige_downloads=gleichzeitige_downloads)
         monat += 1
         if monat > 12:
             monat, jahr = 1, jahr + 1

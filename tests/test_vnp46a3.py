@@ -5,6 +5,7 @@ Hand nachgerechnet (siehe Kommentare), nicht nur gegen den Code selbst
 geprüft.
 """
 
+import time
 from pathlib import Path
 
 import h5py
@@ -218,3 +219,131 @@ def test_manifest_enthaelt_dateinamen(fake_ssd):
     inhalt = ziel.read_text(encoding="utf-8").splitlines()
     assert sorted(inhalt) == sorted(p.name for p in dateien)
     assert ziel == fake_ssd / "protokoll" / "manifeste" / "vnp46a3" / "2024-01.txt"
+
+
+# --- Kachel-Download: Zeitlimit und Wiederholung (2026-09-23) --------------
+#
+# Grund: earthaccess.download() setzt selbst kein Zeitlimit für die HTTP-
+# Anfrage (session.get ohne timeout=), eine hängengebliebene Verbindung
+# wartet sonst unbegrenzt. Diese Tests ersetzen earthaccess.download durch
+# eine Attrappe - kein echter Netzzugriff, keine echten 10 Minuten Wartezeit.
+
+
+def test_lade_kachel_erfolg_im_ersten_versuch(monkeypatch, tmp_path):
+    aufrufe = []
+
+    def fake_download(granules, local_path):
+        aufrufe.append(granules)
+        return [str(Path(local_path) / "kachel.h5")]
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    pfad = vnp46a3._lade_kachel(
+        "granule-1", tmp_path, datei_timeout_sekunden=1, max_versuche=3, wartezeit_basis_sekunden=0.01
+    )
+    assert pfad == tmp_path / "kachel.h5"
+    assert len(aufrufe) == 1
+
+
+def test_lade_kachel_bei_haenger_neuer_versuch(monkeypatch, tmp_path):
+    """Simuliert eine hängengebliebene Verbindung: der erste Versuch reagiert
+    nicht innerhalb des Zeitlimits, der zweite klappt."""
+    versuche = {"n": 0}
+
+    def fake_download(granules, local_path):
+        versuche["n"] += 1
+        if versuche["n"] == 1:
+            time.sleep(0.5)  # länger als das Test-Zeitlimit unten (0,1 s)
+        return [str(Path(local_path) / "kachel.h5")]
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    pfad = vnp46a3._lade_kachel(
+        "granule-1", tmp_path, datei_timeout_sekunden=0.1, max_versuche=3, wartezeit_basis_sekunden=0.01
+    )
+    assert pfad == tmp_path / "kachel.h5"
+    assert versuche["n"] == 2
+
+
+def test_lade_kachel_wartezeit_waechst(monkeypatch, tmp_path):
+    """Prüft, dass die Wartezeit zwischen Versuchen wächst (verdoppelt sich)."""
+    versuche = {"n": 0}
+    wartezeiten = []
+
+    def fake_download(granules, local_path):
+        versuche["n"] += 1
+        if versuche["n"] < 3:
+            raise RuntimeError("simulierter Fehler")
+        return [str(Path(local_path) / "kachel.h5")]
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    monkeypatch.setattr(vnp46a3.time, "sleep", lambda s: wartezeiten.append(s))
+    pfad = vnp46a3._lade_kachel(
+        "granule-1", tmp_path, datei_timeout_sekunden=1, max_versuche=4, wartezeit_basis_sekunden=20
+    )
+    assert pfad == tmp_path / "kachel.h5"
+    assert versuche["n"] == 3
+    assert wartezeiten == [20, 40]
+
+
+def test_lade_kachel_gibt_nach_max_versuchen_auf(monkeypatch, tmp_path):
+    def fake_download(granules, local_path):
+        raise RuntimeError("dauerhafter Fehler")
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    monkeypatch.setattr(vnp46a3.time, "sleep", lambda s: None)
+    with pytest.raises(RuntimeError, match="dauerhafter Fehler"):
+        vnp46a3._lade_kachel(
+            "granule-1", tmp_path, datei_timeout_sekunden=1, max_versuche=3, wartezeit_basis_sekunden=0.01
+        )
+
+
+# --- lade_monat: Nebenläufigkeit einstellbar, Fehler werden gesammelt ------
+
+
+class _AttrappenGranule:
+    """Ersetzt earthaccess.DataGranule in Tests: nur data_links() wird gebraucht."""
+
+    def __init__(self, link: str):
+        self._link = link
+
+    def data_links(self):
+        return [self._link]
+
+
+def _attrappen_granules(anzahl: int, jahr: int = 2024, monat: int = 1) -> list[_AttrappenGranule]:
+    tag = 1  # Tag 001 im Jahr = Januar
+    return [
+        _AttrappenGranule(f"https://example.org/VNP46A3.A{jahr:04d}{tag:03d}.h{i:02d}v03.002.20240101000000.h5")
+        for i in range(anzahl)
+    ]
+
+
+def test_lade_monat_nutzt_gleichzeitige_downloads_und_sammelt_dateien(monkeypatch, tmp_path):
+    monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: True)
+    granules = _attrappen_granules(3)
+    monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: granules)
+
+    aufrufe = []
+
+    def fake_lade_kachel(granule, ziel_ordner):
+        aufrufe.append(granule)
+        pfad = ziel_ordner / f"kachel_{len(aufrufe)}.h5"
+        pfad.touch()
+        return pfad
+
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
+    dateien = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2)
+    assert len(dateien) == 3
+    assert len(aufrufe) == 3
+
+
+def test_lade_monat_meldet_kacheln_die_auch_nach_wiederholung_scheitern(monkeypatch, tmp_path):
+    monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: True)
+    granules = _attrappen_granules(2)
+    monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: granules)
+
+    def fake_lade_kachel(granule, ziel_ordner):
+        raise vnp46a3.DownloadHaengt("simulierter dauerhafter Hänger")
+
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
+    with pytest.raises(vnp46a3.DownloadHaengt, match="nicht geladen"):
+        vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2)

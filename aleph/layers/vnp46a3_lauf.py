@@ -3,12 +3,20 @@
 
 Aufruf (normalerweise über scripts/vnp46a3_start.sh, nicht direkt):
     .venv/bin/python -m aleph.layers.vnp46a3_lauf --start 2013-01 --ende 2025-12
+    .venv/bin/python -m aleph.layers.vnp46a3_lauf --start 2024-01 --ende 2024-01 --gleichzeitig 2
 
 Eigenschaften:
 - setzt nach einem Abbruch beim letzten fertigen Monat wieder an
   (aleph.layers.vnp46a3.vorhandene_monate prüft den Würfel auf der SSD),
 - prüft vor jedem Monat den freien Platz auf der SSD (Speicherwächter,
   Stopp unter 50 GB frei) und bricht klar ab, wenn die SSD fehlt,
+- lädt Kacheln einzeln, höchstens `--gleichzeitig` auf einmal (Vorschlag
+  2-4, Standard aleph.layers.vnp46a3.GLEICHZEITIGE_DOWNLOADS_STANDARD;
+  vermutete Ursache früherer Hänger war zu viel Nebenläufigkeit zum
+  selben NASA/CloudFront-Server - bei erneuten Hängern hier eine kleinere
+  Zahl eintragen statt zu raten), mit eigenem Zeitlimit je Kachel
+  (DATEI_TIMEOUT_SEKUNDEN) und automatischer Wiederholung mit wachsender
+  Wartezeit (aleph.layers.vnp46a3._lade_kachel),
 - prüft nach dem Laden, ob der Monat vollständig ist (Soll-Ist-Vergleich
   gegen die Zahl der bei NASA gemeldeten Kacheln, nicht gegen eine feste
   Zahl), bevor er verarbeitet wird,
@@ -16,10 +24,9 @@ Eigenschaften:
   (protokoll/vnp46a3.log, protokoll/manifeste/vnp46a3/<Monat>.txt),
 - prüft nach dem Schreiben, dass der Monat tatsächlich im Würfel steht,
   bevor die Rohdaten gelöscht werden,
-- bricht einen Download nach vnp46a3.DOWNLOAD_TIMEOUT_SEKUNDEN ohne Antwort
-  ab (beobachtet 2026-09-22: eine hängengebliebene Netzwerkverbindung ließ
-  den Prozess sonst unbegrenzt und ohne Fehlermeldung weiterlaufen) und
-  beendet sich danach mit `os._exit`, damit hängende Hintergrund-Threads
+- bricht den GANZEN Monat nach vnp46a3.DOWNLOAD_TIMEOUT_SEKUNDEN ohne
+  vollständige Antwort ab (Sicherheitsnetz über der Kachel-Wiederholung)
+  und beendet sich danach mit `os._exit`, damit hängende Hintergrund-Threads
   den Prozess nicht am wirklichen Beenden hindern.
 
 Das Wachhalten des Macs (caffeinate) und das Weiterlaufen nach Schließen
@@ -65,7 +72,7 @@ class Protokoll:
         print(zeile, flush=True)
 
 
-def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll) -> None:
+def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_downloads: int) -> None:
     raw_ordner = io.rohdaten_pfad("vnp46a3", f"{jahr:04d}-{monat:02d}")
     if raw_ordner.exists():
         protokoll.schreibe(
@@ -79,7 +86,7 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll) -> None:
     # die NASA-Abfrage) und bricht mit MonatUnvollstaendig ab, BEVOR etwas
     # geschrieben oder gelöscht wird - die Rohdaten bleiben dann zur Prüfung
     # liegen.
-    dateien = vnp46a3.lade_monat(jahr, monat, raw_ordner)
+    dateien = vnp46a3.lade_monat(jahr, monat, raw_ordner, gleichzeitige_downloads=gleichzeitige_downloads)
 
     monatsdaten = vnp46a3.verkleinere_monat(dateien)
     vnp46a3.schreibe_in_wuerfel(monatsdaten)
@@ -107,6 +114,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--start", required=True, help="erster Monat, Format JJJJ-MM")
     parser.add_argument("--ende", required=True, help="letzter Monat, Format JJJJ-MM (eingeschlossen)")
+    parser.add_argument(
+        "--gleichzeitig",
+        type=int,
+        default=vnp46a3.GLEICHZEITIGE_DOWNLOADS_STANDARD,
+        help=(
+            "Zahl gleichzeitiger Kachel-Downloads (Vorschlag 2-4, Standard "
+            f"{vnp46a3.GLEICHZEITIGE_DOWNLOADS_STANDARD}). Bei erneuten "
+            "Hängern hier eine kleinere Zahl eintragen statt zu raten."
+        ),
+    )
     args = parser.parse_args()
 
     protokoll_pfad = None
@@ -122,7 +139,7 @@ def main() -> int:
     offene_monate = [m for m in alle_monate if m not in fertige_monate]
 
     protokoll.schreibe(
-        f"Lauf gestartet: {args.start} bis {args.ende}, "
+        f"Lauf gestartet: {args.start} bis {args.ende}, gleichzeitig={args.gleichzeitig}, "
         f"{len(fertige_monate & set(alle_monate))} von {len(alle_monate)} Monaten bereits fertig, "
         f"{len(offene_monate)} offen."
     )
@@ -135,7 +152,7 @@ def main() -> int:
             return 1
 
         try:
-            verarbeite_monat(jahr, monat, protokoll)
+            verarbeite_monat(jahr, monat, protokoll, args.gleichzeitig)
         except Exception as fehler:  # bewusst breit: jeder Fehler soll klar im Protokoll stehen
             protokoll.schreibe(
                 f"FEHLER bei {jahr:04d}-{monat:02d}: {fehler}\n{traceback.format_exc()}"
