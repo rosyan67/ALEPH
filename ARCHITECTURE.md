@@ -59,7 +59,7 @@ Karte mit Filtern, Zeitreihen, Theorie-Status und Nachrichtenkontext
 - Tagesdaten werden zu Monatswerten zusammengefasst.
 - Jahresdaten (z. B. BIP) bleiben jährlich und werden nur mit Jahresaggregaten verglichen.
 
-**Speicher:** Datenwürfel als Zarr-Dateien (über `xarray`), Tabellen als Parquet-Dateien, Abfragen mit DuckDB. Kein Datenbankserver.
+**Speicher:** Datenwürfel als Zarr-Dateien (über `xarray`), Tabellen als Parquet-Dateien, Abfragen mit DuckDB. Kein Datenbankserver. Alle Rohdaten und Würfel liegen auf einer externen SSD; der Pfad steht in `.env` unter `ALEPH_DATA_DIR` (Vorlage ohne Wert in `.env.example`). `aleph/core/io.py` liest diesen Pfad und bricht mit klarer Meldung ab, wenn die SSD nicht angeschlossen ist.
 
 ## 4a. Fokusgebiete: feinere Analyse für Kriegs- und Krisengebiete
 
@@ -314,7 +314,9 @@ ALEPH/
 ├── web/                   Oberfläche
 ├── tests/                 automatische Tests
 ├── reports/               Blindtest- und Prüfberichte
-└── data/                  (nicht in Git) raw/, cube/, events/
+├── scripts/               einfache Start-/Status-Befehle für Hintergrund-Läufe
+├── logs/                  (nicht in Git) Absturz-Auffangprotokoll; Details stehen auf der SSD
+└── data/                  (nicht in Git, liegt auf externer SSD, ALEPH_DATA_DIR) raw/, cube/, events/
 ```
 
 ## 12. Entscheidungen (bestätigt am 2026-09-21)

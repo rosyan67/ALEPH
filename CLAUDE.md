@@ -1,5 +1,7 @@
 # CLAUDE.md – Verbindliche Regeln für ALEPH
 
+Ziel: Ein überzeugender, funktionierender Prototyp für die NASA Space Apps Challenge (14.–15.11.2026, Berlin). Bewertet wird nach Impact, Creativity, Validity, Relevance und Presentation. Erfolg entsteht durch nachprüfbare Qualität: Keine Aussage wird für die Präsentation übertrieben. Bei Zielkonflikten gilt: lieber weniger, dafür belastbar.
+
 - Vor jeder Änderung ARCHITECTURE.md lesen.
 - Keine Annahmen über den Code. Vor jeder Änderung den tatsächlichen Code lesen.
 - Bei größeren Änderungen die komplette Datei liefern statt vieler kleiner Patches.
