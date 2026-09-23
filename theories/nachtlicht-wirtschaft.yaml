@@ -1,0 +1,199 @@
+id: nachtlicht-wirtschaft
+titel: Nachtlicht folgt der Wirtschaftsleistung eines Landes (Elastizität zwischen Nachtlicht und BIP)
+disziplin: Entwicklungsökonomie / Fernerkundung
+# Formuliert am 2026-09-23, vor jeder Auswertung von ALEPH-Testdaten. Erwartungen hier dürfen nach dem Test nicht angepasst werden.
+# Ergebnisse gehören ausschließlich nach prüfergebnisse.
+
+quellen:
+  - zitat: "Henderson, J. V., Storeygard, A., Weil, D. N. (2012): Measuring Economic Growth from Outer Space. American Economic Review, 102(2), 994-1028"
+    jahr: 2012
+    doi: "10.1257/aer.102.2.994"
+    rolle: original
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 102, Heft 2, Seiten 994-1028, DOI), zusätzlich
+      RePEc/IDEAS-Eintrag und NBER-Seite des Arbeitspapiers (w15199, DOI 10.3386/w15199). Alle Angaben stimmen überein.
+      Nicht bestätigt: Zahlenwerte aus dem Volltext (Höhe von beta, genaue Normierung der Variablen, Behandlung von
+      Gasfackeln und Sättigung). Der Volltext war nicht lesbar (Bezahlschranke bzw. Binär-PDF). Der in Sekundärquellen
+      genannte Wert von etwa 0,3 (Suchzusammenfassungen, Blogbeitrag) ist deshalb nur als Hinweis geführt, nicht als Fakt.
+      Der Nutzerauftrag nannte keinen Zahlenwert für beta.
+  - zitat: "Gibson, J., Olivia, S., Boe-Gibson, G., Li, C. (2021): Which night lights data should we use in economics, and where? Journal of Development Economics, 149, 102602"
+    jahr: 2021
+    doi: "10.1016/j.jdeveco.2020.102602"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autoren, Jahr 2021, Titel, Zeitschrift, Band 149, Artikelnummer 102602, DOI) und
+      RePEc/IDEAS-Eintrag mit Zusammenfassung. Stimmen überein. Zusammenfassung nur über eine automatische
+      Wiedergabe gelesen; der Volltext (ScienceDirect, HTTP 403) war nicht abrufbar. Der Nutzerauftrag lag mit der
+      vermuteten Autorenzusammenstellung richtig.
+  - zitat: "Gibson, J. (2021): Better Night Lights Data, For Longer. Oxford Bulletin of Economics and Statistics, 83(3), 770-791"
+    jahr: 2021
+    doi: "10.1111/obes.12417"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autor, Titel, Zeitschrift, Band 83, Heft 3, Seiten 770-791, DOI) und Wiley-Suchtreffer
+      mit Zusammenfassung. Hinweis: Crossref führt als Jahr 2020 (Online-Erstveröffentlichung), das Heft trägt 2021
+      (so zitiert auch die Wiley-Seite). Hier ist 2021 (Heftjahr) angegeben.
+  - zitat: "Chen, X., Nordhaus, W. D. (2011): Using luminosity data as a proxy for economic statistics. Proceedings of the National Academy of Sciences, 108(21), 8589-8594"
+    jahr: 2011
+    doi: "10.1073/pnas.1017031108"
+    rolle: methode
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 108, Heft 21, Seiten 8589-8594, DOI) und
+      PNAS-Trefferseite in der Websuche. Stimmen überein. Der Volltext wurde nicht gelesen (PNAS-Seite HTTP 403);
+      der Inhalt stammt aus der Zusammenfassung.
+  - zitat: "Keola, S., Andersson, M., Hall, O. (2015): Monitoring Economic Development from Space: Using Nighttime Light and Land Cover Data to Measure Economic Growth. World Development, 66, 322-334"
+    jahr: 2015
+    doi: "10.1016/j.worlddev.2014.08.017"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 66, Seiten 322-334, DOI) und RePEc/IDEAS-Eintrag
+      mit Zusammenfassung. Stimmen überein. Volltext nicht gelesen.
+  - zitat: "Martínez, L. R. (2022): How Much Should We Trust the Dictator's GDP Growth Estimates? Journal of Political Economy, 130(10), 2731-2769"
+    jahr: 2022
+    doi: "10.1086/720458"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autor, Jahr, Titel, Zeitschrift, Band 130, Heft 10, Seiten 2731-2769, DOI) und
+      RePEc/IDEAS-Eintrag mit Zusammenfassung. Stimmen überein. Die Zusammenfassung stützt die Aussagen "Nachtlicht-Elastizität
+      des BIP ist in autoritären Regimen größer" und "Autokratien übertreiben das jährliche Wachstum um etwa 35 Prozent".
+      Einzelne Zahlen zu Demokratien (in Sekundärquellen etwa 0,24) wurden nicht am Original bestätigt und stehen nicht im Eintrag.
+      Rolle "gegenposition" ist eine Einschränkung, keine Widerlegung: Der Autor nutzt Nachtlicht als Vergleichsmaßstab
+      gegen offizielle BIP-Zahlen.
+  - zitat: "Berliant, M., Weiss, A. (2013): Measuring Economic Growth from Outer Space: A Comment. MPRA Paper (Munich Personal RePEc Archive), Nr. 51713"
+    jahr: 2013
+    doi: null
+    rolle: gegenposition
+    citation_verified: false
+    verifiziert_an: >
+      2026-09-23: Autoren, Jahr und Titel auf der MPRA-Seite gesehen (theoretische und ökonometrische Bedenken gegen den
+      Ansatz von Henderson, Storeygard und Weil). NICHT bestätigt: eine Veröffentlichung in einer Fachzeitschrift und eine DOI
+      (keine gefunden; es handelt sich nach den gesehenen Angaben um ein Arbeitspapier). Deshalb false. Die Kritik wird nur
+      allgemein wiedergegeben, weil der Volltext nicht gelesen wurde.
+  - zitat: "Bettencourt, L. M. A., Lobo, J., Helbing, D., Kühnert, C., West, G. B. (2007): Growth, innovation, scaling, and the pace of life in cities. Proceedings of the National Academy of Sciences, 104(17), 7301-7306"
+    jahr: 2007
+    doi: "10.1073/pnas.0610172104"
+    rolle: methode
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 104, Heft 17, Seiten 7301-7306, DOI) und
+      Verzeichniseintrag der Arizona State University mit Zusammenfassung. Stimmen überein. Nur als Verweis für den
+      Fallstrick zur Stadtgröße angeführt; die eigentliche Theorie (Städte-Skalierung) wird in einem eigenen Eintrag geführt,
+      der von einem anderen Kurator angelegt wird. Die Zusammenfassung nennt Exponenten von etwa 1,2 (Innovation) und etwa 0,8
+      (Infrastruktur). Die vom Nutzer genannten Werte 1,15 und 0,85 wurden nicht bestätigt (Volltext nicht gelesen).
+  - zitat: "Xu, Z., Xu, G., Lan, T., Li, X., Chen, Z., Cui, H., Zhou, Z., Wang, H., Jiao, L., Small, C. (2025): Global consistency of urban scaling evidenced by remote sensing. PNAS Nexus, 4(2), pgaf037"
+    jahr: 2025
+    doi: "10.1093/pnasnexus/pgaf037"
+    rolle: methode
+    citation_verified: true
+    verifiziert_an: >
+      2026-09-23: Seite des Verlags (Oxford Academic) mit Autorenliste, Titel, Zeitschrift, Band 4, Heft 2, Artikelnummer
+      pgaf037, DOI und Zusammenfassung. Im gelesenen Auszug: Bebaute Fläche folgt der Städte-Skalierungstheorie in allen 61 Ländern,
+      Nachtlicht in 98 Prozent davon (11 581 Städte, 2000-2020). Konkrete Exponenten (in einer Suchzusammenfassung
+      "0,46 bis 1,22, Median 0,94") wurden im gelesenen Auszug nicht gesehen und sind nicht bestätigt.
+
+modell: >
+  Grundform (Panel mit festen Effekten, Log-Log): ln y_jt = beta * ln L_jt + a_j + g_t + e_jt.
+  Symbole: j = Land, t = Kalenderjahr; y_jt = reales BIP von Land j im Jahr t (konstante Preise, nicht laufende US-Dollar,
+  weil Wechselkursschwankungen sonst als Scheinwachstum wirken); L_jt = Nachtlicht von Land j im Jahr t;
+  beta = Elastizität (1 Prozent mehr Nachtlicht geht mit beta Prozent mehr BIP einher); a_j = Länder-Effekt
+  (nimmt dauerhafte Unterschiede zwischen Ländern heraus, z. B. Lichtnutzung pro Kopf, Klima); g_t = Jahres-Effekt
+  (nimmt gemeinsame Schwankungen aller Länder heraus, z. B. Sensoralterung, Weltkonjunktur); e_jt = Restfehler.
+  Wichtig: Mit festen Effekten zählt nur die Veränderung innerhalb eines Landes über die Zeit, nicht der Vergleich
+  zwischen Ländern.
+  Gleichwertige Variante in Wachstumsraten (Differenzen): ln(1 + g_jt/100) = beta * (ln L_jt - ln L_j,t-1) + g_t + e_jt,
+  mit g_jt = jährliches BIP-Wachstum in Prozent (Weltbank NY.GDP.MKTP.KD.ZG, konstante Preise).
+  Richtung der Ableitung: Die Wirtschaftsleistung erzeugt das Licht (Beleuchtung, Verkehr, Industrie). Nachtlicht ist in
+  ALEPH die abgeleitete Größe, das Weltbank-BIP die Vergleichsgröße. Ob die Beziehung stimmt, wird geprüft; ALEPH ersetzt
+  damit nicht das BIP.
+  Festlegung für ALEPH vor der Prüfung (2026-09-23): L_jt = Jahressumme über alle Land-Zellen des Landes der
+  monatlichen Zellwerte (Feld NearNadir_Composite_Snow_Free, Zellwert mal Zellfläche), nur Land-Zellen innerhalb des
+  Länderpolygons; Land-Jahre mit Summe gleich 0 werden ausgeschlossen und ihre Zahl wird berichtet (kein ln(0), kein
+  stilles Auffüllen). Wie die Originalarbeit normiert (z. B. Licht pro Fläche oder pro Kopf), konnte am Volltext nicht bestätigt werden;
+  ALEPH verwendet ausdrücklich die hier genannte Form und meldet Varianten getrennt.
+
+ursache: {layer: weltbank_bip, richtung: Anstieg, ebene: Land, takt: Jahr}
+wirkung: {layer: nachtlicht, richtung: Anstieg, ebene: Land, takt: Jahr, aggregation: "Ländersumme der Strahldichte, Jahresaggregat aus Monatswerten"}
+verzögerung_monate: [0, 0]
+# Erklärung der Verzögerung: Beide Größen werden im selben Kalenderjahr verglichen (gleichzeitige Beziehung, keine
+# zeitversetzte Ursache-Wirkung). Weil das BIP nur jährlich vorliegt, sind Verzögerungen innerhalb eines Jahres nicht
+# auflösbar; mögliche zeitliche Unschärfe bis etwa 12 Monate ist ein Messgrenze, kein Ergebnis. Ob Weltbank-Bezugsjahre
+# einzelner Länder vom Kalenderjahr abweichen, wurde nicht geprüft.
+
+geltungsbereich: >
+  Nationale Ebene, Jahresdaten, Länder mit Weltbank-BIP-Reihe und ausreichend Nachtlicht im Länderpolygon, Zeitraum 2013-2025
+  (BIP 2024 und 2025 bei vielen Ländern noch vorläufig oder fehlend). Nicht abgedeckt: Gitterzellen (BIP wird nie auf
+  Zellen verteilt, ARCHITECTURE.md Abschnitt 4), Monatswerte, einzelne Städte, Konflikt- und fragile Staaten mit lückenhaftem BIP
+  (Weltbank-Steckbrief, Abschnitt 8). Die Ländersumme des Nachtlichts muss dafür erst aus dem 0,25-Grad-Würfel gebildet werden.
+
+mechanismus: >
+  Beleuchtung, Verkehr, Handel und Industrie verbrauchen Energie und erzeugen nachts sichtbares Licht. Steigt die
+  wirtschaftliche Aktivität eines Landes, steigt im Mittel auch die Lichtmenge. Henderson, Storeygard und Weil (2012)
+  nutzen das, um bei Ländern mit schlechter Statistik das offizielle Wachstum durch ein aus Licht abgeleitetes Wachstum zu ergänzen;
+  nach ihrer Zusammenfassung ist die beste Schätzung dort eine Mischung mit ungefähr gleichem Gewicht für beide (Zusammenfassung des Originals,
+  am Wortlaut geprüft). Die Beziehung ist keine feste Umrechnung: Licht ist ein Nebenprodukt der Wirtschaft, und das Verhältnis
+  Licht zu Leistung hängt vom Land ab (der Zusammenhang wird deshalb mit festen Länder-Effekten geschätzt).
+  Streitstand: Die Nutzung von Nachtlicht als Wirtschaftsmaß ist verbreitet, aber nicht unumstritten (siehe gegenpositionen
+  und fallstricke). Es ist ein Zusammenhang, keine Ursache-Wirkung-Aussage im strengen Sinn.
+
+bedingungen: >
+  Erwartung, festgelegt vor jeder Auswertung (nicht nachträglich änderbar): beta ist positiv, und das 95-Prozent-Intervall
+  (Standardfehler gruppiert nach Land) schließt 0 aus, sowohl in der Niveau-Form mit festen Effekten als auch in der
+  Wachstumsform. Die Größe von beta wird beschrieben, aber nicht als Bestehens-Kriterium verwendet, weil der Originalwert am
+  Volltext nicht bestätigt werden konnte und die Daten von einem anderen Sensor stammen (siehe Übertragbarkeit).
+  Ein Wert nahe 0 oder ein negatives Vorzeichen würde die Theorie für diesen Datensatz nicht stützen.
+  Übertragbarkeit auf VNP46A3: Die in der Literatur genannten Werte stammen aus DMSP-Daten (1992-2008 bei Henderson et al. und Chen/Nordhaus,
+  nach deren Zusammenfassungen; VNP46A3 ist VIIRS, ab 2012, nur Suomi-NPP). Gibson et al. (2021) zeigen für Indonesien, China und Südafrika,
+  dass VIIRS das BIP deutlich besser abbildet als DMSP, besonders in dünn besiedelten Regionen und kleinen Verwaltungseinheiten. Daraus folgt
+  (Ableitung, nicht belegt): beta muss für VIIRS neu geschätzt werden und darf nicht aus der DMSP-Literatur übernommen werden; ein Unterschied
+  in der Größe wäre kein Widerspruch, weil die Messfehler beider Sensoren verschieden sind (Gibson: Fehler der DMSP-Daten ziehen zum Mittelwert zurück).
+  Vorschlag für die Zeitaufteilung (Abschnitt 8 und 9a der Architektur): Kalibrieren 2013-2019, Test später; 2024 und 2025 nur als
+  "vorläufig" ausweisen, weil das Weltbank-BIP dort oft noch fehlt oder vorläufig ist. 2020 ist ein Ausnahmejahr (Pandemie) und wird
+  in einer Variante ohne 2020 gerechnet.
+  Kontrollvariablen, soweit vorhanden: Bevölkerung (Weltbank SP.POP.TOTL), Jahres-Effekte.
+  Zufallsvergleich (Vorschlag): Die Jahresreihen des Nachtlichts innerhalb jedes Landes zufällig vertauschen; der echte Zusammenhang muss
+  deutlich stärker sein als in diesen vertauschten Daten. Länder in Regimegruppen aufteilen (siehe fallstricke, Autokratien).
+  Evidenzstufe bei Bestätigung: statistische Assoziation.
+
+gegenpositionen:
+  - "Gibson, Olivia, Boe-Gibson, Li (2021, Journal of Development Economics): Die häufig genutzten DMSP-Daten sind nach der Zusammenfassung von Unschärfe (Blurring), Deckelung hoher Werte (Top-Coding) und fehlender Kalibrierung betroffen. VIIRS schneidet in Tests zur BIP-Vorhersage für Indonesien, China und Südafrika deutlich besser ab, besonders in dünn besiedelten Regionen und kleinen Verwaltungseinheiten; DMSP macht die BIP-Beziehung verrauschter und unterschätzt die räumliche Ungleichheit, besonders in Städten. Das stellt die ältere DMSP-Literatur (Henderson et al. 2012, Chen/Nordhaus 2011) in Teilen infrage, ist aber keine Widerlegung des Grundzusammenhangs. Wo DMSP ausreicht, sagt die gelesene Zusammenfassung nicht."
+  - "Gibson (2021, Oxford Bulletin of Economics and Statistics): Nach der Zusammenfassung haben VIIRS-Daten in einem Querschnitt von 269 europäischen NUTS2-Regionen 80 Prozent mehr Erklärungskraft für das reale BIP als DMSP; die DMSP-Fehler sind rückläufig-verzerrend (mean-reverting); eine Pareto-Korrektur der Deckelung bringt nur wenig. Das spricht für VIIRS, kann aber auch heißen, dass frühere Elastizitäten durch Messfehler verzerrt sind."
+  - "Keola, Andersson, Hall (2015, World Development): Nachtlicht allein erklärt nach der Zusammenfassung die Wertschöpfung von Land- und Forstwirtschaft nicht gut; die Autoren ergänzen Landbedeckungsdaten. Für agrarisch geprägte Länder ist die Licht-BIP-Beziehung daher schwächer bzw. verzerrt."
+  - "Chen, Nordhaus (2011, PNAS): Nach der Zusammenfassung hat Leuchtdichte vor allem Informationswert für Länder mit schwachen Statistiksystemen, besonders ohne aktuelle Volkszählung oder Wirtschaftszählung. Umgekehrt ist der Zusatznutzen dort, wo die amtliche Statistik gut ist, nach dieser Zusammenfassung nicht der Schwerpunkt. Der Volltext wurde nicht gelesen."
+  - "Martínez (2022, Journal of Political Economy): Die Nachtlicht-Elastizität des BIP ist nach der Zusammenfassung in autoritären Regimen größer; der Autor deutet das als Übertreibung des BIP-Wachstums von etwa 35 Prozent pro Jahr in Autokratien. Das ist die Deutung des Autors und nicht unabhängig geprüft. Folge: Beta ist nicht einheitlich, und das Weltbank-BIP ist nicht in jedem Land eine verlässliche Vergleichsgröße."
+  - "Berliant, Weiss (2013, Arbeitspapier, keine Fachzeitschrift gesehen): Theoretische und ökonometrische Einwände gegen den Ansatz von Henderson, Storeygard und Weil und Vorschlag eines anderen, an der Nachfragetheorie orientierten Rahmens. Wortlaut nur aus der Kurzfassung; nicht in Detail geprüft."
+
+fallstricke:
+  - "Sensor-Übertragbarkeit: Die zitierten Elastizitäten stammen aus DMSP-Daten (1992-2008 in den zitierten Arbeiten laut Zusammenfassungen); ALEPH nutzt VIIRS (VNP46A3, nur Suomi-NPP, 2013-2025). Der Wert von beta darf nicht übernommen werden, er wird neu geschätzt (Gibson et al. 2021)."
+  - "Qualität des Vergleichsmaßstabs: Das Weltbank-BIP ist selbst gemessen. Bei Konfliktstaaten fehlen Reihen oder sind unsicher (Weltbank-Steckbrief, Abschnitt 8); 2024 und 2025 sind oft vorläufig; die Weltbank revidiert rückwirkend. Abrufdatum speichern."
+  - "Autokratien: Nach Martínez (2022) ist die Elastizität in autoritären Regimen größer, weil dort das BIP-Wachstum möglicherweise überzeichnet ist (Deutung des Autors). Ein 'Misserfolg' der Theorie in solchen Ländern wäre dann kein Fehler des Nachtlichts. Deshalb nach Regimeart getrennt auswerten; die dafür nötigen Demokratie-Daten fehlen bisher (siehe datenbedarf)."
+  - "Aggregation: BIP liegt nur je Land vor (ARCHITECTURE.md Abschnitt 4), Nachtlicht muss zur Ländersumme aggregiert werden. Länderpolygon, Zellen an Küsten und Grenzen (Zelle gehört teilweise zu zwei Ländern oder zum Meer) und Kleinstaaten mit sehr wenigen Zellen verursachen Fehler. Ergebnisse gelten nur für die Länderebene, nicht für Städte oder Zellen (ökologischer Fehlschluss)."
+  - "Städte und Stadtgröße (Ableitung, nicht belegt): Bettencourt et al. (2007) berichten nach der Zusammenfassung für Infrastruktur einen Exponenten von etwa 0,8 (unterproportional) und für Innovation/Wertschöpfung von etwa 1,2 (überproportional). Der vom Nutzer genannte Wert (0,85 bzw. 1,15) wurde nicht bestätigt. Der Schluss 'Nachtlicht unterschätzt große Städte systematisch' ist KEIN Ergebnis der Studie, sondern eine mögliche Ableitung: Nur wenn Licht wie Infrastruktur unterproportional mit der Stadtgröße wächst und das BIP überproportional, würde eine feste Licht-BIP-Umrechnung das BIP großer Städte zu niedrig ansetzen. Die Annahme, Licht skaliere wie Infrastruktur, ist nicht belegt: Xu et al. (2025) finden für Nachtlicht in 98 Prozent der 61 Länder ein Skalierungsmuster nach der Städte-Theorie, aber konkrete Exponenten wurden hier nicht bestätigt. Für ALEPH wenig relevant, weil hier Länderveränderungen über die Zeit geprüft werden (feste Effekte) und kein Stadt-BIP; nur relevant, wenn später Stadtvergleiche gezeigt werden. Die eigentliche Städte-Skalierung steht in einem separaten Eintrag."
+  - "Überstrahlung und Unschärfe: Gibson et al. (2021) nennen für DMSP Unschärfe (Blurring); VIIRS ist nach diesen Arbeiten deutlich besser, die Wirkung auf VNP46A3 wurde in ALEPH nicht gemessen."
+  - "Deckelung hoher Werte (Sättigung): Bei DMSP relevant (Gibson et al. 2021: Top-Coding). Für VNP46A3 Version 2 nennt der Anbieter Strahldichte als Fließkommazahl statt Ganzzahl und damit keine Deckelung bei 6553,5 (docs/sources/vnp46a3.md, Abschnitt 10). Das schließt Sättigung im Sensor selbst nicht aus, wurde nicht geprüft."
+  - "Zensur bei niedrigen Werten: VNP46A3 setzt Werte unter 0,5 nW/(cm² sr) auf exakt 0 (docs/sources/vnp46a3.md, Abschnitt 2). Dunkle Länder oder Länder mit stark rückläufigem Licht können null werden; ln(0) ist nicht definiert. Regel: Land-Jahre mit Summe gleich 0 werden nicht in die Schätzung genommen und gezählt gemeldet; Fehlwerte (-999,9) und Nullwerte strikt trennen."
+  - "Datenlage im Jahresaggregat: Ein großer Teil der 'gültigen' Pixel in VNP46A3 ist aufgefüllt; Monate mit wenigen Nächten (hohe Breiten im Sommer, Schnee im Winter) verfälschen Jahressummen. Jahresaggregat nur aus Monaten mit ausreichender Datenlage bilden, Datenlage je Land-Jahr mitführen, Länder in hohen Breiten getrennt bewerten."
+  - "Rohstoffländer, Gasfackeln und Ölförderung: Das Licht von Gasfackeln und Förderanlagen folgt nicht dem übrigen BIP. Ein Beleg aus den gelesenen Quellen liegt nicht vor (die Originalarbeit war im Volltext nicht lesbar); dies ist deshalb nur ein Prüfpunkt, keine belegte Aussage. Ein Datensatz zu Fackeln fehlt bisher."
+  - "Landwirtschaft und Dienstleistungen: Nach Keola et al. (2015) erfasst Nachtlicht die Wertschöpfung von Land- und Forstwirtschaft schlecht. Länder mit hohem Agraranteil können eine schwächere Beziehung zeigen; für diese Unterscheidung fehlt eine Landnutzungskarte."
+  - "Deutung des Lichts: Licht ist ein Nebenprodukt, kein Maß des BIP (Henderson et al.). Umstellungen der Straßenbeleuchtung (z. B. LED), Stromausfälle, Sanktionen oder Kriegsschäden verändern Licht ohne gleiche Wirkung auf das BIP. Die LED-Wirkung auf das VIIRS-Signal ist nicht geprüft (docs/sources/vnp46a3.md, Abschnitt 10)."
+  - "Sensor und Zeitachse: Nur Suomi-NPP; die Lieferung der Suomi-NPP-Produkte endet laut NASA am 1. November 2026 (docs/sources/vnp46a3.md). Restdrift des Sensors nach der Alterungskorrektur ist nicht geprüft; Jahres-Effekte g_t fangen gemeinsamen Drift auf, nicht länderspezifischen."
+  - "Kurze Zeitreihe: Höchstens 13 Jahre je Land (2013-2025), dazu 2020 als Ausnahmejahr; die Schätzung ist deshalb unsicher, Ergebnisse als Bandbreite berichten, nicht als Punktwert."
+  - "Zirkularität vermeiden: Die Theorie wird nicht benutzt, um das Weltbank-BIP aus Licht zu schätzen und dann gegen dasselbe BIP zu prüfen. ALEPH prüft nur, ob Licht und BIP zusammenhängen."
+
+datenbedarf:
+  - {layer: nachtlicht, rolle: wirkung, status: in Arbeit, anmerkung: "VNP46A3, nur Suomi-NPP, 2013-2025, 0,25 Grad, monatlich; großer Lauf läuft, ein Testmonat vorhanden. Ein großer Teil der 'gültigen' Pixel ist aufgefüllt; Qualität siehe docs/sources/vnp46a3.md. Zusätzlich je Zelle Anzahl gültiger Pixel und Nächte (_Num) für die Datenlage nötig. Zusätzlich muss zur Ländersumme aggregiert werden."}
+  - {layer: weltbank_bip, rolle: ursache, status: geplant, anmerkung: "Steckbrief vorhanden (docs/sources/weltbank.md), noch nichts geladen. Länderebene, jährlich. Benötigt: reales BIP in konstanten Preisen bzw. BIP-Wachstum (NY.GDP.MKTP.KD.ZG ist im Steckbrief; NY.GDP.MKTP.CD in laufenden US-Dollar ist für diese Prüfung ungeeignet). Ein Indikator für das reale BIP-Niveau in konstanten Preisen ist im Steckbrief nicht aufgeführt und müsste ergänzt werden."}
+  - {layer: weltbank_bevoelkerung, rolle: kontrolle, status: geplant, anmerkung: "SP.POP.TOTL im Weltbank-Steckbrief; GHSL/WorldPop nur in ARCHITECTURE.md Abschnitt 5, ohne Steckbrief."}
+  - {layer: laendergrenzen, rolle: aggregation, status: geplant, anmerkung: "Länderpolygone (Natural Earth, ARCHITECTURE.md Abschnitt 10) zum Bilden der Ländersummen und zur Verknüpfung mit dem Weltbank-Ländercode; Deckungsgleichheit mit den 217 Weltbank-Volkswirtschaften nicht geprüft."}
+  - {layer: regimeart_demokratieindex, rolle: kontrolle, status: fehlt, anmerkung: "Für die Aufteilung nach Demokratie/Autokratie (Martínez 2022) nirgends geplant."}
+  - {layer: landnutzung_landbedeckung, rolle: kontrolle, status: fehlt, anmerkung: "Für Agraranteil (Keola et al. 2015); Vegetation (MOD13C2 NDVI, geplant) ist keine Landnutzungskarte."}
+  - {layer: gasfackeln_oelfoerderung, rolle: kontrolle, status: fehlt, anmerkung: "Kein Fackel-Datensatz geplant; FIRMS-Brände (nur in Abschnitt 5 geplant) sind kein Fackelverzeichnis."}
+  - {layer: stromnetz_ausfalldaten, rolle: kontrolle, status: fehlt, anmerkung: "Versorger-Ausfalldaten nirgends geplant; würden Lichtausfall ohne BIP-Änderung erklären."}
+
+status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+prüfergebnisse: []

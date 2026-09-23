@@ -1,0 +1,227 @@
+# Theorie-Eintrag nach ARCHITECTURE.md Abschnitt 8.
+# Formuliert am 2026-09-23, VOR jeder Ansicht von ALEPH-Testdaten.
+# Erwartungen in diesem Eintrag werden nachträglich NICHT geändert; Ergebnisse gehören nur in "prüfergebnisse".
+# Alle Angaben unter "quellen" wurden an Crossref (api.crossref.org) und/oder Verlags-/Verzeichnisseiten geprüft (Stand 2026-09-23).
+# Hinweis zu Bowman et al. (2009), Science, DOI 10.1126/science.1163886: Die Angaben (Autoren, Jahr, Titel, Zeitschrift, DOI) stimmen.
+# Der Volltext war aber nicht lesbar; nur die Zusammenfassung wurde gesehen. Sie erwähnt keine glockenförmige Beziehung.
+# Deshalb wird dieser Artikel hier NICHT als Quelle für die Theorie geführt.
+
+id: pyrogeographie-feuer-feuchte
+titel: Feuer folgt einer glockenförmigen Kurve über Feuchte und Produktivität (Intermediate-Fire-Productivity-Hypothese)
+disziplin: Pyrogeographie / Feuerökologie
+
+quellen:
+  - zitat: "Pausas, J. G. & Ribeiro, E. (2013): The global fire-productivity relationship. Global Ecology and Biogeography, 22(6), 728-736"
+    jahr: 2013
+    doi: "10.1111/geb.12043"
+    rolle: original
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 22, Heft 6, Seiten 728-736, DOI stimmen überein);
+      Abstract am FRAMES-Verzeichnis (frames.gov/catalog/17925) und Suchtreffer der Wiley-Seite gesehen.
+      Die Wiley-Seite selbst war per Abruf gesperrt (HTTP 403), der Volltext wurde nicht gelesen.
+      Was die Quelle sagt: Test der Hypothese auf globaler Ebene mit Ökoregionen als räumlicher Einheit (nicht mit Rasterzellen);
+      Feueraktivität am höchsten in tropischen Grasländern und Savannen, zu beiden Enden des Produktivitätsgradienten deutlich niedriger.
+      Genaue Kurvenform, verwendete Feuer-Messgröße und Zahlen wurden nicht am Volltext geprüft.
+
+  - zitat: "Pausas, J. G. & Bradstock, R. A. (2007): Fire persistence traits of plants along a productivity and disturbance gradient in mediterranean shrublands of south-east Australia. Global Ecology and Biogeography, 16(3), 330-340"
+    jahr: 2007
+    doi: "10.1111/j.1466-8238.2006.00283.x"
+    rolle: original
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Titel, Zeitschrift, Band 16, Heft 3, Seiten 330-340, DOI stimmen überein; online seit Dezember 2006, Druckjahr 2007).
+      Dass diese Arbeit die Hypothese ursprünglich vorschlägt, ist nur aus Sekundärquellen ersichtlich
+      (Zuordnung "Pausas and Bradstock, 2007" in einem Suchtreffer-Auszug aus einer späteren Arbeit). Am Volltext nicht geprüft.
+
+  - zitat: "Krawchuk, M. A. & Moritz, M. A. (2011): Constraints on global fire activity vary across a resource gradient. Ecology, 92(1), 121-132"
+    jahr: 2011
+    doi: "10.1890/09-1843.1"
+    rolle: original
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 92, Heft 1, Seiten 121-132, DOI stimmen überein);
+      Zusammenfassung über die Suche gesehen (monatliche globale Feueraktivität, Bodenfeuchte und Zirkulationsdaten 2001-2007,
+      Zusammenschau über Gradienten von Nettoprimärproduktion, Temperatur und Biom; Ergebnis: Der relative Einfluss von Brennstoffmenge und Feuchte/Wetter
+      auf Feuer ändert sich in vorhersagbarer Weise entlang des Ressourcengradienten). Die PDF-Datei war nicht als Text lesbar, PubMed war per Abruf gesperrt.
+      Zahlen und Einzelbefunde wurden nicht am Volltext geprüft.
+
+  - zitat: "Abatzoglou, J. T., Williams, A. P., Boschetti, L., Zubkova, M. & Kolden, C. A. (2018): Global patterns of interannual climate-fire relationships. Global Change Biology, 24(11), 5164-5175"
+    jahr: 2018
+    doi: "10.1111/gcb.14405"
+    rolle: original   # Beleg für den zeitlichen Teil: Verzögerung und Vorzeichenwechsel zwischen trockenen und feuchten Regionen
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 24, Heft 11, Seiten 5164-5175, DOI stimmen überein);
+      Abstract und Ergebnisauszug in PubMed Central (PMC7134822) gesehen. Aussagen daraus: Klimavariabilität erklärt global etwa ein Drittel der
+      Jahr-zu-Jahr-Schwankung der Brandfläche; Niederschlag 14-25 Monate vor der Feuersaison ist in halbtrockenen Regionen stark positiv mit der Brandfläche
+      auf nicht bewaldeten Flächen verknüpft; die Trockenheit des Brennstoffs zählt vor allem in feuchteren (mesischen) Regionen; menschlicher Einfluss
+      schwächt die Klima-Feuer-Beziehung in stark vom Menschen geprägten Waldgebieten. Nur die Zusammenfassung und der Ergebnisauszug wurden gesehen.
+
+  - zitat: "Archibald, S., Roy, D. P., van Wilgen, B. W. & Scholes, R. J. (2009): What limits fire? An examination of drivers of burnt area in Southern Africa. Global Change Biology, 15(3), 613-630"
+    jahr: 2009
+    doi: "10.1111/j.1365-2486.2008.01754.x"
+    rolle: original   # Beleg für die mehrjährige Verzögerung (Niederschlag der zwei Vorjahre) und für den Einfluss des Menschen
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 15, Heft 3, Seiten 613-630, DOI stimmen überein);
+      Inhaltsangabe über Suchtreffer (u. a. Wiley- und FRAMES-Verzeichnis): Baumbedeckung, Niederschlag der vorangegangenen 2 Jahre und Niederschlagssaisonalität
+      sind die wichtigsten Vorhersagegrößen für die Brandfläche im südlichen Afrika (Random-Forest-Analyse mit Brandflächenkarten in 500 m);
+      keine Hinweise, dass Zündquellen die Brandfläche begrenzen; menschliche Faktoren wirken nur in Teilen des Gebiets mit bestimmten Klimabedingungen.
+      Volltext nicht gelesen. Gilt nur für das südliche Afrika.
+
+  - zitat: "Bowman, D. M. J. S., Murphy, B. P., Williamson, G. J. & Cochrane, M. A. (2014): Pyrogeographic models, feedbacks and the future of global fire regimes. Global Ecology and Biogeography, 23(7), 821-824"
+    jahr: 2014
+    doi: "10.1111/geb.12180"
+    rolle: gegenposition   # keine Widerlegung, sondern Einschränkung: die Kurve ist ein Muster, keine Vorhersageregel
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 23, Heft 7, Seiten 821-824, DOI stimmen überein);
+      Abstract am FRAMES-Verzeichnis (frames.gov/catalog/17920) gesehen. Aussage: Makroökologische Modelle zeigen die starke Kontrolle durch Produktivität
+      (hohe Feueraktivität in Savannen mittlerer Produktivität, sehr niedrig in dichten Wäldern und in trockenen/kalten Regionen), aber wegen Rückkopplungen
+      zwischen Feuer, Klima und Vegetation sind solche Modelle für Vorhersagen künftiger Feuer eventuell nicht brauchbar.
+      Der Text ist ein kurzer Kommentar; Volltext nicht gelesen.
+
+  - zitat: "Bistinas, I., Harrison, S. P., Prentice, I. C. & Pereira, J. M. C. (2014): Causal relationships versus emergent patterns in the global controls of fire frequency. Biogeosciences, 11, 5087-5101"
+    jahr: 2014
+    doi: "10.5194/bg-11-5087-2014"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 11, Seiten 5087-5101, DOI stimmen überein);
+      Abstract auf der Zeitschriftenseite (bg.copernicus.org/articles/11/5087/2014/) gelesen. Aussage: Modell für monatliche Brandanteile (GFED, 2000-2005)
+      mit 11 Einflussgrößen; die Brandfläche steigt mit Nettoprimärproduktion und Zahl der Trockentage und sinkt mit Bodenfeuchte; glockenförmige Beziehungen
+      zu Jahresniederschlag und Jahrestemperatur werden nachgebildet und als NEBENFOLGE von Korrelationen zwischen den Einflussgrößen gedeutet
+      (z. B. hohe Produktivität mit hohem Niederschlag), nicht als eigene Ursache. Volltext nicht gelesen.
+
+  - zitat: "Kahiu, M. N. & Hanan, N. P. (2018): Fire in sub-Saharan Africa: The fuel, cure and connectivity hypothesis. Global Ecology and Biogeography, 27(8), 946-957"
+    jahr: 2018
+    doi: "10.1111/geb.12753"
+    rolle: gegenposition   # andere Kurvenform (sättigend) für Afrika südlich der Sahara; Teilwiderspruch
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 27, Heft 8, Seiten 946-957, DOI stimmen überein).
+      Inhalt nur aus einem Suchtreffer-Auszug: Die Autoren nehmen an, dass krautige Vegetation den Brennstoff stellt und die Feueraktivität in afrikanischen Savannen
+      sich asymptotisch (sättigend) zur Produktion der krautigen Vegetation verhält; Holzpflanzen wirken indirekt über die Verbundenheit des Brennstoffs.
+      Die Wiley-Seite war per Abruf gesperrt; Volltext und Zahlen nicht gelesen.
+
+  - zitat: "Andela, N., Morton, D. C., Giglio, L., Chen, Y., van der Werf, G. R., et al. (2017): A human-driven decline in global burned area. Science, 356(6345), 1356-1362"
+    jahr: 2017
+    doi: "10.1126/science.aal4108"
+    rolle: gegenposition   # menschliche Kontrolle statt natürlicher Produktivitätsgradient
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (erste fünf Autoren, Jahr, Titel, Zeitschrift, Band 356, Heft 6345, Seiten 1356-1362, DOI stimmen überein; weitere Autoren nicht in der Liste, daher "et al.").
+      Inhaltsangabe über Suchtreffer (Science, PubMed, ADS): globale Brandfläche in etwa 18 Jahren um 24,3 +/- 8,8 % gesunken, nach Bereinigung um
+      Niederschlagsschwankungen weiter robust, am stärksten in Savannen; als Haupttreiber gelten Ausbau und Intensivierung der Landwirtschaft;
+      Feuermodelle konnten Muster und Stärke des Rückgangs nicht nachbilden. Volltext nicht gelesen.
+
+  - zitat: "Randerson, J. T., Chen, Y., van der Werf, G. R., Rogers, B. M. & Morton, D. C. (2012): Global burned area and biomass burning emissions from small fires. Journal of Geophysical Research: Biogeosciences, 117(G4), G04012"
+    jahr: 2012
+    doi: "10.1029/2012JG002128"
+    rolle: methode   # Messproblem: Kleinfeuer
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 117, Heft G4, DOI stimmen überein; Artikelnummer G04012 aus dem Suchtreffer-Zitat, nicht aus Crossref).
+      Inhaltsangabe über Suchtreffer: In mehreren Biomen (Ackerland, bewaldete Savannen, tropische Wälder) gibt es viele kleine Feuer unterhalb der Nachweisgrenze
+      globaler Brandflächenprodukte, die aber oft Wärmeanomalien erzeugen, die Satelliten sehen; mit Kleinfeuern stieg die globale Brandfläche um etwa 35 %
+      (von 345 auf 464 Mio. ha pro Jahr). Betrifft Brandflächenprodukte (GFED), nicht direkt die aktiven Feuer in FIRMS. Volltext nicht gelesen.
+
+  - zitat: "Huete, A., Didan, K., Miura, T., Rodriguez, E. P., Gao, X. & Ferreira, L. G. (2002): Overview of the radiometric and biophysical performance of the MODIS vegetation indices. Remote Sensing of Environment, 83(1-2), 195-213"
+    jahr: 2002
+    doi: "10.1016/S0034-4257(02)00096-2"
+    rolle: methode   # NDVI-Sättigung bei dichter Vegetation
+    citation_verified: true
+    verifiziert_an: >
+      Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 83, Heft 1-2, Seiten 195-213, DOI stimmen überein; Crossref schreibt die DOI in Kleinbuchstaben, gleiche Kennung).
+      Inhaltsangabe über Suchtreffer: NDVI sättigt bei hoher Biomasse (Beispiel Amazonas), der EVI bleibt dort empfindlicher. Volltext nicht gelesen.
+
+modell: >
+  Vereinfachte Darstellung zur Prüfung, NICHT aus einer Quelle übernommen (die genaue Kurvenform in Pausas & Ribeiro 2013 wurde nicht am Volltext geprüft).
+  Es gibt zwei Ebenen.
+  (A) Räumlich, über viele Zellen, Langzeitmittel:  B_i = a + b * M_i + c * M_i^2 + e_i  mit c < 0.
+  B_i = mittlere jährliche Feueraktivität der Zelle i (Zahl aktiver Feuer-Detektionen je 0,25°-Zelle, geplant aus FIRMS).
+  M_i = langjähriges Mittel von Niederschlag (IMERG) bzw. Vegetationsproduktivität (mittlerer NDVI, MOD13C2) der Zelle i.
+  a, b, c = anzupassende Zahlen. c < 0 heißt glockenförmig: Das Maximum liegt bei M* = -b / (2c) und muss innerhalb des beobachteten Wertebereichs liegen.
+  e_i = Rest (alles, was das Modell nicht erklärt).
+  (B) Zeitlich, innerhalb einer Zelle:  B_it = f(K_it) * g(T_it).
+  K_it = verfügbarer Brennstoff, wachsend mit dem Niederschlag der Vorjahre (etwa P_i,t-L mit L = 14 bis 25 Monate); f steigt und sättigt.
+  T_it = Trockenheit des Brennstoffs im Monat t (etwa Niederschlagsdefizit im selben Monat oder in der Saison, später ERA5-Bodenfeuchte); g steigt mit der Trockenheit.
+  In Anomalieform (Abweichung vom Jahresgang, wie ARCHITECTURE.md Abschnitt 6):  dB_it = beta_A(M_i) * dP_i,t-L + beta_B(M_i) * dP_i,t + e_it.
+  dB = Feuer-Anomalie, dP = Niederschlags-Anomalie, beta_A = Wirkung des Niederschlags der Vorjahre (Brennstoffaufbau), beta_B = Wirkung des Niederschlags im selben Zeitraum (Trockenheit).
+  Erwartete Vorzeichen: beta_A > 0 in trockenen Zellen (Brennstoff knapp), beta_B < 0 in feuchten Zellen (Brennstoff reichlich, aber oft zu nass).
+  Die Vorzeichen hängen damit von M_i ab. Das ist der Kern der Theorie.
+
+ursache:
+  layer: niederschlag
+  richtung: "nicht monoton; Vorzeichen hängt vom Ausgangszustand der Zelle ab (trockene Zellen: mehr Niederschlag der Vorjahre -> mehr Feuer; feuchte Zellen: weniger Niederschlag im selben Zeitraum -> mehr Feuer)"
+  zusätzlich: [vegetation (NDVI als Produktivität/Brennstoff), klima (ERA5 Bodenfeuchte/Trockenheit, geplant)]
+
+wirkung:
+  layer: brände
+  richtung: "glockenförmig über den Feuchte-/Produktivitätsgradienten (Maximum im mittleren Bereich, z. B. Savannen); zeitlich: Anstieg oder Rückgang je nach Ausgangszustand"
+  zusätzlich: Feueraktivität (aktive Feuer-Detektionen je Zelle und Monat, FIRMS, geplant)
+
+# Zwei Zweige. Zweig B (feuchte Zellen, Trockenheit): gleichzeitig, also 0 Monate (Quelle: Abatzoglou et al. 2018, Trockenheit des Brennstoffs zählt vor allem in feuchteren Regionen).
+# Zweig A (trockene Zellen, Brennstoffaufbau): 14 bis 25 Monate nach dem Niederschlag (Abatzoglou et al. 2018: "14-25 Monate vor der Feuersaison", bereits in Monaten angegeben;
+# Archibald et al. 2009: Niederschlag der vorangegangenen 2 Jahre, das sind ca. 24 Monate, Jahresangabe in Monate umgerechnet).
+# Die 14 bis 25 Monate gelten in der Quelle für nicht bewaldete Flächen in halbtrockenen Regionen, nicht für alle Regionen.
+verzögerung_monate: [0, 25]
+
+geltungsbereich: >
+  Für die glockenförmige Langzeitbeziehung (A): global auf Ebene von Ökoregionen gezeigt (Pausas & Ribeiro 2013); ob sie auf 0,25°-Zellen gleich aussieht, ist nicht belegt.
+  Für die zeitliche Umkehr (B): Halbtrockene Regionen mit nicht bewaldeten Flächen (Savannen, Grasland, Buschland) für den Brennstoffaufbau; mesische (mittelfeuchte) und Waldregionen
+  für die Trockenheitswirkung (Abatzoglou et al. 2018). Die Beziehungen sind in der Quelle nicht in allen Regionen gleich stark.
+  Menschlich geprägte Gebiete gelten als Ausnahme: Ausbau und Intensivierung der Landwirtschaft haben laut Andela et al. (2017) die globale Brandfläche gesenkt, am stärksten in Savannen;
+  Abatzoglou et al. (2018) fanden eine schwächere Klima-Feuer-Beziehung in stark vom Menschen geprägten Waldgebieten. Brandrodung und aktive Feuerunterdrückung als Einzelmechanismen
+  wurden in diesem Eintrag nicht an einer eigenen Quelle belegt und werden deshalb nicht als belegte Ausnahme geführt.
+  Nicht anwendbar: Eis- und Kältewüsten sowie Gebiete ohne Vegetation (Feuer dort kaum möglich, ohne eigene Quelle; als Annahme für die Prüfung, dass sie aus der Analyse ausgeschlossen werden).
+
+mechanismus: >
+  Damit ein Feuer brennt, müssen genug Brennstoff da sein und der Brennstoff muss trocken genug sein (Zusammenfassung der Literatur, u. a. Krawchuk & Moritz 2011; Pausas & Ribeiro 2013).
+  Entlang eines Feuchte-/Produktivitätsgradienten wird zuerst der Brennstoff knapp (sehr trockene Regionen: "zu wenig zum Brennen"), am anderen Ende die Trockenheit (sehr feuchte, dichte Wälder:
+  "zu nass zum Brennen"). Dazwischen (z. B. Savannen) liegt das Maximum. Die Richtung des Zusammenhangs ist deshalb NICHT monoton: In trockenen Regionen erhöht ein nasses Jahr
+  über den Brennstoffaufbau später die Feuergefahr, in feuchten Regionen senkt Niederschlag im selben Zeitraum die Feuergefahr. Je nach Ausgangszustand einer Region kehrt sich die Richtung also um.
+  Forschungsstand: Die glockenförmige Beziehung ist ein verbreitetes, oft zitiertes Muster, aber umstritten in Deutung und Nutzen. Bistinas et al. (2014) sehen glockenförmige Kurven zu Niederschlag und
+  Temperatur als Nebenfolge von Korrelationen zwischen Einflussgrößen (etwa hohe Produktivität bei hohem Niederschlag), nicht als eigenen Mechanismus. Bowman et al. (2014) verweisen auf Rückkopplungen zwischen Feuer,
+  Klima und Vegetation, die solche Muster für Vorhersagen unsicher machen. Kahiu & Hanan (2018) beschreiben für Afrika südlich der Sahara eine sättigende statt glockenförmige Abhängigkeit vom Brennstoff.
+  Andela et al. (2017) zeigen, dass menschliche Landnutzung das natürliche Muster verändert. Ein glockenförmiges Muster allein bestätigt den Mechanismus deshalb nicht.
+  Zu Bowman et al. (2009), Science ("Fire in the Earth System"): geprüft, aber die Aussage zur glockenförmigen Beziehung konnte am Text nicht bestätigt werden; die Arbeit wird hier nicht als Beleg genutzt.
+
+bedingungen: >
+  Stärker sichtbar, wenn menschlicher Einfluss gering ist (wenig Landwirtschaft, wenig Feuermanagement) und wenn nach Biomen getrennt wird. Der Brennstoffaufbau-Zweig gilt für halbtrockene, nicht bewaldete Regionen,
+  der Trockenheits-Zweig eher für mesische und bewaldete Regionen (Abatzoglou et al. 2018). Die Lage des Maximums und die Stärke der Kurve sind nicht als feste Zahlen aus den Quellen übernommen.
+  Grenzen zwischen "trocken" und "feucht" (z. B. Terzile des Langzeit-Niederschlags) werden von ALEPH vor der Prüfung festgelegt und sind nicht aus den Quellen abgeleitet.
+
+gegenpositionen:
+  - "Bistinas et al. (2014, Biogeosciences): Glockenförmige Beziehungen zu Niederschlag und Temperatur sind Nebenfolgen korrelierter Einflussgrößen; Brandfläche steigt mit Nettoprimärproduktion und Zahl der Trockentage und sinkt mit Bodenfeuchte (Quelle in quellen)."
+  - "Bowman et al. (2014, Global Ecology and Biogeography): Feedbacks zwischen Feuer, Klima und Vegetation können das Muster für Vorhersagen unbrauchbar machen; dynamische Modelle nötig (Quelle in quellen)."
+  - "Kahiu & Hanan (2018, Global Ecology and Biogeography): In afrikanischen Savannen steigt die Feueraktivität sättigend mit der Produktion krautiger Vegetation (Brennstoff, Trocknung, Verbundenheit), nicht glockenförmig (Quelle in quellen; nur Suchtreffer-Auszug gesehen)."
+  - "Andela et al. (2017, Science): Der Rückgang der globalen Brandfläche bleibt nach Bereinigung um Niederschlagsschwankungen bestehen und wird vor allem mit Landwirtschaft in Verbindung gebracht, am stärksten in Savannen, also gerade in der Region des Maximums; menschliche Kontrolle überlagert damit das natürliche Muster (Quelle in quellen)."
+  - "Archibald et al. (2009, Global Change Biology): Im südlichen Afrika begrenzt nicht die Zündung, sondern Brennstoffmenge und Feuchte die Brandfläche; menschliche Einflüsse wirken nur unter bestimmten Klimabedingungen (Quelle in quellen; stützt die Theorie teilweise, schränkt sie aber regional ein)."
+
+fallstricke:
+  - "Menschliche Zündung und Feuermanagement verändern das natürliche Muster: Landwirtschaft senkt die Brandfläche, besonders in Savannen (Andela et al. 2017); in stark vom Menschen geprägten Waldgebieten ist die Klima-Feuer-Beziehung schwächer (Abatzoglou et al. 2018). Ohne Kontrolle für Bevölkerung und Landnutzung ist das Ergebnis schwer zu deuten."
+  - "Umkehrung der Richtung: Ein einfacher Test auf 'mehr Regen gleich mehr Feuer' oder 'mehr Regen gleich weniger Feuer' über alle Zellen zusammen mittelt beide Zweige weg und kann ein Ergebnis nahe null zeigen, obwohl beide Zweige stimmen. Die Prüfung muss nach dem Ausgangszustand der Zelle getrennt oder mit Wechselwirkung erfolgen."
+  - "Glockenform allein ist kein Beleg für den Mechanismus: Sie kann laut Bistinas et al. (2014) aus Korrelationen zwischen Einflussgrößen entstehen. Nur die Vorzeichenwechsel und die Verzögerung (Zweig A und B) sind ein schärferer Test."
+  - "Rückwärts-Ursache bei NDVI: Feuer senkt die Vegetation im selben Monat, sodass NDVI und Feuer im selben Monat nicht als Ursache-Wirkung gelesen werden dürfen. NDVI muss verzögert (Vorjahre) als Brennstoffmaß genutzt werden. (Eigene methodische Überlegung, nicht an einer Quelle belegt.)"
+  - "NDVI sättigt bei dichter Vegetation (Huete et al. 2002): Am feuchten Ende der Kurve unterscheidet NDVI Produktivitätsstufen schlecht. EVI (im MOD13C2-Produkt vorhanden) ist dort empfindlicher."
+  - "Kleinfeuer: Viele kleine Feuer liegen unter der Nachweisgrenze globaler Brandflächenprodukte (Randerson et al. 2012, +35 % Brandfläche mit Kleinfeuern); das betrifft Brandflächen, nicht direkt aktive Feuer aus FIRMS. Wie gut FIRMS Kleinfeuer erfasst, ist in diesem Eintrag nicht belegt."
+  - "Aktive Feuer und Brandfläche sind zwei verschiedene Messgrößen (Zahl der Detektionen zum Überflug gegenüber verbrannter Fläche). ALEPH plant nur aktive Feuer (FIRMS); die Theorie und die Quellen arbeiten meist mit Brandfläche. Ergebnisse sind nicht ohne Weiteres übertragbar. Wolkenabdeckung, Überflugzeit und Sensorunterschiede MODIS/VIIRS beeinflussen die Detektion; dazu gibt es in diesem Eintrag keine geprüfte Quelle, das gehört in den noch fehlenden FIRMS-Steckbrief."
+  - "Räumliche Skala: Die glockenförmige Beziehung wurde für Ökoregionen gezeigt (Pausas & Ribeiro 2013). Eine 0,25°-Zelle (ca. 28 km) kann mehrere Biome, Ackerland und Wald mischen; die Kurve kann dadurch verwischt werden. (Folgerung aus dem Rastermaß, nicht an einer Quelle belegt.)"
+  - "Zeitachse: 14 bis 25 Monate Verzögerung verbrauchen einen großen Teil der 156 Monate (2013-2025) und verkleinern die Kalibrier-, Validierungs- und Testzeiträume aus ARCHITECTURE.md Abschnitt 9a. Der Zeitraum der Vorjahre könnte für den Niederschlag mit IMERG-Daten vor 2013 verlängert werden, das erfordert eine Entscheidung gegen E3."
+  - "Wenige unabhängige Jahre: Die Feuer-Anomalie-Reihen einer Zelle haben nur 13 Jahresgänge; Nachbarzellen sind räumlich korreliert. Der Permutationstest muss diese Nachbarschaft und die Saison erhalten (ARCHITECTURE.md Abschnitt 8, Punkt 3)."
+  - "Gemeinsame Treiber: Wetterereignisse wie Hitze und Wind wirken auf Trockenheit und Feuer zugleich; Niederschlag allein misst Brennstofftrockenheit nur grob (dafür ERA5, geplant)."
+
+datenbedarf:
+  - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "GPM IMERG monatlich, 0,1° -> 0,25° (Faktor 2,5, flächengewichtet), 2013-2025; Steckbrief docs/sources/gpm_imerg.md vorhanden, noch nichts geladen. Für Vorjahre vor 2013 wäre das Produkt laut Steckbrief verfügbar (ab 1998, frühe Monate weniger verlässlich), liegt aber außerhalb der Entscheidung E3."}
+  - {layer: vegetation, rolle: ursache, status: geplant, anmerkung: "MODIS MOD13C2 NDVI/EVI, 0,05° -> 0,25° (5 x 5 Zellen), 2000 bis laufend; Steckbrief docs/sources/mod13c2.md vorhanden, noch nichts geladen. NDVI-Sättigung beachten, EVI mitführen; Terra-Missionsende und Sensorwechsel zu VIIRS im Steckbrief vermerkt (für 2013-2025 ohne Belang)."}
+  - {layer: brände, rolle: wirkung, status: geplant, anmerkung: "FIRMS Active Fire (MODIS + VIIRS) nur in ARCHITECTURE.md Abschnitt 5 und 13 (Woche 2) geplant, kein Steckbrief. Laufzeit, Sensorwechsel, Lizenz und Wolkeneinfluss sind nicht geprüft. Aktive Feuer, nicht Brandfläche."}
+  - {layer: klima, rolle: kontrolle, status: geplant, anmerkung: "ERA5 (Bodenfeuchte, Temperatur; Copernicus CDS) nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief. Wird für die Trockenheit des Brennstoffs (g) gebraucht; ohne ERA5 nur Niederschlag als grobes Maß."}
+  - {layer: bevölkerung, rolle: kontrolle, status: geplant, anmerkung: "GHSL/WorldPop nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief; grobe Kontrolle für menschlichen Einfluss."}
+  - {layer: landbedeckung_biom, rolle: kontrolle, status: fehlt, anmerkung: "Karte von Wald, Savanne, Ackerland oder Biomen (z. B. Ökoregionen) nirgends geplant; wird gebraucht, um Wald und Nicht-Wald zu trennen und die Skalenmischung in 0,25°-Zellen zu kontrollieren."}
+  - {layer: brandfläche, rolle: wirkung, status: fehlt, anmerkung: "Brandflächenprodukt (verbrannte Fläche) nirgends geplant; die Literatur nutzt meist Brandfläche. Ersatz durch FIRMS-Detektionen ist eine Näherung."}
+  - {layer: nachtlicht, rolle: kontrolle, status: in Arbeit, anmerkung: "VNP46A3, nur Suomi-NPP 2013-2025, 0,25° monatlich; Großlauf läuft, ein Testmonat vorhanden; viele 'gültige' Pixel sind aufgefüllt, Qualität siehe docs/sources/vnp46a3.md. Nur als grobe Kontrolle für Siedlungen, nicht für Landwirtschaft."}
+
+status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+prüfergebnisse: []

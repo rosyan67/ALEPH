@@ -1,0 +1,231 @@
+# Theorie-Eintrag ALEPH, Format nach ARCHITECTURE.md Abschnitt 8.
+# Stand der Literaturprüfung: 2026-09-23. Formuliert VOR jeder ALEPH-Auswertung; keine ALEPH-Ergebnisse eingeflossen.
+# ART DES EINTRAGS: Mess-/Indexeintrag. SPI und SPEI sind Rechenvorschriften (Maßstäbe), keine Kausaltheorie.
+# Als prüfbare Hypothese steckt darin nur: "Ein Niederschlags-/Wasserbilanzdefizit über k Monate geht mit
+# einem Vegetationsrückgang (NDVI) einher." Das wird in ALEPH geprüft, nicht der Index selbst.
+
+id: duerreindizes-spi-spei
+titel: >
+  Dürreindizes SPI und SPEI: standardisierter Maßstab für Niederschlags- bzw. Wasserbilanzdefizite
+  und ihr Zusammenhang mit Vegetationsrückgang
+disziplin: Klimatologie / Hydrometeorologie (Dürre-Überwachung)
+
+quellen:
+  - zitat: "McKee, T. B., Doesken, N. J., Kleist, J. (1993): The relationship of drought frequency and duration to time scales. In: Proceedings of the 8th Conference on Applied Climatology, Anaheim, Kalifornien, 17.-22. Januar 1993, American Meteorological Society, S. 179-184 (Seitenangabe nach Zitierverzeichnissen; dort auch 179-183 zu finden)."
+    jahr: 1993
+    doi: null   # Konferenzbeitrag; bei der Suche wurde keine DOI gefunden. Das heißt nicht sicher, dass es keine gibt.
+    rolle: original   # Ursprung des SPI
+    citation_verified: false
+    verifiziert_an: >
+      Titel, Autoren, Konferenz und Jahr am Original-PDF gesehen (Kopie beim Drought Management
+      Information System, droughtmanagement.info). Der Titel dort lautet "The relationship ...";
+      manche Zitierverzeichnisse schreiben "The relation of ...". Seitenzahl nur aus Sekundärquellen
+      (Zitierverzeichnisse, Semantic Scholar), sie schwankt dort zwischen 179-184 und 179-183.
+      DOI nicht gefunden. Wegen fehlender DOI und ungeprüfter Seitenzahl bewusst false.
+      Aus dem Original gelesen (Zusammenfassung des Textes durch ein Hilfsmodell, nicht Wort für Wort
+      von uns geprüft): Niederschlag wird mit einer Gamma-Verteilung angepasst und in eine
+      Normalverteilung überführt; mehrere Zeitskalen; als Vergleichsbasis wird die "jüngere
+      Klimageschichte (die letzten 30 bis 100 Jahre)" genannt.
+
+  - zitat: "Vicente-Serrano, S. M., Beguería, S., López-Moreno, J. I. (2010): A Multiscalar Drought Index Sensitive to Global Warming: The Standardized Precipitation Evapotranspiration Index. Journal of Climate, 23(7), 1696-1718."
+    jahr: 2010
+    doi: "10.1175/2009JCLI2909.1"
+    rolle: original   # Ursprung des SPEI
+    citation_verified: true
+    verifiziert_an: >
+      Crossref-Eintrag zur DOI (Autoren, Titel, Zeitschrift, Band 23, Heft 7, Seiten 1696-1718,
+      Jahr 2010) und Verlagsseite journals.ametsoc.org (per Suche) gesehen; stimmen überein.
+      Der Volltext war nicht abrufbar (Zugriff 403). Die Formeln unten stammen daher aus der
+      Standarddarstellung des Index und aus Beschreibungen (spei.csic.es, Beguería et al. 2014),
+      nicht aus eigener Lektüre des Originaltexts.
+
+  - zitat: "Vicente-Serrano, S. M., Gouveia, C., Camarero, J. J., Beguería, S., Trigo, R., López-Moreno, J. I., Azorín-Molina, C., Pasho, E., Lorenzo-Lacruz, J., Revuelto, J., Morán-Tejeda, E., Sanchez-Lorenzo, A. (2013): Response of vegetation to drought time-scales across global land biomes. Proceedings of the National Academy of Sciences, 110(1), 52-57."
+    jahr: 2013   # online 2012-12-17, Heft 1 vom 2013-01-02
+    doi: "10.1073/pnas.1207068110"
+    rolle: original   # Beleg für den Zusammenhang Dürreindex -> Vegetation und für die Zeitskala
+    citation_verified: true
+    verifiziert_an: >
+      Crossref-Eintrag zur DOI (alle zwölf Autoren, Titel, PNAS, Band 110, Heft 1, Seiten 52-57)
+      und PMC-Volltextseite (PMC3538253) gesehen; stimmen überein. Inhaltsangaben stammen aus der
+      PMC-Seite (Zusammenfassung durch ein Hilfsmodell, nicht Wort für Wort geprüft). Die Suche
+      lieferte zur Frage, ob trockene oder feuchte Gebiete schneller reagieren, zwei
+      widersprüchliche Formulierungen; diese Richtung wird deshalb hier nicht als Fakt übernommen.
+
+  - zitat: "Beguería, S., Vicente-Serrano, S. M., Reig, F., Latorre, B. (2014): Standardized precipitation evapotranspiration index (SPEI) revisited: parameter fitting, evapotranspiration models, tools, datasets and drought monitoring. International Journal of Climatology, 34(10), 3001-3023."
+    jahr: 2014   # online 2013-12-21, Druck August 2014
+    doi: "10.1002/joc.3887"
+    rolle: methode   # Wahl der PET-Formel und der Parameterschätzung; Vergleich SPI/SPEI
+    citation_verified: true
+    verifiziert_an: >
+      Crossref-Eintrag zur DOI (Autoren, Titel, Zeitschrift, Band 34, Heft 10, Seiten 3001-3023)
+      gesehen. Eine Suchmaschinen-Zusammenfassung nannte den Titel ungenau (mit angehängtem
+      "(2014)" und "kernel weighting"); hier gilt der Crossref-Titel. Inhaltliche Aussagen
+      (Unterschiede zwischen PET-Formeln in halbtrockenen bis mäßig feuchten Gebieten größer als in
+      feuchten) stammen aus Suchauszügen, der Volltext war nicht abrufbar.
+
+  - zitat: "Stagge, J. H., Tallaksen, L. M., Gudmundsson, L., Van Loon, A. F., Stahl, K. (2015): Candidate Distributions for Climatological Drought Indices (SPI and SPEI). International Journal of Climatology, 35(13), 4027-4040."
+    jahr: 2015
+    doi: "10.1002/joc.4267"
+    rolle: gegenposition   # empfiehlt für SPEI eine andere Verteilung (GEV) als das Original (log-logistisch)
+    citation_verified: true
+    verifiziert_an: >
+      Crossref-Eintrag zur DOI mit Abstract (Autoren, Titel, Zeitschrift, Band 35, Heft 13, Seiten
+      4027-4040) gesehen. Der Abstract nennt: Untersuchung an Daten für Europa (0,5 Grad, Watch
+      Forcing Dataset); Gamma-Verteilung für den SPI empfohlen; für den SPEI die verallgemeinerte
+      Extremwertverteilung (GEV) empfohlen. Die Aussagen zu Nullniederschlag und kurzen
+      Zeitskalen stammen aus einem Suchauszug (nicht am Volltext geprüft).
+
+  - zitat: "Stagge, J. H., Kingston, D. G., Tallaksen, L. M., Hannah, D. M. (2017): Observed drought indices show increasing divergence across Europe. Scientific Reports, 7, Artikel 14045."
+    jahr: 2017
+    doi: "10.1038/s41598-017-14283-2"
+    rolle: methode   # zeigt, wo SPI und SPEI unter Erwärmung auseinanderlaufen
+    citation_verified: true
+    verifiziert_an: >
+      Crossref-Eintrag zur DOI mit Abstract (Autoren, Titel, Scientific Reports, Band 7, Artikel
+      14045, Jahr 2017) gesehen. Nur für Europa 1958-2014; auf andere Regionen nicht übertragbar.
+
+  - zitat: "Milly, P. C. D., Dunne, K. A. (2016): Potential evapotranspiration and continental drying. Nature Climate Change, 6, 946-949."
+    jahr: 2016
+    doi: "10.1038/nclimate3046"
+    rolle: gegenposition   # stellt PET-basierte Trockenheitsmaße in Frage
+    citation_verified: true
+    verifiziert_an: >
+      Crossref-Eintrag zur DOI (Autoren, Titel, Nature Climate Change, Band 6, Seiten 946-949, 2016)
+      gesehen; Kernaussage aus der Suche (Auszug der Nature-Seite): PET-abhängige Maße können
+      Austrocknung überzeichnen, unter anderem weil die Wirkung von steigendem CO2 auf die
+      Spaltöffnungen der Pflanzen fehlt. Der Volltext wurde nicht gelesen. Die Arbeit betrifft
+      vor allem Klimamodell-Rechnungen und abgeleitete Abfluss-/Trockenheitsmaße, nicht den SPEI
+      im Einzelnen.
+
+  - zitat: "Svoboda, M., Hayes, M., Wood, D. A. (2012): Standardized Precipitation Index User Guide. World Meteorological Organization, Genf, WMO-No. 1090."
+    jahr: 2012
+    doi: null   # keine DOI gefunden
+    rolle: methode   # Praxisleitfaden zum SPI, unter anderem zur Länge der Bezugszeitreihe
+    citation_verified: false
+    verifiziert_an: >
+      Autoren, Titel, Jahr und WMO-Nummer über die Suche (WMO-Bibliothek, Zitierverzeichnisse)
+      bestätigt. Der Leitfaden selbst war nicht lesbar (PDF ließ sich nicht auswerten), daher
+      sind Aussagen zur Länge der Zeitreihe nur aus Zweitquellen belegt: Seite des Integrated
+      Drought Management Programme (droughtmanagement.info: SPI lasse sich schon mit 20 Jahren
+      rechnen, "idealerweise" seien mindestens 30 Jahre nötig) und UCAR Climate Data Guide (an einer
+      Stelle "30-50 Jahre empfohlen", an anderer "mindestens 50 Jahre"). Die Empfehlungen sind
+      also nicht einheitlich, "mindestens 30 Jahre" ist eine Faustregel, keine harte Grenze.
+      Verlag, DOI und Seitenzahl nicht geprüft.
+
+modell: >
+  Beide Indizes machen dasselbe: Sie ordnen einer Monatsgröße (aufsummiert über k Monate) ihre
+  Wahrscheinlichkeit in der Referenzperiode zu und rechnen diese in einen Standardnormalwert um.
+  Ein Wert von 0 ist "normal", negative Werte sind trockener als üblich. Getrennt je Kalendermonat.
+
+  SPI (McKee et al. 1993):
+    x_k(t) = Summe von P(t-j) für j = 0 ... k-1              (Niederschlag, aufsummiert über k Monate)
+    G(x)   = Gamma-Verteilung, angepasst an x_k der Referenzperiode (Form- und Skalenparameter)
+    H(x)   = q + (1 - q) * G(x)                                (q = Anteil der Monate mit Summe 0)
+    SPI_k(t) = Phi^-1( H( x_k(t) ) )                           (Phi^-1 = Umkehrfunktion der
+                                                                Standardnormalverteilung)
+  Der Nullanteil q ist Standardpraxis (WMO-Leitfaden, nach unserer Kenntnis); der McKee-Text wurde
+  nur zusammengefasst gelesen, die Formel für q steht dort nicht belegt in unserer Prüfung.
+
+  SPEI (Vicente-Serrano et al. 2010):
+    D(t)   = P(t) - PET(t)                                     (klimatische Wasserbilanz; PET =
+                                                                mögliche Verdunstung, im Original mit
+                                                                Thornthwaite aus der Temperatur)
+    D_k(t) = Summe von D(t-j) für j = 0 ... k-1
+    F(x)   = [ 1 + (alpha / (x - gamma))^beta ]^-1             (dreiparametrige log-logistische
+                                                                Verteilung, angepasst an D_k der
+                                                                Referenzperiode; Parameterschätzung im
+                                                                Original mit gewichteten Momenten)
+    SPEI_k(t) = Phi^-1( F( D_k(t) ) )
+  Die Grundstruktur (D = P - PET, Aufsummieren, log-logistisch, Umrechnung in Standardnormal) ist
+  durch spei.csic.es und Suchauszüge gestützt. Die genaue Form von F(x) ist die übliche
+  Darstellung und wurde nicht am Originaltext nachgelesen. Der SPEI ist laut Autoren nicht an
+  eine PET-Formel gebunden; SPEIbase v1.0 nutzt Thornthwaite, v2.0 FAO-56 Penman-Monteith
+  (Angabe spei.csic.es).
+
+  Hypothese, die ALEPH prüfen soll (Vegetationsbezug, Vicente-Serrano et al. 2013):
+    NDVI_anom(z, t) = a(z) + b_k(z) * SPI_k(z, t) + e(z, t),   erwartet b_k > 0
+  z = Gitterzelle, t = Monat, k = Zeitskala in Monaten, NDVI_anom = saisonbereinigte Abweichung
+  (ALEPH-Verfahren, Abschnitt 6), b_k = Steigung; e = Restfehler. Kein Kausalnachweis, nur Assoziation.
+
+ursache: {layer: niederschlag, richtung: rückgang, zusätzlich: "Defizit über k Monate (SPI_k bzw. SPEI_k negativ); SPEI zusätzlich Temperatur/Verdunstung"}
+wirkung: {layer: vegetation, richtung: rückgang, zusätzlich: "NDVI (MOD13C2), Assoziation, kein Nachweis von Ernteschäden"}
+
+# Verzögerung: Hier ist das Wort irreführend. In Vicente-Serrano et al. (2013) wird NDVI eines Monats mit dem
+# Index verglichen, dessen k-Monats-Fenster im SELBEN Monat endet; die "Verzögerung" steckt in der Länge
+# des Fensters k, nicht in einem zeitlichen Abstand. Getestet wurden dort k = 1 bis 24 Monate; für den
+# NDVI hatte überwiegend ein kurzes Fenster (2-4 Monate) den höchsten Zusammenhang, mit großer
+# räumlicher Streuung (Quelle: PMC-Seite und Suchauszug, nicht am Volltext geprüft). Dort wurde NDVI von GIMMS
+# 1981-2006 (0,1 Grad) genutzt, nicht MODIS; MODIS diente nur zur Gegenprüfung (2001-2009).
+# Deshalb: Abstand Fensterende zu NDVI = 0 Monate. Ob es in ALEPH zusätzlich einen echten zeitlichen
+# Nachlauf gibt, ist eine eigene Frage, die diese Quelle nicht beantwortet (Lücke, siehe unten).
+verzögerung_monate: [0, 0]
+zeitskala_k_monate_erwartet: "überwiegend 2-4 (Literatur: PNAS 2013, globaler NDVI 1981-2006); geprüft werden k = 1, 2, 3, 4, 6, 9, 12"   # Festlegung VOR den Daten; Auswahl nur für die Prüfung, kein Literaturwert
+
+geltungsbereich: >
+  Vegetationsbedeckte Landflächen, in denen Wasser das Wachstum begrenzt. Die Literatur (PNAS 2013)
+  betrachtet alle großen Landbiome global, findet aber große Unterschiede zwischen Biomen und Regionen.
+  Nicht sinnvoll: Eis, Dauerschnee, vegetationsfreie Wüste. Bei Schnee ist der IMERG-Niederschlag
+  laut Steckbrief in Version 07 unterschätzt (docs/sources/gpm_imerg.md, Abschnitt 9), also
+  Vorsicht in kalten und gebirgigen Regionen. Europa-Aussagen zu SPI/SPEI (Stagge et al.) sind
+  nicht ohne Weiteres auf andere Klimazonen übertragbar.
+
+mechanismus: >
+  Pflanzen reagieren auf Wassermangel, der sich über Wochen bis Monate im Boden aufbaut. Der
+  SPI misst nur, wie ungewöhnlich der Niederschlag der letzten k Monate war. Der SPEI zieht die
+  mögliche Verdunstung ab und bezieht damit Temperatur ein. Kurze Fenster (1-3 Monate) sollen die
+  Bodenfeuchte und Vegetation beschreiben, lange Fenster (12-24 Monate) eher Grundwasser und
+  Speicher (Grundidee von McKee et al. 1993; im Original als "Zeitskala" begründet, hier nur
+  sinngemäß wiedergegeben). Forschungsstand: SPI ist der von der WMO empfohlene Standard. Der SPEI
+  ist ebenfalls weit verbreitet, aber der Nutzen der PET-Komponente ist umstritten (siehe
+  gegenpositionen). Der Zusammenhang Dürreindex -> Vegetation ist in PNAS 2013 global beobachtet,
+  aber mit großer Streuung, und beruht auf Korrelationen, nicht auf Kausalnachweis.
+
+bedingungen: >
+  Prüfplan in ALEPH (VOR den Testdaten festgelegt; nicht nachträglich ändern):
+  (1) Beobachtet wird, ob in Zellen und Monaten mit SPI_k <= -1 (Bezeichnung "trockener als üblich"
+  nach gängiger SPI-Klassifikation; Schwelle nicht an der Quelle geprüft) der NDVI-Anomaliewert
+  häufiger negativ ist als in einem Zufallsmodell, das Jahreszeit und Nachbarschaft erhält
+  (Permutationstest, Abschnitt 8). Erwartete Richtung: negativ (b_k > 0).
+  (2) Die Zeitskala k mit dem stärksten Zusammenhang wird im Kalibrierungszeitraum gewählt, die
+  Prüfung erfolgt im späteren Testzeitraum (Abschnitt 8/9a).
+  (3) Der SPEI-Teil gilt nur, wenn ein PET-Layer beschafft wird (siehe datenbedarf). Die PET-Formel
+  wird vorab festgelegt und nicht nach dem Ergebnis gewechselt.
+  (4) Wichtig für die Einordnung: SPI/SPEI ist ein alternativer, standardisierter Maßstab zum
+  ALEPH-Verfahren aus Abschnitt 6, nicht dessen Ersatz und nicht als besser belegt. Unterschiede:
+  ALEPH vergleicht mit demselben Kalendermonat früherer Jahre (Median und MAD, ohne
+  Verteilungsannahme, der geprüfte Monat gehört nie zur eigenen Basislinie). SPI/SPEI passt eine
+  Verteilung an (Gamma bzw. log-logistisch, mit Parametern), rechnet auf k Monate aufsummierte
+  Werte und bezieht den bewerteten Monat üblicherweise in die Anpassung mit ein. ALEPH betrachtet
+  einzelne Monate, der SPI glättet über k Monate. SPI/SPEI sind Standardnormalwerte mit Wahrscheinlichkeitsdeutung;
+  MAD-Werte sind es nicht automatisch. Ob das eine oder das andere besser Dürre findet, ist offen und
+  wird hier nicht behauptet.
+  Evidenzstufen: berechneter SPI/SPEI aus Messdaten = beobachtet (abgeleitet); ein bestätigter
+  Zusammenhang mit NDVI = statistische Assoziation; Projektionen nicht Teil dieses Eintrags.
+
+gegenpositionen:
+  - "Milly und Dunne (2016, Nature Climate Change, DOI 10.1038/nclimate3046): PET-abhängige Trockenheitsmaße können Austrocknung überzeichnen, weil steigendes CO2 die Verdunstung der Pflanzen bremst und das in der PET-Rechnung fehlt. Das stellt den Zusatznutzen der PET-Komponente des SPEI unter Erwärmung in Frage; die Arbeit befasst sich aber vor allem mit Modellrechnungen und abgeleiteten Maßen, nicht mit dem SPEI selbst (Abstract-Auszug, Volltext nicht gelesen)."
+  - "Beguería et al. (2014, Int. J. Climatol., DOI 10.1002/joc.3887) und die SPEI-Projektseite (spei.csic.es): In feuchten Regionen spielt die PET-Formel eine geringe Rolle, in stabilem Klima unterscheiden sich SPI und SPEI kaum (Angaben aus Suchauszug und Projektseite, nicht am Volltext geprüft). Der SPEI bringt dort also wenig Zusatzinformation gegenüber dem einfacheren SPI."
+  - "Stagge et al. (2015, Int. J. Climatol., DOI 10.1002/joc.4267): Für den SPEI wird die verallgemeinerte Extremwertverteilung (GEV) empfohlen, nicht die log-logistische Verteilung des Originals (Untersuchung für Europa). Es gibt also keine Einigkeit über die Verteilungsannahme."
+  - "Stagge et al. (2017, Sci. Rep., DOI 10.1038/s41598-017-14283-2): In Europa 1958-2014 laufen SPI und SPEI auseinander: Die steigende Verdunstung durch Erwärmung verstärkt den SPEI-Trockenheitstrend im Süden, der SPI zeigt das nicht. Das ist keine Widerlegung, zeigt aber: Die beiden Indizes liefern unter Erwärmung verschiedene Aussagen. Welcher näher an der tatsächlichen Vegetationsreaktion liegt, ist damit nicht entschieden."
+
+fallstricke:
+  - "BEZUGSZEITRAUM (zentral für ALEPH): SPI/SPEI brauchen eine lange Referenzperiode für die Verteilungsanpassung. Der WMO-Leitfaden nennt nach Zweitquellen idealerweise mindestens 30 Jahre (Zweitquellen nennen teils 20 als Untergrenze, teils 30-50 oder 50 als Empfehlung); McKee et al. sprechen von den letzten 30 bis 100 Jahren. Der geplante ALEPH-Zeitraum 2013-2025 gibt je Kalendermonat nur 13 Werte, dafür wären Gamma- und Nullanteil-Parameter sehr unsicher. Das SPI-Ergebnis würde stark vom gewählten Zeitraum abhängen. Auch der IMERG-Monatsdatensatz reicht laut Steckbrief nur bis Januar 1998 zurück (für 1998 bis Mai 2000 mit geringerer Qualität, NASA empfiehlt dort Vorsicht), ab Juni 2000 also nur etwa 25 Jahre bis 2025, und in der TRMM-Ära ist die Kalibrierung außerhalb 35 Grad Nord/Süd nur näherungsweise. Ein längeres Niederschlagsarchiv (ERA5, ab 1940, geplant) wäre nötig; ERA5 ist aber ein Reanalyse-Produkt mit anderen Fehlern als IMERG, und ein SPI aus ERA5 ist nicht gleich einem SPI aus IMERG (Mischen unzulässig ohne Prüfung)."
+  - "WAHL DER PET-FORMEL: Beguería et al. (2014) fanden, dass sich SPEI-Reihen je nach PET-Formel (z. B. Thornthwaite gegenüber Penman-Monteith) regional deutlich unterscheiden können, vor allem in halbtrockenen bis mäßig feuchten Gebieten; in feuchten Gebieten weniger (Suchauszug, Volltext nicht gelesen). Thornthwaite braucht nur Temperatur, Penman-Monteith mehr Eingangsdaten. Die Formel muss vorab festgelegt und dokumentiert werden."
+  - "VERTEILUNGSANNAHME: Die Gamma-Verteilung passt bei kurzen Zeitskalen und trockenem Klima mit vielen Monaten ohne Niederschlag schlecht (Stagge et al. 2015 nennen Nullniederschlag als Problem der Anpassung; WMO-/NDMC-Seiten warnen, dass die Verteilungsannahme gerade bei kurzen Ereignissen nicht überall passt: Zweitquellen). Der SPEI hat laut Stagge et al. dieses Nullproblem nicht, weil die Wasserbilanz nicht bei Null begrenzt ist, aber auch hier ist die Verteilungswahl umstritten (log-logistisch, GEV)."
+  - "TEMPERATUR: Der SPI kennt keine Temperatur, der SPEI schon. In einem sich erwärmenden Klima können beide verschiedene Aussagen liefern (Stagge et al. 2017 für Europa). Ob das Ergebnis einer ALEPH-Prüfung mit SPI auf SPEI übertragbar ist, ist nicht gegeben."
+  - "SCHNEE/GEBIRGE: IMERG V07 unterschätzt Schneefall und ist in Gebirgen weniger zuverlässig (Steckbrief gpm_imerg.md, Abschnitt 9, Anbieterangabe). SPI-Werte dort sind mit Vorsicht zu lesen. Für den ERA5-Niederschlag wurde das nicht geprüft."
+  - "AUFLÖSUNG: IMERG (0,1 Grad) muss flächengewichtet auf das 0,25-Grad-Raster (Faktor 2,5, keine ganze Zahl) gebracht werden (Steckbrief). Verteilungsanpassung je Zelle ist bei 13 Werten je Kalendermonat nicht stabil (siehe Bezugszeitraum)."
+  - "ZIRKULARITÄT: Die ALEPH-Anomalieregel 'Dürre' (ARCHITECTURE.md Abschnitt 7) besteht aus Niederschlagsdefizit plus Vegetationsrückgang. Wird derselbe Zusammenhang hier als Theorie geprüft, ist das Ergebnis teilweise vorgegeben. Die Prüfung muss deshalb an Zellen und Monaten erfolgen, die nicht schon über diese Regel ausgewählt wurden, oder es muss die Regel vorher offen als Zirkularität ausgewiesen werden."
+  - "KEINE AUSSAGE ÜBER SCHÄDEN: SPI/SPEI und NDVI messen Trockenheit bzw. Grün, nicht Ernteverluste, Hunger oder Abwanderung. NDVI-Sättigung bei dichter Vegetation und geringe Repräsentativität der Vergleichsdaten nennen die Autoren von PNAS 2013 selbst als Unsicherheit."
+  - "MESSSYSTEM: MOD13C2 (Terra) nähert sich dem Missionsende; Sensorwechsel MODIS -> VIIRS erzeugt Brüche (Steckbrief mod13c2.md, Abschnitt 8/14). Für 2013-2025 nicht relevant."
+  - "ZUSATZWIRKUNGEN AUF NDVI (nur vorgemerkt, hier OHNE Quellenbeleg, deshalb keine Behauptung): Bewässerung, Landnutzungswechsel, Brände und Erntekalender können NDVI unabhängig vom Niederschlag verändern. Vor einer Aussage im Bericht muss dazu eine Quelle gefunden und geprüft werden."
+
+datenbedarf:
+  - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "GPM IMERG (Steckbrief docs/sources/gpm_imerg.md vorhanden, noch nichts geladen). Vorgesehen ist 2013-2025; das ist für SPI zu kurz (13 Jahre). IMERG-Monatsprodukt gibt es laut Steckbrief ab Januar 1998 (Qualität vor Juni 2000 geringer); Nachladen ab 2000 würde grob 2,5-3 GB zusätzlich bedeuten (Hochrechnung nach Steckbrief, keine Zählung), reicht aber auch nur für etwa 25 Jahre."}
+  - {layer: niederschlag_langzeit, rolle: ursache, status: geplant, anmerkung: "ERA5 (Copernicus CDS, ab 1940) ist in ARCHITECTURE.md Abschnitt 5 geplant, aber ohne Steckbrief; Eignung als Niederschlagsquelle und Umgang mit dem Wechsel zwischen ERA5 und IMERG nicht geprüft."}
+  - {layer: temperatur_pet, rolle: ursache, status: fehlt, anmerkung: "Nur für den SPEI nötig. Temperatur (und ggf. weitere Größen) kommt voraussichtlich aus ERA5 (geplant), aber eine berechnete PET (Thornthwaite o. ä.) ist nirgends als Layer eingeplant. Ob ERA5 eine fertige Verdunstungsgröße liefert, ist nicht geprüft. Ohne diesen Layer ist nur der SPI-Teil prüfbar."}
+  - {layer: vegetation, rolle: wirkung, status: geplant, anmerkung: "MODIS MOD13C2 NDVI (Steckbrief docs/sources/mod13c2.md vorhanden, noch nichts geladen); 0,05 Grad, monatlich, ab Februar 2000, ALEPH-Raster 5 x 5 Zellen je 0,25 Grad."}
+  - {layer: landnutzung_bewässerung, rolle: kontrollvariable, status: fehlt, anmerkung: "Landnutzungskarte und Bewässerungsflächen sind nirgends geplant; nötig, um Ackerland/bewässerte Flächen auszunehmen (Beleg für diesen Fallstrick noch zu finden)."}
+
+status: ungeprüft
+prüfergebnisse: []

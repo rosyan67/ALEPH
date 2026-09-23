@@ -1,0 +1,223 @@
+# ALEPH Theorie-Eintrag. Aussagen sind Aussagen der Literatur, keine ALEPH-Ergebnisse.
+# Formuliert am 2026-09-23, vor jeder Ansicht von Testdaten.
+# Erwartungen (Richtung, Verzögerung, Geltungsbereich) dürfen nachträglich NICHT geändert werden.
+# Ergebnisse gehören ausschließlich in `prüfergebnisse`.
+#
+# Hinweis zum Status: Der Auftrag verlangt `ungeprüft`. Die zentrale Wirkungsgröße (Migration
+# im Sinne der Quelle) ist in ALEPH aber weder geladen noch mit Steckbrief geplant, und die
+# Kernaussage (Menschen bleiben, obwohl sie gehen wollen) ist in Satellitendaten nicht direkt
+# sichtbar. Der Auftraggeber kann daher entscheiden, ob `Daten unzureichend` ehrlicher ist.
+
+id: klimamigration-gefangene-bevoelkerung
+titel: Erwärmung erhöht die Abwanderung in Ländern mittleren Einkommens, aber nicht in sehr armen Ländern (Liquiditätsbeschränkung, "gefangene Bevölkerung")
+disziplin: Umweltökonomie / Migrationsforschung / Entwicklungsökonomie
+
+quellen:
+  - zitat: "Cattaneo, C., Peri, G. (2016): The migration response to increasing temperatures. Journal of Development Economics, 122, 127-146"
+    jahr: 2016
+    doi: "10.1016/j.jdeveco.2016.05.004"
+    rolle: original
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Seiten und DOI am 2026-09-23 übereinstimmend gesehen
+      in der Crossref-API und im RePEc/IDEAS-Verzeichnis (Journal of Development Economics 122(C), 127-146);
+      Abstract zusätzlich auf den Seiten von NBER (Arbeitspapier 21622, 2015), FEEM/bepress und
+      Giovanni Peris Webseite gelesen. Der Volltext (Gleichungen, Tabellen) konnte NICHT gelesen werden
+      (PDF-Dateien waren mit den verfügbaren Werkzeugen nicht als Text lesbar, ScienceDirect lieferte 403).
+      Abweichung zwischen Fassungen: Der veröffentlichte Abstract nennt 115 Länder, die Arbeitspapier-Fassung
+      (NBER/FEEM) 116 Länder; beide Zeitraum 1960-2000. Eine Sekundärquelle (JDC-Literaturübersicht,
+      selbst nur über eine automatische Zusammenfassung gelesen) nennt 30 Länder mit niedrigem und
+      85 Länder mit mittlerem Einkommen.
+  - zitat: "Foresight (2011): Migration and Global Environmental Change. Final Project Report. UK Government Office for Science, London (Projektleitung: Richard Black)"
+    jahr: 2011
+    doi: null   # Regierungsbericht, es wurde keine DOI gefunden
+    rolle: methode   # Herkunft des Konzepts "trapped populations" (Konzept, kein Modell)
+    citation_verified: false
+    verifiziert_an: >
+      Titel, Jahr und Herausgeber (UK Government Office for Science, Foresight) in Suchergebnissen und auf
+      Verzeichnisseiten gesehen; dass der Bericht das Konzept "trapped populations" prominent macht, wird von
+      DeWaard et al. (2022, siehe unten) ausdrücklich so beschrieben. Der Berichtstext selbst (PDF der
+      gov.uk-Seite) war nicht als Text lesbar, das Zitat wurde also nicht am Original gelesen; es gibt keine DOI.
+      Deshalb false.
+  - zitat: "Black, R., Adger, W. N., Arnell, N. W., Dercon, S., Geddes, A., Thomas, D. (2011): The effect of environmental change on human migration. Global Environmental Change, 21 (Supplement 1), S3-S11"
+    jahr: 2011
+    doi: "10.1016/j.gloenvcha.2011.10.001"
+    rolle: methode   # Rahmen: fünf Treiberfamilien der Migration (wirtschaftlich, politisch, sozial, demografisch, Umwelt)
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Seiten und DOI am 2026-09-23 in der Crossref-API und im
+      Forschungsportal der University of East Anglia gesehen (Abstract stimmt überein). ABWEICHUNG VOM AUFTRAG:
+      Die genannte DOI gehört zu "The effect of environmental change on human migration" (Black et al., GEC),
+      NICHT zum Foresight-Bericht "Migration and Global Environmental Change". Das sind zwei verschiedene
+      Veröffentlichungen. Das Konzept "trapped populations" steht laut den geprüften Quellen im
+      Foresight-Bericht; im Abstract des GEC-Papiers und im geprüften Auszug kommt der Begriff nicht vor
+      (Volltext nicht durchsucht, deshalb nur "nicht gefunden", nicht "kommt nicht vor").
+  - zitat: "DeWaard, J., Hunter, L. M., Mathews, M. C., Quiñones, E. J., Riosmena, F., Simon, D. H. (2022): Operationalizing and empirically identifying populations trapped in place by climate and environmental stressors in Mexico. Regional Environmental Change, 22, Artikel 29"
+    jahr: 2022
+    doi: "10.1007/s10113-022-01882-7"
+    rolle: methode   # Definition und Messproblem von "trapped populations"
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Artikelnummer und DOI am 2026-09-23 in der Crossref-API und im
+      Volltext bei PubMed Central (PMC9004677) übereinstimmend gesehen. Dort wird das Konzept dem
+      Foresight-Bericht (2011) zugeschrieben und mit Black und Collyer (2014) verfeinert: Unterscheidung
+      zwischen "bleiben wollen" und "bleiben müssen". (Black und Collyer 2014 selbst wurde nicht geprüft und
+      steht deshalb nicht in dieser Liste.)
+  - zitat: "Feng, S., Krueger, A. B., Oppenheimer, M. (2010): Linkages among climate change, crop yields and Mexico-US cross-border migration. Proceedings of the National Academy of Sciences, 107(32), 14257-14262"
+    jahr: 2010
+    doi: "10.1073/pnas.1002632107"
+    rolle: methode   # Beispiel einer Studie zu Ertrag/Klima und Auswanderung im Land mittleren Einkommens; Gegenstand der Kritik unten
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Heft, Seiten und DOI am 2026-09-23 in der Crossref-API und
+      in den Suchergebnissen (PNAS, PubMed Central) übereinstimmend gesehen. Genannte Kernaussage laut Abstract:
+      Ernteertragsrückgang durch Klima erhöht die Auswanderung aus Mexiko in die USA; Halbelastizität etwa -0,2
+      (10 % weniger Ertrag entsprechen etwa 2 % zusätzlich Auswandernden). Diese Zahl steht im Abstract, wurde aber
+      an der Kritik unten in Frage gestellt.
+  - zitat: "Auffhammer, M., Vincent, J. R. (2012): Unobserved time effects confound the identification of climate change impacts. Proceedings of the National Academy of Sciences, 109(30), 11973-11974"
+    jahr: 2012
+    doi: "10.1073/pnas.1202049109"
+    rolle: gegenposition   # methodische Kritik an Feng et al. 2010
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Heft, Seiten und DOI am 2026-09-23 in der Crossref-API,
+      bei PNAS (Suchergebnis) und im Volltext bei PubMed Central (PMC3409766) übereinstimmend gesehen.
+      ABWEICHUNG VOM AUFTRAG: Der Auftrag sagte "widerlegt". Die Quelle sagt es anders: Feng et al. hätten
+      den Zeiteffekt in ihrer Gleichung 1 nicht tatsächlich einbezogen, obwohl der Text das angibt. Mit
+      Zeiteffekt seien die Koeffizienten des Maisertrags nicht signifikant von null verschieden (auch nicht
+      auf dem 10-Prozent-Niveau). Die Autoren schreiben, das entkräfte die Schlussfolgerung von Feng et al.
+      "im statistischen Sinn"; sie nennen andere gleichzeitige Ereignisse (u. a. NAFTA, Pesokrise, verschärfte
+      Grenzkontrollen) als mögliche Erklärung. Es ist eine methodische Kritik an einer Studie, keine
+      Widerlegung der ganzen Klima-Migrations-Forschung. Eine Erwiderung von Feng und Oppenheimer
+      (PNAS 2012, "Applying statistical models to the climate-migration relationship", DOI 10.1073/pnas.1212226109)
+      existiert; ihr Inhalt konnte nicht gelesen werden (PNAS lieferte 403) und wird hier nicht bewertet.
+  - zitat: "Beine, M., Parsons, C. (2015): Climatic factors as determinants of international migration. Scandinavian Journal of Economics, 117(2), 723-767"
+    jahr: 2015
+    doi: "10.1111/sjoe.12098"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Heft, Seiten und DOI am 2026-09-23 in der Crossref-API und
+      in mehreren Verzeichnissen (Wiley, RePEc/IDEAS, EconPapers) übereinstimmend gesehen. Abstract:
+      Bilaterale Wanderungsströme 1960-2000; kein direkter Effekt langfristiger Klimafaktoren auf internationale
+      Migration in der gesamten Stichprobe; Hinweise auf indirekte Wirkung über Löhne; Naturkatastrophen
+      begünstigen vor allem Wanderung in Städte. (Aus dem Abstract, Volltext nicht gelesen.)
+  - zitat: "Cai, R., Feng, S., Oppenheimer, M., Pytlikova, M. (2016): Climate variability and international migration: The importance of the agricultural linkage. Journal of Environmental Economics and Management, 79, 135-151"
+    jahr: 2016
+    doi: "10.1016/j.jeem.2016.06.005"
+    rolle: gegenposition   # differenziert: Temperatureffekt hängt von der Rolle der Landwirtschaft ab, nicht (nur) vom Einkommen
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Seiten und DOI am 2026-09-23 in der Crossref-API und im
+      Publikationsverzeichnis der Princeton University übereinstimmend gesehen. Aussage laut Abstract:
+      jährliche bilaterale Wanderungsdaten 1980-2010; Temperatur löst internationale Auswanderung nur aus
+      Ländern mit großem Agrarsektor aus. Volltext nicht gelesen; ob die Studie eine Einkommens-Wechselwirkung
+      wie Cattaneo und Peri prüft, ist nicht bekannt.
+  - zitat: "Mester, B., Frieler, K., Schewe, J. (2023): Human displacements, fatalities, and economic damages linked to remotely observed floods. Scientific Data, 10, Artikel 482"
+    jahr: 2023
+    doi: "10.1038/s41597-023-02376-9"
+    rolle: daten   # Beschreibung der IDMC-Vertreibungsdaten und einer Verknüpfung mit Satellitendaten
+    citation_verified: true
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band, Artikelnummer und DOI am 2026-09-23 in der Crossref-API und im
+      Volltext bei PubMed Central (PMC10363124) übereinstimmend gesehen. Nur als Beleg dafür verwendet, wie IDMC-Daten
+      beschrieben werden (siehe fallstricke), nicht als Beleg für die Theorie.
+
+modell: >
+  ZWEI STUFEN. Stufe A ist die Idee der Quelle in Worten, Stufe B ist eine ALEPH-Vereinfachung zur Prüfung.
+
+  Stufe A (Cattaneo und Peri 2016, nur nach Abstract; die genaue Gleichung wurde NICHT gelesen und wird hier
+  nicht wiedergegeben): Die Autoren untersuchen 115 bzw. 116 Länder, 1960-2000, und vergleichen die
+  unterschiedliche Erwärmung zwischen Ländern mit den Auswanderungsraten ins Ausland und in die Städte.
+  Getrennt nach Einkommensgruppe (Länder mit mittlerem gegenüber Ländern mit niedrigem Einkommen) ergibt sich
+  laut Abstract ein entgegengesetztes Vorzeichen. Erklärung der Autoren: starke Liquiditätsbeschränkungen in
+  armen Ländern.
+
+  Stufe B (ALEPH-Vereinfachung, NICHT die Gleichung der Quelle):
+    m_it = a_i + g_t + b1 * T_it + b2 * (T_it * Arm_i) + c * K_it + e_it
+  Symbole: m_it = Auswanderungs- bzw. Vertreibungsrate des Landes (oder der Region) i im Jahr t.
+  a_i = fester Effekt je Land (alles, was sich nicht ändert). g_t = fester Effekt je Jahr (gemeinsame Schocks
+  für alle Länder; wichtig wegen der Kritik von Auffhammer und Vincent 2012). T_it = Temperaturanomalie
+  (Abweichung vom Mittel der Basisjahre). Arm_i = 1 für Länder mit niedrigem Einkommen, 0 für Länder mit
+  mittlerem Einkommen; die Schwelle wird VOR dem Test festgelegt (Weltbank-Einkommensgruppe, Stand
+  Basisjahr) und nicht danach verändert. K_it = Kontrollen (z. B. Bevölkerungswachstum, BIP-Wachstum).
+  e_it = Fehler.
+  Vorab festgelegte Erwartung: b1 > 0 (Länder mit mittlerem Einkommen: Erwärmung erhöht Auswanderung) und
+  b1 + b2 < 0 (Länder mit niedrigem Einkommen: Erwärmung senkt oder erhöht sie nicht), also b2 < 0.
+  Die Idee "Liquiditätsschwelle": Wer auswandern will, braucht Geld für die Reise und die Ankunft. Fällt das
+  Einkommen durch die Erwärmung unter diese Schwelle, kann der Haushalt nicht gehen, obwohl er gehen wollte.
+  Beobachtbar ist nur, dass weniger Menschen gehen, nicht warum.
+  Wichtige Abweichung von der Quelle: Die Quelle nutzt langfristige Erwärmungstrends über Jahrzehnte
+  (Zehnjahres-Perioden laut Abstract). ALEPH hat 2013-2025 mit Jahres- oder Monatsanomalien. Das ist keine
+  Wiederholung der Studie, sondern ein neuer Test auf einem anderen Zeitraum und mit einem anderen Maß.
+
+ursache: {layer: temperatur, richtung: anstieg, zusätzlich: "Niederschlagsausfall (niederschlag) als zweiter, nicht von der Quelle geprüfter Kanal"}
+wirkung: {layer: migration_vertreibung, richtung: "Anstieg in Ländern mittleren Einkommens, kein Anstieg oder Rückgang in armen Ländern", zusätzlich: "Nachtlicht nur als indirekter, unbestätigter Proxy; keine Richtung vorab festgelegt, weil Nicht-Wandern kein sichtbares Signal erzeugt"}
+verzögerung_monate: [0, 24]   # ALEPH-Annahme vor dem Test, NICHT aus der Quelle. Siehe Erklärung im mechanismus.
+geltungsbereich: >
+  Länder mit ländlicher, landwirtschaftlich geprägter Bevölkerung. Die Vorzeichen-Aufspaltung gilt laut Quelle
+  zwischen Ländern mit mittlerem und niedrigem Einkommen (Zeitraum 1960-2000, Länderebene). Nicht abgedeckt
+  laut Quelle: Länder mit hohem Einkommen, Bürgerkriegsgebiete, Küsten- und Meeresspiegel-Fälle. Übertragung
+  auf Regionen innerhalb eines Landes und auf 2013-2025 ist eine ALEPH-Annahme.
+
+mechanismus: >
+  Erwärmung senkt die Erträge und damit das Einkommen ländlicher Haushalte. In Ländern mit mittlerem
+  Einkommen gehen laut Cattaneo und Peri (2016) mehr Menschen in Städte oder ins Ausland. In sehr armen
+  Ländern sinkt laut Quelle die Wahrscheinlichkeit dieser Wanderung, was die Autoren mit "severe liquidity
+  constraints" erklären. Das Konzept "trapped populations" (gefangene Bevölkerung) stammt aus dem
+  Foresight-Bericht 2011: Menschen sind Umweltgefahren ausgesetzt, können aber wegen fehlender Mittel nicht
+  wegziehen (Definition nach DeWaard et al. 2022: Menschen, die den Umweltbelastungen ausgesetzt sind, aber wegen
+  fehlender Ressourcen nicht durch Wanderung anpassen können, obwohl sie umziehen wollen).
+  FORSCHUNGSSTAND: Die Aufspaltung nach Einkommen ist eine einzelne Studie mit Länderdaten; die Erklärung
+  "Liquiditätsbeschränkung" ist eine Deutung der Autoren, kein direkt gemessener Mechanismus (Ersparnisse und
+  Kreditzugang werden nicht beobachtet, soweit aus dem Abstract erkennbar). Andere Studien finden keinen
+  direkten Klimaeffekt auf internationale Migration (Beine und Parsons 2015) oder einen Effekt nur bei großem
+  Agrarsektor (Cai et al. 2016). Der Streit um Feng et al. (2010) zeigt, dass Ergebnisse stark von der
+  Modellform (Zeiteffekte) abhängen.
+  VERZÖGERUNG: Die Quelle arbeitet mit Zehnjahres-Perioden (etwa 120 Monate), also ohne monatliche
+  Verzögerungsstruktur. Ob und welche Verzögerung sie schätzt, ist nicht bekannt (Volltext nicht gelesen).
+  Das Intervall [0, 24] Monate ist eine ALEPH-Annahme (Ernte, Einkommensverlust, dann Entscheidung); es ist
+  in der Literatur hier nicht belegt und bleibt eine offene Lücke.
+
+bedingungen: >
+  Laut Quelle hängt das Vorzeichen vom Einkommensniveau des Landes ab (Liquidität). Ob die Grenze bei einer
+  bestimmten Einkommenshöhe liegt und wie die Autoren "arm" genau abgrenzen, wurde nicht am Volltext geprüft.
+  Nach Cai et al. (2016) ist zusätzlich die Bedeutung der Landwirtschaft entscheidend. Nach Beine und Parsons
+  (2015) wirken Umweltfaktoren eher indirekt über Löhne. Nach Black et al. (2011) ist Umwelt nur einer von
+  fünf Treibern (wirtschaftlich, politisch, sozial, demografisch, Umwelt) und wirkt über Barrieren und
+  Erleichterungen der Wanderung.
+
+gegenpositionen:
+  - "Beine und Parsons (2015, Scandinavian Journal of Economics): Bilaterale Wanderungsdaten 1960-2000, kein direkter Effekt langfristiger Klimafaktoren auf internationale Migration in der gesamten Stichprobe; Umwelt wirkt eher indirekt über Löhne. Das widerspricht einem allgemeinen Temperatureffekt, schließt einen Effekt in Untergruppen aber nicht ausdrücklich aus (nur nach Abstract beurteilt)."
+  - "Cai, Feng, Oppenheimer und Pytlikova (2016, Journal of Environmental Economics and Management): Temperatur erhöht die internationale Auswanderung nur aus Ländern mit großem Agrarsektor. Das legt nahe, dass die Agrarabhängigkeit und nicht (nur) das Einkommen entscheidet (nur nach Abstract beurteilt)."
+  - "Auffhammer und Vincent (2012, PNAS): Kritik an Feng et al. (2010). Ohne Kontrolle für Zeiteffekte sei der Ertragseffekt auf die Mexiko-USA-Auswanderung nicht identifiziert; mit Zeiteffekt sind die Koeffizienten nicht signifikant. Feng und Oppenheimer haben laut Titelverzeichnis erwidert; deren Inhalt wurde nicht gelesen. Der Streit ist in der Fachwelt nicht durch diesen Eintrag entschieden."
+  - "Innerhalb der Quelle selbst: Der Befund 'weniger Wanderung in armen Ländern' ist eine Deutung als Liquiditätsbeschränkung. Andere Erklärungen (z. B. mehr Rückkehrwanderung, Verschiebung zu anderen Zielen, Messfehler bei Wanderungsdaten armer Länder) sind mit dem Abstract nicht ausgeschlossen; ob die Autoren sie im Volltext prüfen, ist nicht bekannt."
+
+fallstricke:
+  - "ZAHLEN DES NUTZERS NICHT BESTÄTIGT: Die vom Nutzer genannten Werte (+4 % in Ländern mittleren Einkommens, -16 % in armen Ländern) konnten in keinem gelesenen Text (Abstract der Zeitschrift, NBER, FEEM, Peri-Seite) gefunden werden. Vom Nutzer genannt, nicht bestätigt. Die Quelle gibt in den gelesenen Texten nur die Richtung an. Zahlen im Abstract: durchschnittliche Netto-Auswanderungsrate über zehn Jahre 4,2 Prozent in Ländern mit mittlerem Einkommen gegenüber 1,8 Prozent in Ländern mit niedrigem Einkommen; das sind Durchschnittswerte, KEINE Effekte der Erwärmung. Vermutung, nicht bestätigt: Die 4 des Nutzers könnte aus dieser 4,2 oder aus einer Prozentpunkt-Angabe zur Verstädterung stammen. Eine Sekundärseite (JDC-Literaturübersicht, nur über eine automatische Zusammenfassung gelesen) nennt für 1 Grad Celsius ganz andere Größenordnungen (etwa +20 % bzw. -80 % internationale Migration); auch das ist am Original nicht bestätigt und wird nicht als Fakt verwendet. Quantitative Erwartungen stehen deshalb in diesem Eintrag nicht, nur Vorzeichen."
+  - "IDENTIFIKATION UND ZEITEFFEKTE: Nach Auffhammer und Vincent (2012) kann ein scheinbarer Klimaeffekt entstehen, wenn gemeinsame zeitliche Ereignisse (Wirtschaftskrise, Politik, Grenzkontrollen) nicht kontrolliert werden. ALEPH-Modell braucht Jahreseffekte (g_t) und Landeseffekte (a_i); der Permutationstest aus Abschnitt 8 muss diese Struktur erhalten."
+  - "VERSCHIEDENE ZEITSKALEN: Quelle = Erwärmungstrend über Jahrzehnte (1960-2000, Länderebene); ALEPH = 2013-2025, Jahres-/Monatsanomalien, Nachtlicht ab 2013. Ein Nicht-Treffer widerlegt die Quelle nicht, ein Treffer bestätigt sie nicht im engen Sinn. Kurzfristige Schwankungen (Wetter) und langfristiger Klimawandel (Anpassung) können unterschiedlich wirken."
+  - "MIGRATION IST NICHT VERTREIBUNG: Die Quelle misst Auswanderung ins Ausland und Wanderung in Städte (Abstract). IDMC-Daten erfassen Vertreibung durch Katastrophen und Konflikt, also plötzliche Ereignisse, keine schleichende Erwärmung. Laut Mester et al. (2023) beruhen IDMC-Schätzungen auf zerstörten oder unbewohnbaren Häusern, vertriebenen Haushalten und angeordneten Evakuierungen. UNHCR erfasst Flüchtlinge, nicht Wirtschaftsmigranten. Keine der geplanten Quellen misst also dieselbe Größe wie Cattaneo und Peri."
+  - "KURZFRISTIG GEGEN LANGFRISTIG: Saisonale und zirkuläre Wanderung, dauerhafte Abwanderung und Vertreibung mit Rückkehr sind verschiedene Dinge; Jahresdaten und Nachtlicht mischen sie."
+  - "SELEKTION: Wer wandern kann, ist nicht zufällig gewählt (oft die etwas Bessergestellten). Wer geht, verändert die Zusammensetzung der zurückbleibenden Bevölkerung. Das verzerrt Vergleiche ohne Haushaltsdaten."
+  - "BLEIBEN WOLLEN GEGEN BLEIBEN MÜSSEN: Nach DeWaard et al. (2022) unter Verweis auf Black und Collyer (2014) ist wichtig, zwischen freiwilligem Bleiben und erzwungenem Bleiben zu unterscheiden. Aus Länderdaten oder Satellitendaten ist das nicht erkennbar; 'gefangene Bevölkerung' ist eine Deutung, kein gemessener Zustand."
+  - "GRENZÜBERSCHREITEND GEGEN INTERN: Die Quelle nutzt Auswanderung ins Ausland und Landflucht. In ALEPH wäre interne Wanderung nur indirekt über Nachtlicht sichtbar; bilaterale Wanderungsströme (wie bei Beine und Parsons, Cai et al.) sind nicht geplant."
+  - "NACHTLICHT ALS PROXY FÜR ARME LÄNDLICHE GEBIETE: Ländliche Gebiete armer Länder haben oft kaum Elektrifizierung; Nachtlicht-Werte unter 0,5 nW cm-2 sr-1 werden im Produkt VNP46A3 auf null gesetzt (docs/sources/vnp46a3.md). Ein Wegzug aus dunklen Dörfern ist damit kaum sichtbar. Ein ausbleibendes Signal kann 'niemand geht' oder 'Wanderung nicht sichtbar' heißen. Nachtlicht darf hier höchstens als Nebenhinweis dienen."
+  - "IDMC-ZIRKULARITÄT (Vermutung des Nutzers, nicht bestätigt): Der Nutzer vermutet, IDMC nutze selbst Satellitenbilder zur Lückenfüllung, so dass ein Vergleich mit Satellitendaten nicht unabhängig wäre. Belegt werden konnte das nicht: Die Methodikseite von IDMC (internal-displacement.org/database/methodology) war mit den Werkzeugen nicht lesbar (nur Menüs), die GRID-Methodik 2020 als PDF nicht lesbar, und die Seite zum Vertreibungsrisikomodell sagt nichts dazu. Die einzige gelesene Beschreibung (Mester et al. 2023) sagt, dass IDMC-Schätzungen auf zerstörten Häusern, vertriebenen Haushalten und Evakuierungen beruhen, und dass die Verknüpfung von IDMC-Daten mit Satelliten-Flutkarten (Global Flood Database) von den Forschern hergestellt wurde, nicht von IDMC. Ein anderes, ebenfalls nicht geprüftes Risiko: Meldungen aus Medien und Behörden decken arme Länder weniger dicht ab; das könnte die Einkommensaufspaltung künstlich erzeugen (ALEPH-Überlegung, nicht aus einer Quelle)."
+  - "ÖKOLOGISCHER FEHLSCHLUSS: Länderdaten (Einkommensgruppe des Landes) sagen nichts über einzelne arme Haushalte in einem Land mittleren Einkommens. Die Übertragung auf Zellen von 0,25 Grad ist nicht abgesichert."
+  - "EINKOMMENSGRENZE: Wie 'arm' und 'mittleres Einkommen' abgegrenzt werden, wurde nicht am Volltext geprüft. Die Grenze muss in ALEPH vor dem Test festgelegt werden (Rechenspielraum, sonst Scheinbefund)."
+  - "TEMPERATUR-ZEITREIHE: Die Quelle nutzt eigene historische Temperaturdaten 1960-2000; ERA5 (geplant) ist ein Reanalyse-Produkt mit eigenen Unsicherheiten, hier nicht geprüft."
+
+datenbedarf:
+  - {layer: temperatur_era5, rolle: ursache, status: geplant, anmerkung: "ERA5 (Copernicus CDS) nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief, nichts geladen."}
+  - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "GPM IMERG, Steckbrief vorhanden (docs/sources/gpm_imerg.md), noch nichts geladen. Von der Quelle nicht geprüfter Zusatzkanal."}
+  - {layer: migration_vertreibung, rolle: wirkung, status: geplant, anmerkung: "IDMC/UNHCR nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief. Misst Vertreibung durch Katastrophe/Konflikt bzw. Flüchtlinge, nicht Wirtschaftsmigration im Sinn der Quelle."}
+  - {layer: bilaterale_wanderung_oder_stadt_land_wanderung, rolle: wirkung, status: fehlt, anmerkung: "Datenart der Quelle (Auswanderungsraten, Landflucht) nirgends geplant."}
+  - {layer: nachtlicht, rolle: wirkung, status: in Arbeit, anmerkung: "VNP46A3, Suomi-NPP, 2013-2025, 0,25 Grad, monatlich; großer Lauf läuft, ein Testmonat vorhanden; ein großer Teil der gültigen Pixel ist aufgefüllt (docs/sources/vnp46a3.md). Nur indirekter, nicht bestätigter Proxy; Werte unter 0,5 nW cm-2 sr-1 sind auf 0 gesetzt."}
+  - {layer: einkommensniveau_land, rolle: bedingung, status: geplant, anmerkung: "Weltbank (jährlich, Länderebene), Steckbrief vorhanden (docs/sources/weltbank.md), noch nichts geladen. Ein Einkommensindikator (z. B. BIP je Einwohner) steht dort nicht im Mindestindikatorenset; ob und wie die Einkommensgruppe abrufbar ist, wurde nicht geprüft."}
+  - {layer: agraranteil_land, rolle: bedingung, status: geplant, anmerkung: "Weltbank-Indikator zum Agrarsektor nicht im Steckbrief; ob abrufbar, nicht geprüft. Alternativ Vegetation MOD13C2 (Steckbrief vorhanden, noch nichts geladen) nur als grober Ersatz."}
+  - {layer: bevoelkerung_ghsl_worldpop, rolle: kontrolle, status: geplant, anmerkung: "Nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief."}
+  - {layer: liquiditaet_haushalte_ersparnisse_kreditzugang, rolle: mechanismus, status: fehlt, anmerkung: "Der eigentliche Mechanismus (Liquiditätsbeschränkung) ist mit keinem geplanten Layer messbar; Länder-Einkommen ist nur ein grober Ersatz."}
+
+status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+prüfergebnisse: []

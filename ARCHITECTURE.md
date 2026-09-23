@@ -201,7 +201,13 @@ id: duerre-migration
 titel: Dürre verstärkt Abwanderung aus ländlichen Regionen
 disziplin: Umweltökonomie / Migrationsforschung
 quellen:
-  - "<Literaturangabe>"
+  - zitat: "<Autoren (Jahr): Titel. Zeitschrift, Band, Seiten>"
+    jahr: 2000
+    doi: "<DOI oder null, wenn es keinen gibt>"
+    rolle: original          # original | gegenposition | methode | daten
+    citation_verified: false # PFLICHT je Quelle, siehe unten
+    verifiziert_an: "<wo und wie geprüft, z. B. Verlagsseite/Crossref; sonst was fehlt>"
+modell: "<Gleichung, z. B. y_it = a_i + g_t + b * x_i,t-L + e_it, mit Erklärung der Symbole>"
 ursache: {layer: niederschlag, richtung: rückgang}
 wirkung: {layer: nachtlicht, richtung: rückgang, zusätzlich: abwanderung}
 verzögerung_monate: [3, 24]
@@ -210,9 +216,23 @@ mechanismus: >
   Ernteausfälle senken Einkommen, Haushalte wandern in Städte ab.
 bedingungen: >
   Stärker bei geringer Bewässerung und schwachen sozialen Sicherungssystemen.
+gegenpositionen:
+  - "<Studie oder Position mit abweichendem Ergebnis, mit Verweis auf die Quelle in quellen>"
+fallstricke:
+  - "<bekanntes methodisches Problem dieser Theorie>"
+datenbedarf:
+  - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "<z. B. Steckbrief vorhanden, noch nicht geladen>"}
 status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
 prüfergebnisse: []
 ```
+
+**Pflichtfelder für Qualität und Ehrlichkeit** (jeder Eintrag muss sie ausfüllen):
+- `citation_verified` (je Quelle, `true`/`false`): `true` nur, wenn Autoren, Jahr, Titel, Zeitschrift und DOI tatsächlich an der Originalquelle oder einem Verzeichnis (Verlag, Crossref) geprüft wurden, nicht aus dem Gedächtnis. Alles andere ist `false`, und `verifiziert_an` sagt, was fehlt. Eine Quellenangabe wird nie erfunden.
+- `fallstricke`: bekannte methodische Probleme der Theorie (Messfehler, Zirkularität, Streit in der Fachwelt, Fehlschlüsse beim Übertragen auf Satellitendaten).
+- `datenbedarf`: welche Layer die Prüfung braucht und ob wir sie haben. `status` je Layer: `vorhanden` (Würfel geladen), `in Arbeit` (Download läuft), `geplant` (Steckbrief oder Eintrag in Abschnitt 5, noch nicht geladen), `fehlt` (nirgends geplant).
+- `modell` (Gleichung) und `gegenpositionen` (mindestens eine, sonst ausdrücklich „keine gefunden") sind ebenfalls Pflicht.
+
+Die Angaben im Eintrag sind Aussagen der Literatur, nicht ALEPH-Ergebnisse. Bis zur Prüfung gilt eine Theorie in ALEPH nur als Hypothese; zusammenfallende Ereignisse tragen höchstens `beobachtet` (siehe „Evidenzstufen der Verknüpfung“).
 
 **Beispiele für erste Theorie-Einträge** (Bereiche, nicht abschließend; jede Theorie ist in der Forschung umstritten und wird genau deshalb geprüft):
 
