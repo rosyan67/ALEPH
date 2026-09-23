@@ -228,4 +228,9 @@ datenbedarf:
   - {layer: landnutzung_bewässerung, rolle: kontrollvariable, status: fehlt, anmerkung: "Landnutzungskarte und Bewässerungsflächen sind nirgends geplant; nötig, um Ackerland/bewässerte Flächen auszunehmen (Beleg für diesen Fallstrick noch zu finden)."}
 
 status: ungeprüft
+# Der Status gilt für den SPI-Teil (Einordnung B; Bezugszeitraum siehe Fallstrick "BEZUGSZEITRAUM").
+teilstatus:
+  - teil: "SPEI-Teil (Wasserbilanz P minus PET statt Niederschlag allein)"
+    status: Daten unzureichend
+    grund: "Es ist kein PET-Layer (Verdunstung) geplant (datenbedarf: temperatur_pet, fehlt). Ohne PET lässt sich der SPEI nicht berechnen. Der Teil wird erst geprüft, wenn ein PET-Layer beschafft ist; die PET-Formel wird dann vorab festgelegt."
 prüfergebnisse: []

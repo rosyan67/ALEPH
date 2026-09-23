@@ -3,10 +3,12 @@
 # Erwartungen (Richtung, Verzögerung, Geltungsbereich) dürfen nachträglich NICHT geändert werden.
 # Ergebnisse gehören ausschließlich in `prüfergebnisse`.
 #
-# Hinweis zum Status: Der Auftrag verlangt `ungeprüft`. Die zentrale Wirkungsgröße (Migration
-# im Sinne der Quelle) ist in ALEPH aber weder geladen noch mit Steckbrief geplant, und die
-# Kernaussage (Menschen bleiben, obwohl sie gehen wollen) ist in Satellitendaten nicht direkt
-# sichtbar. Der Auftraggeber kann daher entscheiden, ob `Daten unzureichend` ehrlicher ist.
+# Hinweis zum Status (2026-09-23): Der Eintrag wurde zunächst mit `ungeprüft` angelegt und auf
+# Entscheidung des Auftraggebers auf `Daten unzureichend` umgestellt. Grund: Die zentrale
+# Wirkungsgröße (Auswanderungs- und Stadtwanderungsraten im Sinne der Quelle) und der Mechanismus
+# (Liquidität der Haushalte) sind in ALEPH nirgends geplant, und die Kernaussage (Menschen bleiben,
+# obwohl sie gehen wollen) ist in Satellitendaten nicht direkt sichtbar. Einordnung C.
+# Erwartungen, Quellen und Modell sind dabei unverändert geblieben.
 
 id: klimamigration-gefangene-bevoelkerung
 titel: Erwärmung erhöht die Abwanderung in Ländern mittleren Einkommens, aber nicht in sehr armen Ländern (Liquiditätsbeschränkung, "gefangene Bevölkerung")
@@ -214,10 +216,12 @@ datenbedarf:
   - {layer: migration_vertreibung, rolle: wirkung, status: geplant, anmerkung: "IDMC/UNHCR nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief. Misst Vertreibung durch Katastrophe/Konflikt bzw. Flüchtlinge, nicht Wirtschaftsmigration im Sinn der Quelle."}
   - {layer: bilaterale_wanderung_oder_stadt_land_wanderung, rolle: wirkung, status: fehlt, anmerkung: "Datenart der Quelle (Auswanderungsraten, Landflucht) nirgends geplant."}
   - {layer: nachtlicht, rolle: wirkung, status: in Arbeit, anmerkung: "VNP46A3, Suomi-NPP, 2013-2025, 0,25 Grad, monatlich; großer Lauf läuft, ein Testmonat vorhanden; ein großer Teil der gültigen Pixel ist aufgefüllt (docs/sources/vnp46a3.md). Nur indirekter, nicht bestätigter Proxy; Werte unter 0,5 nW cm-2 sr-1 sind auf 0 gesetzt."}
-  - {layer: einkommensniveau_land, rolle: bedingung, status: geplant, anmerkung: "Weltbank (jährlich, Länderebene), Steckbrief vorhanden (docs/sources/weltbank.md), noch nichts geladen. Ein Einkommensindikator (z. B. BIP je Einwohner) steht dort nicht im Mindestindikatorenset; ob und wie die Einkommensgruppe abrufbar ist, wurde nicht geprüft."}
+  - {layer: einkommensniveau_land, rolle: bedingung, status: vorhanden, anmerkung: "STAND 2026-09-23: reales BIP pro Kopf geladen (laender/weltbank.parquet); Einkommensgruppen der Weltbank sind NICHT in der Tabelle. Frühere Angabe: Weltbank (jährlich, Länderebene), Steckbrief vorhanden (docs/sources/weltbank.md), noch nichts geladen. Ein Einkommensindikator (z. B. BIP je Einwohner) steht dort nicht im Mindestindikatorenset; ob und wie die Einkommensgruppe abrufbar ist, wurde nicht geprüft."}
   - {layer: agraranteil_land, rolle: bedingung, status: geplant, anmerkung: "Weltbank-Indikator zum Agrarsektor nicht im Steckbrief; ob abrufbar, nicht geprüft. Alternativ Vegetation MOD13C2 (Steckbrief vorhanden, noch nichts geladen) nur als grober Ersatz."}
   - {layer: bevoelkerung_ghsl_worldpop, rolle: kontrolle, status: geplant, anmerkung: "Nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief."}
   - {layer: liquiditaet_haushalte_ersparnisse_kreditzugang, rolle: mechanismus, status: fehlt, anmerkung: "Der eigentliche Mechanismus (Liquiditätsbeschränkung) ist mit keinem geplanten Layer messbar; Länder-Einkommen ist nur ein grober Ersatz."}
 
-status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+status: Daten unzureichend   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+# Grund: Wirkungsgröße (Auswanderungs-/Stadtwanderungsraten) und Mechanismus (Haushaltsliquidität) fehlen (siehe datenbedarf, status: fehlt);
+# IDMC/UNHCR misst Vertreibung, nicht die Wanderung im Sinne der Quelle. Einordnung C.
 prüfergebnisse: []

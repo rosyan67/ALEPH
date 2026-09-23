@@ -2,18 +2,23 @@
 # Verfasst am 2026-09-23, bevor irgendein ALEPH-Testergebnis angesehen wurde.
 # Erwartungen in diesem Eintrag werden nachträglich nicht geändert; Ergebnisse stehen nur in "prüfergebnisse".
 #
+# UMBENENNUNG (2026-09-23, nach Sichtung der Prüfberichte, vor jeder ALEPH-Auswertung):
+# Früherer Name: "Gravitationsmodell der Migration, mit PPML geschätzt" (id gravitation-migration-ppml).
+# Der alte Name war nicht ehrlich. Erwartungen, Quellen, Gleichungen und Verzögerung sind unverändert;
+# geändert wurden nur Name (id, titel), Status und die Vermerke dazu.
+#
 # WICHTIG ZUM NAMEN: Die klassische Gravitationsform (Herkunft UND Ziel UND Distanz) ist mit den
-# geplanten ALEPH-Daten NICHT prüfbar. Geprüft wird nur eine herkunftsseitige Vereinfachung
-# (ALEPH-Vereinfachung, steht so in keiner der geprüften Quellen). Siehe Feld "modell" und "fallstricke".
-# Für die volle Gravitationsform wäre der Status "Daten unzureichend" (bilaterale Daten fehlen);
-# der Status bleibt hier "ungeprüft", weil die herkunftsseitige Variante mit geplanten Layern
-# grundsätzlich prüfbar ist und noch keine Prüfung gelaufen ist.
+# geplanten ALEPH-Daten NICHT prüfbar. Das volle Gravitationsmodell bräuchte bilaterale Wanderungsdaten
+# (Herkunfts-Ziel-Paare) und Distanzen; beides ist nirgends geplant. Es ist deshalb Einordnung (C),
+# nicht prüfbar, und steht in "teilstatus" mit "Daten unzureichend".
+# Geprüft wird nur eine herkunftsseitige Vereinfachung (Einordnung B; ALEPH-Vereinfachung, steht so in
+# keiner der geprüften Quellen). Siehe Feld "modell" und "fallstricke".
 
-id: gravitation-migration-ppml
+id: abwanderung-herkunftsseitig-ppml
 titel: >
-  Gravitationsmodell der Migration, mit PPML geschätzt (ALEPH prüft nur die herkunftsseitige Vereinfachung:
-  Schocks im Herkunftsgebiet und Ausreise bzw. Vertreibung)
-disziplin: Migrationsökonomik / Ökonometrie (Gravitationsmodelle)
+  Abwanderung als Reaktion auf herkunftsseitige Faktoren (PPML-Schätzung): Schocks im Herkunftsgebiet
+  und Ausreise bzw. Vertreibung, angelehnt an die Gravitationsliteratur
+disziplin: Migrationsökonomik / Ökonometrie (angelehnt an Gravitationsmodelle)
 
 quellen:
   - zitat: "Ravenstein, E. G. (1885): The Laws of Migration. Journal of the Statistical Society of London, Band 48, Heft 2, S. 167-227 (Seitenangabe laut Oxford-Academic-Seite)"
@@ -163,8 +168,10 @@ bedingungen: >
   aggregiert auf Länder-Jahr, Kalibrierung auf früheren Jahren, Test auf späteren Jahren, Vergleich mit Permutationstest (Abschnitt 8),
   Bevölkerung als Kontrolle. Bestätigt wäre nur die herkunftsseitige Aussage "Schock steht mit Ausreise in Zusammenhang", nicht die Gravitationsform.
   Zur Benennung: Ohne Ziel- und Distanzinformation ist das kein Gravitationsmodell im Sinne der Quellen. Es ist ein PPML-Paneldatenmodell
-  mit Gravitations-Herkunft (Bevölkerungsgröße als Skalierung). Es sollte in der Oberfläche so bezeichnet werden ("herkunftsseitiges Ausreisemodell,
-  angelehnt an die Gravitationsliteratur"), nicht als "Gravitationsmodell der Migration".
+  mit Gravitations-Herkunft (Bevölkerungsgröße als Skalierung). Der Eintrag heißt deshalb nicht mehr "Gravitationsmodell"; in der Oberfläche
+  ist er so zu bezeichnen ("herkunftsseitiges Ausreisemodell, angelehnt an die Gravitationsliteratur"), nicht als "Gravitationsmodell der Migration".
+  Das volle Gravitationsmodell (bilateral: M_ij mit Ziel und Distanz) bräuchte bilaterale Wanderungsdaten und Distanzen, ist mit den geplanten
+  Layern nicht schätzbar und damit Einordnung (C), nicht prüfbar.
 
 gegenpositionen:
   - >
@@ -232,12 +239,16 @@ datenbedarf:
   - {layer: acled, rolle: ursache, status: geplant, anmerkung: "Steckbrief vorhanden, noch nichts geladen; Lizenz schränkt öffentliche Anzeige ein, Ergebnisse nur zusammengefasst zeigen"}
   - {layer: idmc_unhcr, rolle: wirkung, status: geplant, anmerkung: "nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief; Definitionen (Vertreibung, Flüchtlinge, Bestand oder Strom) und Länderjahr-Auflösung noch zu klären; erfasst nur Flucht/Vertreibung, nicht alle Wanderung"}
   - {layer: bevoelkerung, rolle: kontrolle, status: geplant, anmerkung: "GHSL/WorldPop nur in Abschnitt 5 geplant, kein Steckbrief; für P_i nötig. Weltbank-Länderdaten (Steckbrief vorhanden, geplant) könnten Bevölkerung pro Land liefern; ob der Indikator dort enthalten ist, wurde nicht geprüft"}
-  - {layer: weltbank, rolle: kontrolle, status: geplant, anmerkung: "Steckbrief vorhanden, noch nichts geladen; jährlich, nur Länderebene; Wirtschaftskontrolle möglich"}
+  - {layer: weltbank, rolle: kontrolle, status: vorhanden, anmerkung: "STAND 2026-09-23: geladen (laender/weltbank.parquet). Frühere Angabe: Steckbrief vorhanden, noch nichts geladen; jährlich, nur Länderebene; Wirtschaftskontrolle möglich"}
   - {layer: bilaterale_wanderung, rolle: wirkung, status: fehlt, anmerkung: "Bestände oder Ströme nach Herkunfts-Ziel-Paar; nirgends geplant. Ohne sie ist die volle Gravitationsform (M_ij) nicht schätzbar"}
   - {layer: distanz_zielland, rolle: kontrolle, status: fehlt, anmerkung: "bilaterale Distanzen, Merkmale der Zielländer (Einkommen, Arbeitsmarkt), multilaterale Widerstandsterme; nirgends geplant"}
   - {layer: netzwerk_politik, rolle: kontrolle, status: fehlt, anmerkung: "Diaspora-Größe und Visa-/Grenzpolitik; nirgends geplant"}
 
 status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
-# Hinweis: Für die volle bilaterale Gravitationsform wäre "Daten unzureichend" zutreffend (bilaterale Daten und Distanz fehlen).
-# Für die herkunftsseitige Vereinfachung fehlt vor allem noch der Wirkungs-Layer (IDMC/UNHCR, kein Steckbrief).
+# Der Status gilt für die herkunftsseitige Vereinfachung, also den Gegenstand dieses Eintrags (Einordnung B).
+# Ihr fehlt noch der Wirkungs-Layer IDMC/UNHCR (geplant, kein Steckbrief); er ist noch nicht geladen.
+teilstatus:
+  - teil: "Volle bilaterale Gravitationsform (Herkunft, Ziel und Distanz, M_ij), Einordnung C"
+    status: Daten unzureichend
+    grund: "Bilaterale Wanderungsdaten und Distanzen/Zielland-Merkmale sind nirgends geplant (datenbedarf: bilaterale_wanderung, distanz_zielland: fehlt). Nicht schätzbar, nicht prüfbar."
 prüfergebnisse: []

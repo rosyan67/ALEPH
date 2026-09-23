@@ -1,6 +1,6 @@
 # Steckbrief: Weltbank-Indikatoren (World Bank Open Data / World Development Indicators)
 
-Stand der Recherche: 2026-09-23. Erstellt vom Agenten „datenquellen-scout".
+Stand der Recherche: 2026-09-23. Erstellt vom Agenten „datenquellen-scout"; Abschnitt 13 (Indikatoren für den Layer, gemessene Befunde) am selben Tag nachgetragen.
 
 Kennzeichnung in diesem Dokument:
 - **[Anbieter]** = Angabe stammt direkt von der Weltbank (data.worldbank.org, datahelpdesk, datacatalog, API), mit Link.
@@ -137,3 +137,32 @@ Konkrete Rolle laut ARCHITECTURE.md Abschnitt 8 (Verknüpfung und Theorie-Regist
 - Genaue Formulierung des Volltexts der allgemeinen „Terms of Use for Datasets"-Seite im Widerspruch/Verhältnis zur spezifischeren Data-Catalog-Lizenzseite (nur automatisierte Zusammenfassungen gelesen, siehe Warnhinweis in Abschnitt 6).
 - SDMX-API im Detail.
 - Ob und wie oft einzelne Länderwerte (nicht nur Aggregate) durch die Weltbank imputiert/geschätzt statt roh gemeldet werden.
+
+## 13. Nachtrag 2026-09-23: Indikatoren für den Layer und gemessene Befunde
+
+Der Layer `aleph/layers/weltbank.py` ist gebaut und hat einmal echt abgerufen (Abruf 2026-09-23 15:59 UTC, 179 s, Quelle zuletzt aktualisiert 2026-07-13). Die Zahlen unten wurden an diesem Abruf selbst gemessen (Evidenzstufe: beobachtet, ein Abruf; Revisionen können sie ändern).
+
+**Änderung gegenüber Abschnitt 2 (Nutzerentscheidung):** Für die Prüfung „Nachtlicht und Wirtschaftsleistung" (`theories/nachtlicht-wirtschaft.yaml`) werden **reale** Reihen gebraucht, nicht laufende US-Dollar. Laufende Dollar enthalten Preisänderungen, die Prüfung würde sonst Inflation messen. `NY.GDP.MKTP.CD` und `NE.TRD.GNFS.ZS` sind deshalb nicht im Layer. Die Codes und Namen wurden am 2026-09-23 gegen die Live-API geprüft:
+
+| Code | Name (Anbieter) | Kurzname in der Tabelle |
+|---|---|---|
+| `NY.GDP.MKTP.KD` | GDP (constant 2015 US$) | bip_real |
+| `NY.GDP.MKTP.PP.KD` | GDP, PPP (constant 2021 international $) | bip_real_kkp |
+| `NY.GDP.PCAP.KD` | GDP per capita (constant 2015 US$) | bip_pro_kopf_real |
+| `NY.GDP.PCAP.PP.KD` | GDP per capita, PPP (constant 2021 international $) | bip_pro_kopf_real_kkp |
+| `SP.POP.TOTL` | Population, total | bevoelkerung |
+| `NE.EXP.GNFS.KD` | Exports of goods and services (constant 2015 US$) | export_real |
+| `NE.IMP.GNFS.KD` | Imports of goods and services (constant 2015 US$) | import_real |
+
+Die Basisjahre unterscheiden sich (US-Dollar-Reihen 2015, KKP-Reihen 2021): nicht mischen.
+
+**Gemessene Befunde:**
+- **Länderzahl bestätigt:** 295 Einträge in der Länderliste, davon 217 Volkswirtschaften und 78 Aggregate („World", Regionen, Einkommensgruppen). Die Datenantwort mischt beide (265 Einheiten je Indikator); der Layer filtert die Aggregate über die Region „Aggregates" aus. Alle 217 Volkswirtschaften haben zu jedem Indikator Datensätze (teils ohne Wert). Taiwan steht nicht in der Länderliste.
+- **Basisjahr geprüft:** Bei 212 Ländern ist das reale BIP 2015 exakt gleich dem laufenden BIP 2015 (`NY.GDP.MKTP.CD`), wie bei „konstanten Preisen 2015" zu erwarten. Der Indikator misst also real.
+- **Lücken (Anteil der 217 Volkswirtschaften ohne Wert):** Bevölkerung 0 % in allen Jahren. BIP real 2 bis 4 % bis 2022, 6 % (2023), 8 % (2024), 14 % (2025). KKP-Reihen 8 bis 10 %, 2025 15 %. Export und Import real 15 bis 28 % bis 2024, 41 % (2025). Das bestätigt die Warnung aus Abschnitt 8 für die jüngsten Jahre, und Export/Import sind deutlich lückenhafter als das BIP. Im Layer sind ab 2024 alle Werte als `vorlaeufig` markiert (Konvention, keine Angabe der Weltbank je Wert; das Feld `obs_status` der API war durchgehend leer).
+- **Innere Stimmigkeit:** BIP pro Kopf mal Bevölkerung geteilt durch BIP liegt im Median bei genau 1,0 (2679 Land-Jahre). Fünf Länder weichen in allen Jahren systematisch ab: Zypern (Faktor 1,37 bis 1,44), Ukraine (1,05 bis 1,07), Tansania (1,03), Marokko (0,985) und Russland (0,983). Die Ursache wurde nicht geprüft (Vermutung, nicht belegt: unterschiedliche Bevölkerungsgrundlage der beiden Reihen). Für diese Länder das BIP pro Kopf nicht aus BIP und Bevölkerung nachrechnen.
+- **KKP bringt für Zeitreihen nichts Neues:** Bei allen 199 Ländern mit beiden Reihen ist das Verhältnis KKP-BIP zu BIP in konstanten US-Dollar über alle Jahre konstant (Schwankung 0,0000 %). Beide Reihen haben dieselbe Veränderung über die Zeit; die KKP-Reihe ist nur für Niveauvergleiche zwischen Ländern nützlich.
+
+**Lizenz (am 2026-09-23 auf datacatalog.worldbank.org gelesen, jeweils nur als Seitenauszug, nicht im vollen Wortlaut):** Der WDI-Katalogeintrag nennt „licensed under Creative Commons Attribution 4.0". Die Seite „public-licenses" nennt CC BY 4.0 als Standardlizenz für von der Weltbank selbst erzeugte Datensätze und erlaubt Vervielfältigung und Weitergabe in jedem Format für jeden Zweck, auch kommerziell; verpflichtend sind Quellenangabe und Hinweis auf Änderungen. Eine feste Zitierform schreibt die Seite **nicht** vor (Abschnitt 6 oben nannte eine; sie wurde hier nicht wiedergefunden). Ob für Drittquellen in WDI (z. B. UN-Bevölkerung) getrennte Bedingungen gelten, nennt keine der Seiten und wurde nicht gesondert geprüft; die Quellenangabe nennt deshalb bei der Bevölkerung auch die UN. Wortlaut der Quellenangabe: siehe `META["quellenangabe"]`.
+
+**Ablage:** Rohdaten unverändert unter `raw/weltbank/<Abrufzeitpunkt>/` (mit `manifest.json` und Prüfsummen), fertige Tabelle als `laender/weltbank.parquet` (Langformat, eine Zeile je Land, Jahr und Indikator, 19 747 Zeilen). Der Abruf braucht keinen Zugang und keine `.env`-Variable. Die API war beim Abruf langsam (rund 25 Sekunden je Indikator); der Layer hat ein Zeitlimit von 60 Sekunden je Versuch mit bis zu vier Versuchen.

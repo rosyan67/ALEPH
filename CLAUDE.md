@@ -9,6 +9,7 @@ Ziel: Ein überzeugender, funktionierender Prototyp für die NASA Space Apps Cha
 - Alle Datenquellen nutzen dieselbe Ladelogik.
 - Keine scheinpräzisen Scores. Unsicherheit immer ausweisen.
 - Jede Aussage trägt eine Evidenzstufe: beobachtet, statistische Assoziation, Modellprojektion oder hypothetisches Szenario.
+- Fachliche Angaben aus dem Chat (auch Zahlen, Autoren, DOIs) gelten als unbestätigt, bis sie gegen die Originalquelle geprüft sind. Im Zweifel citation_verified: false.
 - Kein unnötiges Deep Learning, keine unnötig komplexe Infrastruktur.
 - Fehler explizit erklären statt Workarounds.
 - Zugangsdaten nur in .env, niemals im Code.

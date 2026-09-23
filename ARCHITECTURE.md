@@ -106,6 +106,8 @@ Jede Datenquelle ist ein Modul `aleph/layers/<name>.py` mit genau diesen Bestand
 
 Alle Layer sind in `layers.yaml` registriert. Ein neuer Layer ist fertig, wenn `to_cube()` einen Würfel liefert, der den automatischen Prüftest `tests/test_layer_contract.py` besteht.
 
+**Layer auf Länderebene** (Wirtschaftsdaten, Abschnitt 4: nie auf das Raster verteilt) liefern statt `to_cube()` die Funktion `to_table()`: eine Parquet-Tabelle im Langformat (eine Zeile je Land, Jahr und Indikator) unter `data/laender/<layer>.parquet`. Fehlende Werte bleiben leer und werden nie aufgefüllt. Erster Layer dieser Art: `aleph/layers/weltbank.py`.
+
 Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Download-Logik.
 
 **Kandidaten für die ersten Layer** (NASA-Daten zuerst, weil Space Apps sie verlangt):
@@ -223,8 +225,12 @@ fallstricke:
 datenbedarf:
   - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "<z. B. Steckbrief vorhanden, noch nicht geladen>"}
 status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+teilstatus:         # optional: nur wenn ein Teil des Eintrags einen anderen Stand hat als das Ganze
+  - {teil: "<Teilaussage>", status: Daten unzureichend, grund: "<welcher Layer fehlt>"}
 prüfergebnisse: []
 ```
+
+**Status `Daten unzureichend`:** Er gilt, wenn ein Layer, der für die Kernaussage nötig ist, nirgends geplant ist (`fehlt` im `datenbedarf`) oder wenn die Kernaussage mit den geplanten Layern nicht messbar ist. Fehlt nur ein Layer für eine Nebenprüfung (z. B. eine Kontrollvariable), bleibt es bei `ungeprüft`, und die Lücke steht im `datenbedarf`. Hat nur ein Teil des Eintrags dieses Problem (z. B. der SPEI-Teil eines Dürreindex-Eintrags), bleibt `status` beim Stand des Ganzen und `teilstatus` benennt den Teil mit Grund.
 
 **Pflichtfelder für Qualität und Ehrlichkeit** (jeder Eintrag muss sie ausfüllen):
 - `citation_verified` (je Quelle, `true`/`false`): `true` nur, wenn Autoren, Jahr, Titel, Zeitschrift und DOI tatsächlich an der Originalquelle oder einem Verzeichnis (Verlag, Crossref) geprüft wurden, nicht aus dem Gedächtnis. Alles andere ist `false`, und `verifiziert_an` sagt, was fehlt. Eine Quellenangabe wird nie erfunden.
@@ -336,7 +342,7 @@ ALEPH/
 ├── reports/               Blindtest- und Prüfberichte
 ├── scripts/               einfache Start-/Status-Befehle für Hintergrund-Läufe
 ├── logs/                  (nicht in Git) Absturz-Auffangprotokoll; Details stehen auf der SSD
-└── data/                  (nicht in Git, liegt auf externer SSD, ALEPH_DATA_DIR) raw/, cube/, events/
+└── data/                  (nicht in Git, liegt auf externer SSD, ALEPH_DATA_DIR) raw/, cube/, laender/, events/
 ```
 
 ## 12. Entscheidungen (bestätigt am 2026-09-21)
