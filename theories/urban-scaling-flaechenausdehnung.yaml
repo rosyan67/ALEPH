@@ -14,6 +14,7 @@ quellen:
     doi: "10.1073/pnas.0610172104"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band, Seiten, DOI) und Zusammenfassung (Abstract)
       dort gelesen. ABWEICHUNG vom Auftrag: (1) Es sind fünf Autoren, nicht "Bettencourt & West".
@@ -29,6 +30,7 @@ quellen:
     doi: "10.1038/467912a"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band, Seiten, DOI) gelesen. Der Inhalt selbst
       (Nature-Seite verlangt Anmeldung) wurde NICHT gelesen. Nur als Verweis auf das Autorenpaar
@@ -38,6 +40,7 @@ quellen:
     doi: "10.1371/journal.pone.0023777"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Artikelnummer, DOI) und
       PLOS-ONE-Seite (Abstract) gelesen; beides stimmt mit dem Auftrag überein. Inhalt laut Abstract:
@@ -52,6 +55,7 @@ quellen:
     doi: "10.1098/rsif.2014.0745"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Artikelnummer, DOI) und Abstract gelesen.
       Abstract: Städte für England und Wales auf tausende verschiedene Arten abgegrenzt (Pendlerströme,
@@ -63,6 +67,7 @@ quellen:
     doi: "10.1098/rsos.150649"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Artikelnummer, DOI) sowie arXiv-Seite
       1604.02872 (Abstract) gelesen. Kernaussage laut Abstract: ob beta ungleich 1 gilt, hängt davon ab, wie die
@@ -75,6 +80,7 @@ quellen:
     doi: "10.48550/arXiv.1102.4101 (arXiv-DOI, keine Zeitschriften-DOI)"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Nachprüfung 2026-09-23. arXiv-Seite https://arxiv.org/abs/1102.4101 abgerufen (WebFetch lieferte nur eine
       Zusammenfassung eines Hilfsmodells, nicht den Rohtext der Seite). Dort gesehen: Autor Cosma Rohilla Shalizi;
@@ -91,6 +97,7 @@ quellen:
     doi: "10.48550/arXiv.1910.06732 (arXiv-DOI, keine Zeitschriften-DOI)"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Nachprüfung 2026-09-23. arXiv-Seite https://arxiv.org/abs/1910.06732 abgerufen (WebFetch lieferte nur eine
       Zusammenfassung eines Hilfsmodells, nicht den Rohtext der Seite). Dort gesehen: Autoren Gang Xu, Zhengzi Zhou,
@@ -108,6 +115,7 @@ quellen:
     doi: "10.1111/jors.12703"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Seiten, DOI) und Abstract gelesen.
       Laut Abstract: Bevölkerung ist auf Länderebene gleichmäßiger verteilt als Licht; die Nachtlicht-Verteilung folgt
@@ -118,6 +126,7 @@ quellen:
     doi: "10.1371/journal.pone.0040393"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band, Artikelnummer, DOI) gelesen; Ausgabe ist 2012.
       Inhalt nur aus einer Suchergebnis-Zusammenfassung bekannt (Statistik der Streuung um Skalengesetze, Bezug
@@ -129,6 +138,7 @@ quellen:
     doi: null
     rolle: daten
     citation_verified: false
+    verifiziert_umfang: null   # nur über Suchergebnisse gesehen, nicht belastbar
     verifiziert_an: >
       Nur JRC/Copernicus-Katalogseiten über die Suche gesehen, nicht im Wortlaut gelesen; keine DOI geprüft
       (deshalb doi: null). Gesehen: GHS-POP R2023A hat Epochen im 5-Jahres-Abstand 1975-2020 (Bevölkerung

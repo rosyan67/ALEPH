@@ -26,6 +26,7 @@ quellen:
     doi: "10.2307/2979181"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autor, Jahr, Titel, Zeitschrift, Band/Heft und DOI gesehen bei Oxford Academic (academic.oup.com/jrsssa/article/48/2/167)
       und in der Crossref-Datenbank (Crossref nennt nur die Startseite 167). Abweichung zum Auftrag: Der Nutzer nannte
@@ -36,6 +37,7 @@ quellen:
     doi: "10.2307/2979333"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autor, Jahr, Titel, Zeitschrift, Band/Heft und DOI 10.2307/2979333 gesehen in der Crossref-Datenbank; dieselbe Arbeit
       trägt bei Oxford Academic (academic.oup.com/jrsssa/article/52/2/241) die DOI 10.1111/j.2397-2335.1889.tb00043.x
@@ -46,6 +48,7 @@ quellen:
     doi: "10.1016/0305-7488(77)90143-8"
     rolle: gegenposition   # historische Einordnung: Ravensteins "Gesetze" sind eher Hypothesen, nicht alle bestätigt
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autor, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen; Zusammenfassung
       (Abstract) über die ScienceDirect-Trefferseite gelesen, nicht der Volltext. Das Abstract nennt: elf Hypothesen
@@ -55,6 +58,7 @@ quellen:
     doi: "10.1162/rest.88.4.641"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen; zusätzlich Abstract im
       Repositorium der University of Essex (repository.essex.ac.uk/3567) und Verzeichniseintrag bei MIT Press. Die DOI aus dem
@@ -65,6 +69,7 @@ quellen:
     doi: "10.1257/000282803321455214"
     rolle: methode   # gilt für den HANDEL; Migration nur indirekt (siehe Bertoli und Fernández-Huertas Moraga 2013)
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI bei der American Economic Association (aeaweb.org) und in der
       Crossref-Datenbank gesehen. Es geht um Handel, nicht um Migration. Das Abstract nennt: Gravitationsgleichungen ohne
@@ -74,6 +79,7 @@ quellen:
     doi: "10.1016/j.jdeveco.2012.12.001"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band/Seiten und DOI in der Crossref-Datenbank gesehen; Zusammenfassung über
       IDEAS/RePEc gelesen (Kernaussage: Die Wanderungsrate zwischen zwei Ländern hängt auch von der Attraktivität alternativer
@@ -83,6 +89,7 @@ quellen:
     doi: "10.1111/twec.12265"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen (online 2015, gedruckt 2016);
       Abstract bei EconPapers/RePEc gelesen (Themen: theoretische Grundlage, Migrationsdaten, multilateraler Widerstand,
@@ -93,6 +100,7 @@ quellen:
     doi: "10.15185/izawol.239"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autor, Jahr, Titel, Reihe und DOI in der Crossref-Datenbank gesehen; Inhalt über die IZA-Webseite (wol.iza.org, Langfassung)
       gelesen, Autor zusätzlich über EconStor-Eintrag. Das ist ein Überblicksartikel (Politikreihe), keine Originalstudie.
@@ -103,6 +111,7 @@ quellen:
     doi: "10.1080/000368400421093"
     rolle: methode   # frühe Anwendung; Beispiel für die klassische bilaterale Form
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen; Abstract über die
       Trefferseiten gelesen: 70 Herkunftsländer, Zuwanderung nach USA und Kanada, 1976-1986, 1540 Beobachtungen; Bevölkerung
@@ -112,6 +121,7 @@ quellen:
     doi: "10.1057/s41599-022-01067-x"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band/Artikel-Nr. und DOI in der Crossref-Datenbank gesehen; Abstract über IDEAS/RePEc
       gelesen. Nur Abstract gelesen, nicht der Volltext.

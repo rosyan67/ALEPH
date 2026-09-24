@@ -16,6 +16,7 @@ quellen:
     doi: "10.1111/geb.12043"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 22, Heft 6, Seiten 728-736, DOI stimmen überein);
       Abstract am FRAMES-Verzeichnis (frames.gov/catalog/17925) und Suchtreffer der Wiley-Seite gesehen.
@@ -29,6 +30,7 @@ quellen:
     doi: "10.1111/j.1466-8238.2006.00283.x"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Titel, Zeitschrift, Band 16, Heft 3, Seiten 330-340, DOI stimmen überein; online seit Dezember 2006, Druckjahr 2007).
       Dass diese Arbeit die Hypothese ursprünglich vorschlägt, ist nur aus Sekundärquellen ersichtlich
@@ -39,6 +41,7 @@ quellen:
     doi: "10.1890/09-1843.1"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 92, Heft 1, Seiten 121-132, DOI stimmen überein);
       Zusammenfassung über die Suche gesehen (monatliche globale Feueraktivität, Bodenfeuchte und Zirkulationsdaten 2001-2007,
@@ -51,6 +54,7 @@ quellen:
     doi: "10.1111/gcb.14405"
     rolle: original   # Beleg für den zeitlichen Teil: Verzögerung und Vorzeichenwechsel zwischen trockenen und feuchten Regionen
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 24, Heft 11, Seiten 5164-5175, DOI stimmen überein);
       Abstract und Ergebnisauszug in PubMed Central (PMC7134822) gesehen. Aussagen daraus: Klimavariabilität erklärt global etwa ein Drittel der
@@ -63,6 +67,7 @@ quellen:
     doi: "10.1111/j.1365-2486.2008.01754.x"
     rolle: original   # Beleg für die mehrjährige Verzögerung (Niederschlag der zwei Vorjahre) und für den Einfluss des Menschen
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 15, Heft 3, Seiten 613-630, DOI stimmen überein);
       Inhaltsangabe über Suchtreffer (u. a. Wiley- und FRAMES-Verzeichnis): Baumbedeckung, Niederschlag der vorangegangenen 2 Jahre und Niederschlagssaisonalität
@@ -75,6 +80,7 @@ quellen:
     doi: "10.1111/geb.12180"
     rolle: gegenposition   # keine Widerlegung, sondern Einschränkung: die Kurve ist ein Muster, keine Vorhersageregel
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 23, Heft 7, Seiten 821-824, DOI stimmen überein);
       Abstract am FRAMES-Verzeichnis (frames.gov/catalog/17920) gesehen. Aussage: Makroökologische Modelle zeigen die starke Kontrolle durch Produktivität
@@ -87,6 +93,7 @@ quellen:
     doi: "10.5194/bg-11-5087-2014"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 11, Seiten 5087-5101, DOI stimmen überein);
       Abstract auf der Zeitschriftenseite (bg.copernicus.org/articles/11/5087/2014/) gelesen. Aussage: Modell für monatliche Brandanteile (GFED, 2000-2005)
@@ -99,6 +106,7 @@ quellen:
     doi: "10.1111/geb.12753"
     rolle: gegenposition   # andere Kurvenform (sättigend) für Afrika südlich der Sahara; Teilwiderspruch
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 27, Heft 8, Seiten 946-957, DOI stimmen überein).
       Inhalt nur aus einem Suchtreffer-Auszug: Die Autoren nehmen an, dass krautige Vegetation den Brennstoff stellt und die Feueraktivität in afrikanischen Savannen
@@ -110,6 +118,7 @@ quellen:
     doi: "10.1126/science.aal4108"
     rolle: gegenposition   # menschliche Kontrolle statt natürlicher Produktivitätsgradient
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (erste fünf Autoren, Jahr, Titel, Zeitschrift, Band 356, Heft 6345, Seiten 1356-1362, DOI stimmen überein; weitere Autoren nicht in der Liste, daher "et al.").
       Inhaltsangabe über Suchtreffer (Science, PubMed, ADS): globale Brandfläche in etwa 18 Jahren um 24,3 +/- 8,8 % gesunken, nach Bereinigung um
@@ -121,6 +130,7 @@ quellen:
     doi: "10.1029/2012JG002128"
     rolle: methode   # Messproblem: Kleinfeuer
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 117, Heft G4, DOI stimmen überein; Artikelnummer G04012 aus dem Suchtreffer-Zitat, nicht aus Crossref).
       Inhaltsangabe über Suchtreffer: In mehreren Biomen (Ackerland, bewaldete Savannen, tropische Wälder) gibt es viele kleine Feuer unterhalb der Nachweisgrenze
@@ -132,6 +142,7 @@ quellen:
     doi: "10.1016/S0034-4257(02)00096-2"
     rolle: methode   # NDVI-Sättigung bei dichter Vegetation
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref (Autoren, Jahr, Titel, Zeitschrift, Band 83, Heft 1-2, Seiten 195-213, DOI stimmen überein; Crossref schreibt die DOI in Kleinbuchstaben, gleiche Kennung).
       Inhaltsangabe über Suchtreffer: NDVI sättigt bei hoher Biomasse (Beispiel Amazonas), der EVI bleibt dort empfindlicher. Volltext nicht gelesen.

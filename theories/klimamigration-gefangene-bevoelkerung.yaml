@@ -20,6 +20,7 @@ quellen:
     doi: "10.1016/j.jdeveco.2016.05.004"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Seiten und DOI am 2026-09-23 übereinstimmend gesehen
       in der Crossref-API und im RePEc/IDEAS-Verzeichnis (Journal of Development Economics 122(C), 127-146);
@@ -35,6 +36,7 @@ quellen:
     doi: null   # Regierungsbericht, es wurde keine DOI gefunden
     rolle: methode   # Herkunft des Konzepts "trapped populations" (Konzept, kein Modell)
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Nachprüfung am 2026-09-23. Titel, Herausgeber, Datum und Fundstelle gesehen auf der Publikationsseite
       der Regierung (gov.uk/government/publications/migration-and-global-environmental-change-future-challenges-and-opportunities):
@@ -63,6 +65,7 @@ quellen:
     doi: "10.1016/j.gloenvcha.2011.10.001"
     rolle: methode   # Rahmen: fünf Treiberfamilien der Migration (wirtschaftlich, politisch, sozial, demografisch, Umwelt)
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Seiten und DOI am 2026-09-23 in der Crossref-API und im
       Forschungsportal der University of East Anglia gesehen (Abstract stimmt überein). ABWEICHUNG VOM AUFTRAG:
@@ -76,6 +79,7 @@ quellen:
     doi: "10.1007/s10113-022-01882-7"
     rolle: methode   # Definition und Messproblem von "trapped populations"
     citation_verified: true
+    verifiziert_umfang: originaltext
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Artikelnummer und DOI am 2026-09-23 in der Crossref-API und im
       Volltext bei PubMed Central (PMC9004677) übereinstimmend gesehen. Dort wird das Konzept dem
@@ -87,6 +91,7 @@ quellen:
     doi: "10.1073/pnas.1002632107"
     rolle: methode   # Beispiel einer Studie zu Ertrag/Klima und Auswanderung im Land mittleren Einkommens; Gegenstand der Kritik unten
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Heft, Seiten und DOI am 2026-09-23 in der Crossref-API und
       in den Suchergebnissen (PNAS, PubMed Central) übereinstimmend gesehen. Genannte Kernaussage laut Abstract:
@@ -98,6 +103,7 @@ quellen:
     doi: "10.1073/pnas.1202049109"
     rolle: gegenposition   # methodische Kritik an Feng et al. 2010
     citation_verified: true
+    verifiziert_umfang: originaltext
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Heft, Seiten und DOI am 2026-09-23 in der Crossref-API,
       bei PNAS (Suchergebnis) und im Volltext bei PubMed Central (PMC3409766) übereinstimmend gesehen.
@@ -115,6 +121,7 @@ quellen:
     doi: "10.1111/sjoe.12098"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Heft, Seiten und DOI am 2026-09-23 in der Crossref-API und
       in mehreren Verzeichnissen (Wiley, RePEc/IDEAS, EconPapers) übereinstimmend gesehen. Abstract:
@@ -126,6 +133,7 @@ quellen:
     doi: "10.1016/j.jeem.2016.06.005"
     rolle: gegenposition   # differenziert: Temperatureffekt hängt von der Rolle der Landwirtschaft ab, nicht (nur) vom Einkommen
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Seiten und DOI am 2026-09-23 in der Crossref-API und im
       Publikationsverzeichnis der Princeton University übereinstimmend gesehen. Aussage laut Abstract:
@@ -137,6 +145,7 @@ quellen:
     doi: "10.1038/s41597-023-02376-9"
     rolle: daten   # Beschreibung der IDMC-Vertreibungsdaten und einer Verknüpfung mit Satellitendaten
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Jahr, Titel, Zeitschrift, Band, Artikelnummer und DOI am 2026-09-23 in der Crossref-API und im
       Volltext bei PubMed Central (PMC10363124) übereinstimmend gesehen. Nur als Beleg dafür verwendet, wie IDMC-Daten

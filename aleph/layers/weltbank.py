@@ -67,8 +67,9 @@ WARTEZEIT_BASIS_SEKUNDEN = 5  # verdoppelt sich je Versuch
 
 ORDNER_MUSTER = re.compile(r"^\d{8}T\d{6}Z$")
 
-# Länder, bei denen BIP pro Kopf nicht zu BIP und Bevölkerung passt (Abruf 2026-09-23, Steckbrief Abschnitt 14).
-# Die Ursache ist in der Weltbank-Dokumentation nicht belegt; deshalb wird BIP pro Kopf für diese Länder
+# Länder, bei denen BIP pro Kopf nicht zu BIP und Bevölkerung passt (Abruf 2026-09-23; nachgerechnet
+# 2026-09-24, Steckbrief Abschnitt 14: nur diese fünf von 212 Ländern weichen um mehr als 1 % ab, in
+# beiden Pro-Kopf-Reihen gleich). Die Ursache ist nicht geprüft; deshalb wird BIP pro Kopf für diese Länder
 # nicht verwendet, sondern mit BIP und Bevölkerung getrennt gerechnet. Die Werte bleiben in der Tabelle
 # (nichts wird versteckt), aber `nicht_verwenden` ist gesetzt.
 PRO_KOPF_CODES = ("NY.GDP.PCAP.KD", "NY.GDP.PCAP.PP.KD")
@@ -164,10 +165,11 @@ META = {
         "Gemessen am Abruf 2026-09-23 (Zahlen ändern sich mit Revisionen): Export und Import fehlen je Jahr bei "
         "15 bis 41 % der Volkswirtschaften, das BIP bei 2 bis 14 % (2025 am höchsten), die Bevölkerung nie.",
         "Gemessen am Abruf 2026-09-23: Bei Zypern, Marokko, Russland, Tansania und der Ukraine passt BIP pro Kopf "
-        "mal Bevölkerung in den meisten Jahren nicht zum BIP (Abweichung 1,5 bis 44 %, bei Zypern am größten; "
-        "Russland und Ukraine erst ab 2014, dort spiegelbildlich um dieselbe Personenzahl). Die Weltbank-Dokumentation "
-        "nennt keine Ursache (Steckbrief Abschnitt 14). Deshalb ist BIP pro Kopf für diese Länder mit "
-        "`nicht_verwenden` markiert; dort mit BIP und Bevölkerung getrennt rechnen.",
+        "mal Bevölkerung nicht zum BIP (Abweichung 1,5 bis 44 %, bei Zypern am größten; nachgerechnet 2026-09-24: "
+        "bei Russland und Ukraine erst ab 2014, dort in jedem Jahr um dieselbe Personenzahl von etwa 2,3 bis 2,5 "
+        "Millionen in entgegengesetzter Richtung; bei allen anderen 207 Ländern null). Die Ursache ist nicht "
+        "geprüft (Steckbrief Abschnitt 14). Deshalb ist BIP pro Kopf für diese Länder mit `nicht_verwenden` "
+        "markiert; dort mit BIP und Bevölkerung getrennt rechnen.",
         "Gemessen am Abruf 2026-09-23: Das Verhältnis KKP-BIP zu BIP in konstanten US-Dollar ist bei allen 199 Ländern "
         "mit beiden Reihen über alle Jahre konstant. Die KKP-Reihe hat also dieselbe Veränderung über die Zeit und "
         "bringt für Zeitreihen nichts Neues; sie ist nur für Niveauvergleiche zwischen Ländern nützlich.",

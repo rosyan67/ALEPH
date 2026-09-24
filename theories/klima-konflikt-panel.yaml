@@ -13,6 +13,7 @@ quellen:
     doi: "10.1126/science.1235367"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: originaltext
     verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft und DOI im Crossref-Eintrag gefunden und übereinstimmend; zusätzlich den Volltext (PDF, 14 Seiten) selbst gelesen (Gleichung 1, Tabelle 1, Abbildungen 4 und 5, Abschnitte zu Kontrollvariablen, Heterogenität, Mechanismen). Abweichung vom Auftrag: keine beim Titel; der Artikel ist ein Sammel- und Neuauswertungs-Artikel (Meta-Analyse von 60 Studien), keine einzelne Panel-Studie. Der Wert für Gewalt zwischen Gruppen (14 Prozent, Median) und für Gewalt zwischen Personen (4 Prozent, Median) steht so in der Zusammenfassung des Originals."
 
   - zitat: "Miguel, E., Satyanath, S., Sergenti, E. (2004): Economic Shocks and Civil Conflict: An Instrumental Variables Approach. Journal of Political Economy, Band 112, Heft 4, S. 725-753."
@@ -20,6 +21,7 @@ quellen:
     doi: "10.1086/421174"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhaltsangabe (Zusammenfassung) über eine Suchergebnis-Seite gelesen, den Volltext nicht. Der Aufsatz ist eine Vorläufer-Studie: Er nutzt Niederschlag als externe Größe (Instrument) für Wirtschaftswachstum in 41 afrikanischen Ländern 1981-99. Er ist kein reines Klima-Konflikt-Modell wie Hsiang et al. (2013)."
 
   - zitat: "Burke, M. B., Miguel, E., Satyanath, S., Dykema, J. A., Lobell, D. B. (2009): Warming increases the risk of civil war in Africa. Proceedings of the National Academy of Sciences, Band 106, Heft 49, S. 20670-20674."
@@ -27,6 +29,7 @@ quellen:
     doi: "10.1073/pnas.0907998106"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend. Der Inhalt wurde nur über die Beschreibung in Hsiang et al. (2013, Tabelle 1: Länderpanel Afrika südlich der Sahara 1981-2002, jährlich, Temperatur, Bürgerkrieg) und in der Replik von 2014 gelesen, nicht im Volltext. Wird hier genannt, weil sie der Gegenstand der Kritik von Buhaug (2010) ist."
 
   - zitat: "Buhaug, H. (2010): Climate not to blame for African civil wars. Proceedings of the National Academy of Sciences, Band 107, Heft 38, S. 16477-16482."
@@ -34,6 +37,7 @@ quellen:
     doi: "10.1073/pnas.1005739107"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autor, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhaltsangabe über die PNAS-Seite (Suchergebnis) gelesen: Mit anderen Modellvarianten und anderen Maßen für Dürre, Hitze und Bürgerkrieg sei Klimaschwankung ein schlechter Vorhersagefaktor für bewaffnete Konflikte; Bürgerkriege in Afrika ließen sich eher durch allgemeine strukturelle Bedingungen erklären (ethnisch-politischer Ausschluss, schwache Wirtschaft, Ende des Kalten Krieges). Das ist die Aussage des Autors. Volltext nicht gelesen. Abweichung vom Auftrag: Der Titel lautet wirklich so und existiert; Buhaug (2010) ist eine Einzelstudie des Autors und bezieht sich auf Burke et al. (2009)."
 
   - zitat: "Buhaug, H., Nordkvelle, J., Bernauer, T., Böhmelt, T., Brzoska, M. und 21 weitere Autorinnen und Autoren (2014): One effect to rule them all? A comment on climate and conflict. Climatic Change, Band 127, Heft 3-4, S. 391-397."
@@ -41,6 +45,7 @@ quellen:
     doi: "10.1007/s10584-014-1266-1"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autorenzahl (26), Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden; die volle Autorenliste wurde zusätzlich in einem Verzeichnis (RePEc, Suchergebnis) gesehen; hier werden nur die ersten fünf genannt. Inhalt: Der Kommentar prüft, warum ein Sammelartikel zu Klima und Gewalt zwischen Gruppen zu anderen Schlüssen kommt als andere Übersichten. Den Volltext konnte ich nicht lesen (Verlagsseite verlangt Anmeldung). Was dieser Kommentar im Einzelnen kritisiert, ist deshalb nur so wiedergegeben, wie es die Replik von Hsiang, Burke & Miguel (2014) beschreibt, und ist als deren Darstellung gekennzeichnet."
 
   - zitat: "Hsiang, S. M., Burke, M., Miguel, E. (2014): Reconciling climate-conflict meta-analyses: reply to Buhaug et al. Climatic Change, Band 127, Heft 3-4, S. 399-405."
@@ -48,6 +53,7 @@ quellen:
     doi: "10.1007/s10584-014-1276-z"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: originaltext
     verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; den Volltext (PDF) selbst gelesen. Es ist die Antwort der Originalautoren auf Buhaug et al. (2014); sie ist damit Partei-Darstellung. Rolle 'original' gewählt, weil sie das Original verteidigt."
 
   - zitat: "Hsiang, S. M., Burke, M. (2014): Climate, conflict, and social stability: what does the evidence say? Climatic Change, Band 123, S. 39-55."
@@ -55,6 +61,7 @@ quellen:
     doi: "10.1007/s10584-013-0868-3"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend (im Crossref-Ergebnis erschien die Jahreszahl 2013, die gedruckte Ausgabe trägt 2014; Hsiang et al. 2014 zitieren den Aufsatz mit 2014). Der Inhalt wurde nicht gelesen; der Aufsatz wird in Hsiang et al. (2013) als ausführliche Einzelbeschreibung der 60 Studien genannt (dort Ref. 26)."
 
   - zitat: "Ciccone, A. (2011): Economic Shocks and Civil Conflict: A Comment. American Economic Journal: Applied Economics, Band 3, Heft 4, S. 215-227."
@@ -62,6 +69,7 @@ quellen:
     doi: "10.1257/app.3.4.215"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autor, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhaltsangabe (Zusammenfassung) über eine Suchergebnis-Seite gelesen: Der Befund von Miguel et al. (2004) beruhe auf einem (unerwarteten) Zusammenhang mit dem Niederschlagsniveau zwei Jahre zuvor; in den neuesten Daten sei Konflikt nicht mit Niederschlag verbunden. Volltext nicht gelesen. Antwort der Autoren: Miguel, E., Satyanath, S. (2011): Re-examining Economic Shocks and Civil Conflict. American Economic Journal: Applied Economics 3(4), 228-232, DOI 10.1257/app.3.4.228 (Bibliografie in Crossref bestätigt; Inhalt nicht gelesen)."
 
   - zitat: "Mach, K. J., Kraan, C. M., Adger, W. N., Buhaug, H., Burke, M. u. a. (14 Autorinnen und Autoren) (2019): Climate as a risk factor for armed conflict. Nature, Band 571, Heft 7764, S. 193-197."
@@ -69,6 +77,7 @@ quellen:
     doi: "10.1038/s41586-019-1300-6"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Titel, Zeitschrift, Band/Heft/Seiten, Jahr, DOI und die ersten fünf Autoren im Crossref-Eintrag gefunden und übereinstimmend (Autorenzahl 14; die übrigen Namen habe ich nicht gelesen und darum nicht genannt). Inhalt nur über Suchergebnis-Zusammenfassungen (PRIO, Nature-Zusammenfassung) gelesen, Volltext nicht: Befragung von Fachleuten; sie sind sich einig, dass Klima bewaffnete Konflikte innerhalb von Ländern beeinflusst hat, halten aber andere Ursachen (niedrige wirtschaftliche Entwicklung, schwache staatliche Fähigkeiten) für wesentlich wichtiger; die Wirkwege blieben eine große Unsicherheit. Das ist eine Expertenbefragung, keine Datenanalyse. Sie steht hier als Einordnung der Größenordnung, nicht als Widerlegung."
 
   - zitat: "Auffhammer, M., Hsiang, S. M., Schlenker, W., Sobel, A. (2013): Using Weather Data and Climate Model Output in Economic Analyses of Climate Change. Review of Environmental Economics and Policy, Band 7, Heft 2, S. 181-198."
@@ -76,6 +85,7 @@ quellen:
     doi: "10.1093/reep/ret016"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhalt nur über die Zusammenfassung (Suchergebnis) gelesen: Der Aufsatz stellt Wetterdatensätze vor und behandelt typische Fehler, wenn historische Wetterdaten als erklärende Größe in ökonometrischen Modellen dienen. Volltext nicht gelesen; welche Fehler er im Einzelnen nennt, kann ich deshalb hier nicht wiedergeben. Er wird von Hsiang et al. (2013, Ref. 126) für die Frage zitiert, wie Klimavariablen korreliert sind. Zwei der Autoren (Hsiang) sind auch Autoren des Originals."
 
   - zitat: "Hersbach, H., Bell, B. u. a. (51 Autorinnen und Autoren) (2020): The ERA5 global reanalysis. Quarterly Journal of the Royal Meteorological Society, Band 146, Heft 730, S. 1999-2049."
@@ -83,6 +93,7 @@ quellen:
     doi: "10.1002/qj.3803"
     rolle: daten
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Titel, Zeitschrift, Band/Heft/Seiten, Jahr, DOI und Autorenzahl im Crossref-Eintrag gefunden und übereinstimmend; von den Autoren nenne ich nur die ersten beiden (Hersbach, Bell). Im Abfrageergebnis war ein weiterer Name anders geschrieben, als ich ihn kenne; ich habe ihn deshalb nicht übernommen. Beschreibung des ERA5-Datensatzes (Copernicus CDS) für die geplante Nutzung als Temperatur- und Niederschlagsquelle; Inhalt nicht gelesen."
 
 modell: >

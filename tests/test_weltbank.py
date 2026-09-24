@@ -436,3 +436,57 @@ def test_meta_ist_vollstaendig_und_ehrlich():
     # Keine laufenden US-Dollar (würden Inflation messen).
     assert not any(code.endswith(".CD") for code in wb.INDIKATOREN)
     assert set(wb.META["indikatoren"]) == set(wb.INDIKATOREN)
+
+
+# --- Spalte nicht_verwenden (2026-09-24) ------------------------------------------
+#
+# Die fünf Länder stehen nicht in der vorgetäuschten Länderliste (DEU, EGY, SAU). Der Mechanismus wird
+# deshalb mit einer geänderten Liste geprüft; die echte Liste prüft ein eigener Test.
+
+PRO_KOPF = ("NY.GDP.PCAP.KD", "NY.GDP.PCAP.PP.KD")
+
+
+def test_nicht_verwenden_markiert_nur_bip_pro_kopf_der_gelisteten_laender(monkeypatch):
+    monkeypatch.setattr(wb, "PRO_KOPF_ABWEICHEND", ("EGY",))
+    ordner, _ = lade(monkeypatch)
+    tabelle = wb.baue_tabelle(ordner)
+    markiert = tabelle[tabelle["nicht_verwenden"]]
+    assert set(markiert["land_iso3"]) == {"EGY"}
+    assert set(markiert["indikator"]) == set(PRO_KOPF)
+    assert len(markiert) == 3 * len(PRO_KOPF)  # 3 Jahre x 2 Pro-Kopf-Reihen
+    # Andere Indikatoren desselben Landes und alle anderen Länder bleiben unmarkiert.
+    egy_rest = tabelle[(tabelle.land_iso3 == "EGY") & ~tabelle.indikator.isin(PRO_KOPF)]
+    assert not egy_rest["nicht_verwenden"].any()
+    assert not tabelle[tabelle.land_iso3 != "EGY"]["nicht_verwenden"].any()
+
+
+def test_nicht_verwenden_versteckt_keine_werte(monkeypatch):
+    monkeypatch.setattr(wb, "PRO_KOPF_ABWEICHEND", ("EGY",))
+    ordner, _ = lade(monkeypatch)
+    tabelle = wb.baue_tabelle(ordner)
+    zeile = tabelle[(tabelle.land_iso3 == "EGY") & (tabelle.jahr == 2014) & (tabelle.indikator == "NY.GDP.PCAP.KD")].iloc[0]
+    assert zeile.nicht_verwenden and zeile.hat_wert
+    assert zeile.wert == wert("NY.GDP.PCAP.KD", "EG", 2014)  # Wert unverändert, nur markiert
+
+
+def test_nicht_verwenden_ist_ohne_treffer_ueberall_falsch_und_bool(monkeypatch):
+    ordner, _ = lade(monkeypatch)  # DEU, EGY, SAU stehen nicht in der echten Liste
+    tabelle = wb.baue_tabelle(ordner)
+    assert tabelle["nicht_verwenden"].dtype == bool
+    assert not tabelle["nicht_verwenden"].any()
+
+
+def test_liste_der_abweichenden_laender_und_codes():
+    assert set(wb.PRO_KOPF_ABWEICHEND) == {"CYP", "MAR", "RUS", "TZA", "UKR"}
+    assert set(wb.PRO_KOPF_CODES) == set(PRO_KOPF)
+    assert {wb.INDIKATOREN[c]["kurzname"] for c in wb.PRO_KOPF_CODES} == {"bip_pro_kopf_real", "bip_pro_kopf_real_kkp"}
+
+
+def test_nicht_verwenden_ueberlebt_schreiben_und_lesen(monkeypatch):
+    monkeypatch.setattr(wb, "PRO_KOPF_ABWEICHEND", ("SAU",))
+    lade(monkeypatch)
+    wb.to_table()
+    gelesen = wb.lese_tabelle()
+    assert "nicht_verwenden" in gelesen.columns and gelesen["nicht_verwenden"].dtype == bool
+    assert set(gelesen[gelesen["nicht_verwenden"]]["land_iso3"]) == {"SAU"}
+

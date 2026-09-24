@@ -16,6 +16,7 @@ quellen:
     doi: null   # Konferenzbeitrag; bei der Suche wurde keine DOI gefunden. Das heißt nicht sicher, dass es keine gibt.
     rolle: original   # Ursprung des SPI
     citation_verified: false
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Titel, Autoren, Konferenz und Jahr am Original-PDF gesehen (Kopie beim Drought Management
       Information System, droughtmanagement.info). Der Titel dort lautet "The relationship ...";
@@ -32,6 +33,7 @@ quellen:
     doi: "10.1175/2009JCLI2909.1"
     rolle: original   # Ursprung des SPEI
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Eintrag zur DOI (Autoren, Titel, Zeitschrift, Band 23, Heft 7, Seiten 1696-1718,
       Jahr 2010) und Verlagsseite journals.ametsoc.org (per Suche) gesehen; stimmen überein.
@@ -44,6 +46,7 @@ quellen:
     doi: "10.1073/pnas.1207068110"
     rolle: original   # Beleg für den Zusammenhang Dürreindex -> Vegetation und für die Zeitskala
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Eintrag zur DOI (alle zwölf Autoren, Titel, PNAS, Band 110, Heft 1, Seiten 52-57)
       und PMC-Volltextseite (PMC3538253) gesehen; stimmen überein. Inhaltsangaben stammen aus der
@@ -56,6 +59,7 @@ quellen:
     doi: "10.1002/joc.3887"
     rolle: methode   # Wahl der PET-Formel und der Parameterschätzung; Vergleich SPI/SPEI
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Eintrag zur DOI (Autoren, Titel, Zeitschrift, Band 34, Heft 10, Seiten 3001-3023)
       gesehen. Eine Suchmaschinen-Zusammenfassung nannte den Titel ungenau (mit angehängtem
@@ -68,6 +72,7 @@ quellen:
     doi: "10.1002/joc.4267"
     rolle: gegenposition   # empfiehlt für SPEI eine andere Verteilung (GEV) als das Original (log-logistisch)
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Eintrag zur DOI mit Abstract (Autoren, Titel, Zeitschrift, Band 35, Heft 13, Seiten
       4027-4040) gesehen. Der Abstract nennt: Untersuchung an Daten für Europa (0,5 Grad, Watch
@@ -80,6 +85,7 @@ quellen:
     doi: "10.1038/s41598-017-14283-2"
     rolle: methode   # zeigt, wo SPI und SPEI unter Erwärmung auseinanderlaufen
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Eintrag zur DOI mit Abstract (Autoren, Titel, Scientific Reports, Band 7, Artikel
       14045, Jahr 2017) gesehen. Nur für Europa 1958-2014; auf andere Regionen nicht übertragbar.
@@ -89,6 +95,7 @@ quellen:
     doi: "10.1038/nclimate3046"
     rolle: gegenposition   # stellt PET-basierte Trockenheitsmaße in Frage
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Crossref-Eintrag zur DOI (Autoren, Titel, Nature Climate Change, Band 6, Seiten 946-949, 2016)
       gesehen; Kernaussage aus der Suche (Auszug der Nature-Seite): PET-abhängige Maße können
@@ -102,6 +109,7 @@ quellen:
     doi: null   # keine DOI gefunden
     rolle: methode   # Praxisleitfaden zum SPI, unter anderem zur Länge der Bezugszeitreihe
     citation_verified: false
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       Autoren, Titel, Jahr und WMO-Nummer über die Suche (WMO-Bibliothek, Zitierverzeichnisse)
       bestätigt. Der Leitfaden selbst war nicht lesbar (PDF ließ sich nicht auswerten), daher

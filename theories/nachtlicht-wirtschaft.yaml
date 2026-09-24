@@ -10,6 +10,7 @@ quellen:
     doi: "10.1257/aer.102.2.994"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 102, Heft 2, Seiten 994-1028, DOI), zusätzlich
       RePEc/IDEAS-Eintrag und NBER-Seite des Arbeitspapiers (w15199, DOI 10.3386/w15199). Alle Angaben stimmen überein.
@@ -22,6 +23,7 @@ quellen:
     doi: "10.1016/j.jdeveco.2020.102602"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autoren, Jahr 2021, Titel, Zeitschrift, Band 149, Artikelnummer 102602, DOI) und
       RePEc/IDEAS-Eintrag mit Zusammenfassung. Stimmen überein. Zusammenfassung nur über eine automatische
@@ -32,6 +34,7 @@ quellen:
     doi: "10.1111/obes.12417"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autor, Titel, Zeitschrift, Band 83, Heft 3, Seiten 770-791, DOI) und Wiley-Suchtreffer
       mit Zusammenfassung. Hinweis: Crossref führt als Jahr 2020 (Online-Erstveröffentlichung), das Heft trägt 2021
@@ -41,6 +44,7 @@ quellen:
     doi: "10.1073/pnas.1017031108"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 108, Heft 21, Seiten 8589-8594, DOI) und
       PNAS-Trefferseite in der Websuche. Stimmen überein. Der Volltext wurde nicht gelesen (PNAS-Seite HTTP 403);
@@ -50,6 +54,7 @@ quellen:
     doi: "10.1016/j.worlddev.2014.08.017"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 66, Seiten 322-334, DOI) und RePEc/IDEAS-Eintrag
       mit Zusammenfassung. Stimmen überein. Volltext nicht gelesen.
@@ -58,6 +63,7 @@ quellen:
     doi: "10.1086/720458"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autor, Jahr, Titel, Zeitschrift, Band 130, Heft 10, Seiten 2731-2769, DOI) und
       RePEc/IDEAS-Eintrag mit Zusammenfassung. Stimmen überein. Die Zusammenfassung stützt die Aussagen "Nachtlicht-Elastizität
@@ -70,6 +76,7 @@ quellen:
     doi: null
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: MPRA-Seite https://mpra.ub.uni-muenchen.de/51713/ (Wiedergabe durch ein Hilfsmodell, nicht der Rohtext):
       Autoren Marcus Berliant und Adam Weiss, Titel "Measuring Economic Growth from Outer Space: A Comment", eingestellt am
@@ -89,6 +96,7 @@ quellen:
     doi: "10.1073/pnas.0610172104"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Crossref-API (Autoren, Jahr, Titel, Zeitschrift, Band 104, Heft 17, Seiten 7301-7306, DOI) und
       Verzeichniseintrag der Arizona State University mit Zusammenfassung. Stimmen überein. Nur als Verweis für den
@@ -100,6 +108,7 @@ quellen:
     doi: "10.1093/pnasnexus/pgaf037"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: >
       2026-09-23: Seite des Verlags (Oxford Academic) mit Autorenliste, Titel, Zeitschrift, Band 4, Heft 2, Artikelnummer
       pgaf037, DOI und Zusammenfassung. Im gelesenen Auszug: Bebaute Fläche folgt der Städte-Skalierungstheorie in allen 61 Ländern,

@@ -214,6 +214,7 @@ quellen:
     doi: "<DOI oder null, wenn es keinen gibt>"
     rolle: original          # original | gegenposition | methode | daten
     citation_verified: false # PFLICHT je Quelle, siehe unten
+    verifiziert_umfang: metadaten   # PFLICHT je Quelle: metadaten | originaltext (Bedeutung siehe unten)
     verifiziert_an: "<wo und wie geprüft, z. B. Verlagsseite/Crossref; sonst was fehlt>"
 modell: "<Gleichung, z. B. y_it = a_i + g_t + b * x_i,t-L + e_it, mit Erklärung der Symbole>"
 ursache: {layer: niederschlag, richtung: rückgang}
@@ -239,6 +240,11 @@ prüfergebnisse: []
 **Status `Daten unzureichend`:** Er gilt, wenn ein Layer, der für die Kernaussage nötig ist, nirgends geplant ist (`fehlt` im `datenbedarf`) oder wenn die Kernaussage mit den geplanten Layern nicht messbar ist. Fehlt nur ein Layer für eine Nebenprüfung (z. B. eine Kontrollvariable), bleibt es bei `ungeprüft`, und die Lücke steht im `datenbedarf`. Hat nur ein Teil des Eintrags dieses Problem (z. B. der SPEI-Teil eines Dürreindex-Eintrags), bleibt `status` beim Stand des Ganzen und `teilstatus` benennt den Teil mit Grund.
 
 **Pflichtfelder für Qualität und Ehrlichkeit** (jeder Eintrag muss sie ausfüllen):
+- `verifiziert_umfang` (je Quelle): **wie weit** die Prüfung ging. Zwei Werte:
+  - `metadaten`: Autoren, Jahr, Titel und Fundstelle wurden in einem Verzeichnis gesehen (Crossref, Verlag, arXiv, Katalog). Auch ein gelesener Abstract oder eine Zusammenfassung durch ein Hilfsmodell bleibt `metadaten`: Die Quelle existiert und ist richtig zitiert, aber ihre inhaltliche Aussage ist nicht am Text geprüft.
+  - `originaltext`: die inhaltliche Aussage, die ALEPH sich auf die Quelle stützt, wurde im Volltext gelesen (nicht nur im Abstract und nicht nur in einer Zusammenfassung durch ein Hilfsmodell). Nur mit `citation_verified: true` zulässig.
+  - Im Zweifel `metadaten`. `null` ist nur erlaubt, wenn `citation_verified: false` ist und nicht einmal die Metadaten belastbar gesehen wurden (z. B. nur Suchergebnisse). `verifiziert_an` nennt weiterhin die Einzelheiten.
+  - Für Aussagen, die in einer Präsentation oder Veröffentlichung verwendet werden, ist `originaltext` Pflicht (CLAUDE.md).
 - `citation_verified` (je Quelle, `true`/`false`): `true` nur, wenn Autoren, Jahr, Titel, Zeitschrift und DOI tatsächlich an der Originalquelle oder einem Verzeichnis (Verlag, Crossref) geprüft wurden, nicht aus dem Gedächtnis. Alles andere ist `false`, und `verifiziert_an` sagt, was fehlt. Eine Quellenangabe wird nie erfunden.
 - `fallstricke`: bekannte methodische Probleme der Theorie (Messfehler, Zirkularität, Streit in der Fachwelt, Fehlschlüsse beim Übertragen auf Satellitendaten).
 - `datenbedarf`: welche Layer die Prüfung braucht und ob wir sie haben. `status` je Layer: `vorhanden` (Würfel geladen), `in Arbeit` (Download läuft), `geplant` (Steckbrief oder Eintrag in Abschnitt 5, noch nicht geladen), `fehlt` (nirgends geplant).

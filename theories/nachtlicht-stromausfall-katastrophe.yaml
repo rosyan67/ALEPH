@@ -15,6 +15,7 @@ quellen:
     doi: "10.1016/j.rse.2018.03.017"
     rolle: daten
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Crossref (Autorenliste in Reihenfolge, Titel, Zeitschrift, Jahr, Band, Seiten, DOI) und Verzeichnisseiten (ORNL, NOAA-Repository, CIRA) per Websuche übereinstimmend gesehen. Der Volltext wurde nicht gelesen; die Quelle wird hier nur als Produktbeschreibung der Datenquelle (Black Marble, VNP46) angeführt, nicht für Zahlen zu Katastrophen. Die DOI stimmt mit der Angabe im Steckbrief docs/sources/vnp46a3.md überein."
 
   - zitat: "Román, M. O., Stokes, E. C., Shrestha, R., Wang, Z., Schultz, L., Sepúlveda Carlo, E. A., Sun, Q., Bell, J., Molthan, A., Kalb, V., Ji, C., Seto, K. C., McClain, S. N., Enenkel, M. (2019): Satellite-based assessment of electricity restoration efforts in Puerto Rico after Hurricane Maria. PLOS ONE, 14(6), e0218883."
@@ -22,6 +23,7 @@ quellen:
     doi: "10.1371/journal.pone.0218883"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Crossref (alle 14 Autoren in Reihenfolge, Titel, Zeitschrift, Jahr, Band, Heft, Artikelnummer, DOI) und PLOS-ONE-Seite bzw. PubMed-Central-Volltext (PMC6599127) per Web-Abruf übereinstimmend gesehen. Die inhaltlichen Angaben (Formeln, 4-Tage-Zusammenfassung, Zahlen) wurden aus dem Volltext über ein automatisches Zusammenfassungswerkzeug gelesen und nicht im Original-PDF gegengeprüft; sie sind unten als 'laut Quelle' gekennzeichnet und sollten vor einer Veröffentlichung einmal im Volltext nachgelesen werden. Der Nutzer nannte nur 'Black-Marble-Arbeiten, Román et al.'; die Zuordnung zu den beiden Román-Arbeiten (2018, 2019) stammt aus der Recherche, nicht vom Nutzer."
 
   - zitat: "Wang, Z., Román, M. O., Sun, Q., Molthan, A. L., Schultz, L. A., Kalb, V. L. (2018): Monitoring disaster-related power outages using NASA Black Marble nighttime light product. The International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences, XLII-3, 1853-1856."
@@ -29,6 +31,7 @@ quellen:
     doi: "10.5194/isprs-archives-XLII-3-1853-2018"
     rolle: methode
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Crossref (Autoren, Titel, Reihe, Band, Seiten, Jahr, DOI) und ISPRS-Archives-Seite (Copernicus) übereinstimmend gesehen. Es ist ein kurzer Tagungsbeitrag (4 Seiten). Auf der Seite wurde nur die Kurzfassung gelesen; sie nennt keine einzelnen Ereignisse. Dass die Arbeit Hurrikan Sandy (2012) und Hurrikan Maria (2017) betrifft, stammt nur aus der Beschreibung in einer anderen Arbeit (Sekundärangabe, nicht am Original bestätigt) und wird deshalb hier nicht als Fakt verwendet. Der Auftrag nannte 'Wang et al. 2018 zu Hurrikan-Stromausfällen': Titel, Autoren und Jahr passen, der Hurrikan-Bezug ist nicht bestätigt."
 
   - zitat: "Zhao, X., Yu, B., Liu, Y., Yao, S., Lian, T., Chen, L., Yang, C., Chen, Z., Wu, J. (2018): NPP-VIIRS DNB Daily Data in Natural Disaster Assessment: Evidence from Selected Case Studies. Remote Sensing, 10(10), 1526."
@@ -36,6 +39,7 @@ quellen:
     doi: "10.3390/rs10101526"
     rolle: original
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Crossref (alle 9 Autoren, Titel, Zeitschrift, Jahr, Band, Heft, Artikelnummer, DOI, Kurzfassung) sowie ADS/ECNU-Verzeichnis per Websuche übereinstimmend gesehen. Nur die Kurzfassung wurde gelesen, nicht der Volltext. Der Auftrag nannte 'Zhao et al. zu Nachtlicht und Katastrophen': Diese Arbeit wurde als passende Quelle gefunden; ob der Nutzer genau diese meinte, ist nicht bestätigt."
 
   - zitat: "Zhang, D., Huang, H., Roy, N., Roozbahani, M. M., Frost, J. D. (2023): Black Marble Nighttime Light Data for Disaster Damage Assessment. Remote Sensing, 15(17), 4257."
@@ -43,6 +47,7 @@ quellen:
     doi: "10.3390/rs15174257"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Crossref (Autoren, Titel, Zeitschrift, Jahr, Band, Heft, Artikelnummer, DOI, Kurzfassung wörtlich) und MDPI-Verzeichnis per Websuche übereinstimmend gesehen. Die MDPI-Seite selbst war für den Web-Abruf gesperrt (HTTP 403); es wurde nur die Kurzfassung gelesen. Rolle 'gegenposition' im eingeschränkten Sinn: bestätigt die Methode für Hurrikane, aber nicht für Erdbeben und Tornados und nicht zur Quantifizierung von Schäden."
 
   - zitat: "Skoufias, E., Strobl, E., Tveit, T. (2021): Can we rely on VIIRS nightlights to estimate the short-term impacts of natural hazards? Evidence from five South East Asian countries. Geomatics, Natural Hazards and Risk, 12(1), 381-404."
@@ -50,6 +55,7 @@ quellen:
     doi: "10.1080/19475705.2021.1879943"
     rolle: gegenposition
     citation_verified: true
+    verifiziert_umfang: metadaten
     verifiziert_an: "Crossref (Autoren, Titel, Zeitschrift, Jahr, Band, Heft, Seiten, DOI) und Verlagsseite (Taylor & Francis) per Websuche übereinstimmend gesehen. Die Verlagsseite war für den Web-Abruf gesperrt (HTTP 403). Die unten wiedergegebenen Aussagen stammen aus dem Text der gleichnamigen Weltbank-Arbeitsfassung (Policy Research Working Paper 9052), nicht aus der Zeitschriftenfassung; die Zeitschriftenfassung kann in Einzelheiten abweichen."
 
 modell: >
