@@ -37,6 +37,8 @@ Ablauf und Sicherheitsnetz:
 - Fehlende Werte bleiben als leerer Wert (NaN) mit `hat_wert = False` in der
   Tabelle; sie werden nie aufgefüllt oder interpoliert. Die jüngsten Jahre ab
   `VORLAEUFIG_AB` sind als `vorlaeufig` markiert.
+- BIP pro Kopf ist für fünf Länder mit `nicht_verwenden` markiert (`PRO_KOPF_ABWEICHEND`),
+  weil es dort nicht zu BIP und Bevölkerung passt; die Werte bleiben sichtbar.
 """
 
 import argparse
@@ -64,6 +66,13 @@ MAX_VERSUCHE = 4
 WARTEZEIT_BASIS_SEKUNDEN = 5  # verdoppelt sich je Versuch
 
 ORDNER_MUSTER = re.compile(r"^\d{8}T\d{6}Z$")
+
+# Länder, bei denen BIP pro Kopf nicht zu BIP und Bevölkerung passt (Abruf 2026-09-23, Steckbrief Abschnitt 14).
+# Die Ursache ist in der Weltbank-Dokumentation nicht belegt; deshalb wird BIP pro Kopf für diese Länder
+# nicht verwendet, sondern mit BIP und Bevölkerung getrennt gerechnet. Die Werte bleiben in der Tabelle
+# (nichts wird versteckt), aber `nicht_verwenden` ist gesetzt.
+PRO_KOPF_CODES = ("NY.GDP.PCAP.KD", "NY.GDP.PCAP.PP.KD")
+PRO_KOPF_ABWEICHEND = ("CYP", "MAR", "RUS", "TZA", "UKR")
 
 INDIKATOREN = {
     "NY.GDP.MKTP.KD": {
@@ -155,8 +164,10 @@ META = {
         "Gemessen am Abruf 2026-09-23 (Zahlen ändern sich mit Revisionen): Export und Import fehlen je Jahr bei "
         "15 bis 41 % der Volkswirtschaften, das BIP bei 2 bis 14 % (2025 am höchsten), die Bevölkerung nie.",
         "Gemessen am Abruf 2026-09-23: Bei Zypern, Marokko, Russland, Tansania und der Ukraine passt BIP pro Kopf "
-        "mal Bevölkerung in allen Jahren nicht zum BIP (Abweichung 1,5 bis 44 %, bei Zypern am größten); "
-        "Ursache nicht geprüft. Für diese Länder das BIP pro Kopf nicht aus BIP und Bevölkerung nachrechnen.",
+        "mal Bevölkerung in den meisten Jahren nicht zum BIP (Abweichung 1,5 bis 44 %, bei Zypern am größten; "
+        "Russland und Ukraine erst ab 2014, dort spiegelbildlich um dieselbe Personenzahl). Die Weltbank-Dokumentation "
+        "nennt keine Ursache (Steckbrief Abschnitt 14). Deshalb ist BIP pro Kopf für diese Länder mit "
+        "`nicht_verwenden` markiert; dort mit BIP und Bevölkerung getrennt rechnen.",
         "Gemessen am Abruf 2026-09-23: Das Verhältnis KKP-BIP zu BIP in konstanten US-Dollar ist bei allen 199 Ländern "
         "mit beiden Reihen über alle Jahre konstant. Die KKP-Reihe hat also dieselbe Veränderung über die Zeit und "
         "bringt für Zeitreihen nichts Neues; sie ist nur für Niveauvergleiche zwischen Ländern nützlich.",
@@ -398,6 +409,7 @@ def baue_tabelle(abruf_ordner):
     tabelle["jahr"] = tabelle["jahr"].astype("int16")
     tabelle["hat_wert"] = tabelle["wert"].notna()
     tabelle["vorlaeufig"] = tabelle["jahr"] >= VORLAEUFIG_AB
+    tabelle["nicht_verwenden"] = tabelle["indikator"].isin(PRO_KOPF_CODES) & tabelle["land_iso3"].isin(PRO_KOPF_ABWEICHEND)
     tabelle["abruf_utc"] = manifest["abruf_utc"]
 
     erwartet = len(echte) * len(jahre) * len(INDIKATOREN)

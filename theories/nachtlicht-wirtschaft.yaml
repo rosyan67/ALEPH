@@ -69,12 +69,21 @@ quellen:
     jahr: 2013
     doi: null
     rolle: gegenposition
-    citation_verified: false
+    citation_verified: true
     verifiziert_an: >
-      2026-09-23: Autoren, Jahr und Titel auf der MPRA-Seite gesehen (theoretische und ökonometrische Bedenken gegen den
-      Ansatz von Henderson, Storeygard und Weil). NICHT bestätigt: eine Veröffentlichung in einer Fachzeitschrift und eine DOI
-      (keine gefunden; es handelt sich nach den gesehenen Angaben um ein Arbeitspapier). Deshalb false. Die Kritik wird nur
-      allgemein wiedergegeben, weil der Volltext nicht gelesen wurde.
+      2026-09-23: MPRA-Seite https://mpra.ub.uni-muenchen.de/51713/ (Wiedergabe durch ein Hilfsmodell, nicht der Rohtext):
+      Autoren Marcus Berliant und Adam Weiss, Titel "Measuring Economic Growth from Outer Space: A Comment", eingestellt am
+      26. November 2013, MPRA Paper Nr. 51713, Status Arbeitspapier (Preprint), DOI nicht angegeben. Dasselbe im
+      RePEc/IDEAS-Eintrag https://ideas.repec.org/p/pra/mprapa/51713.html (ebenfalls Wiedergabe durch ein Hilfsmodell; Jahr 2013,
+      Reihe MPRA Paper 51713, keine DOI). Autorennamen, Jahr, Titel und Nummer stimmen mit dem Zitat überein. Keine
+      Zeitschriftenfassung: Die MPRA-Seite der Neufassung von 2017 (MPRA Paper Nr. 78602, eingestellt 19. April 2017,
+      https://mpra.ub.uni-muenchen.de/78602/) nennt keine Zeitschrift und keine DOI; die Crossref-Suche (Titel und
+      Autoren) fand keinen Eintrag von Berliant und Weiss. DOI: nach einer DOI gesucht in MPRA (beide Seiten), RePEc/IDEAS
+      und Crossref, keine gefunden, daher doi: null. Hinweis: Es gibt mehrere Fassungen desselben Papiers (nach IDEAS:
+      MPRA Paper 47340 und 51055, beide 2013, sowie 78602 von 2017); der IDEAS-Auszug zu 47340 nennt als Gegenstand
+      "spatial econometric issues", der zu 51713 "econometric and elementary economic theory issues", also mit nicht
+      identischer Kurzfassung. Zitiert wird Fassung 51713. Nicht geprüft: Google-Scholar-Eintrag; der Volltext (PDF) wurde
+      nicht gelesen. Die Kritik wird nur allgemein aus der Kurzfassung wiedergegeben.
   - zitat: "Bettencourt, L. M. A., Lobo, J., Helbing, D., Kühnert, C., West, G. B. (2007): Growth, innovation, scaling, and the pace of life in cities. Proceedings of the National Academy of Sciences, 104(17), 7301-7306"
     jahr: 2007
     doi: "10.1073/pnas.0610172104"

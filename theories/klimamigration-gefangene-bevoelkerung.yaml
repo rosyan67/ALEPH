@@ -30,17 +30,34 @@ quellen:
       (NBER/FEEM) 116 Länder; beide Zeitraum 1960-2000. Eine Sekundärquelle (JDC-Literaturübersicht,
       selbst nur über eine automatische Zusammenfassung gelesen) nennt 30 Länder mit niedrigem und
       85 Länder mit mittlerem Einkommen.
-  - zitat: "Foresight (2011): Migration and Global Environmental Change. Final Project Report. UK Government Office for Science, London (Projektleitung: Richard Black)"
+  - zitat: "Foresight (2011): Migration and Global Environmental Change: Future Challenges and Opportunities (Final Project Report, Ref. BIS/11/1116). Government Office for Science, London"
     jahr: 2011
     doi: null   # Regierungsbericht, es wurde keine DOI gefunden
     rolle: methode   # Herkunft des Konzepts "trapped populations" (Konzept, kein Modell)
-    citation_verified: false
+    citation_verified: true
     verifiziert_an: >
-      Titel, Jahr und Herausgeber (UK Government Office for Science, Foresight) in Suchergebnissen und auf
-      Verzeichnisseiten gesehen; dass der Bericht das Konzept "trapped populations" prominent macht, wird von
-      DeWaard et al. (2022, siehe unten) ausdrücklich so beschrieben. Der Berichtstext selbst (PDF der
-      gov.uk-Seite) war nicht als Text lesbar, das Zitat wurde also nicht am Original gelesen; es gibt keine DOI.
-      Deshalb false.
+      Nachprüfung am 2026-09-23. Titel, Herausgeber, Datum und Fundstelle gesehen auf der Publikationsseite
+      der Regierung (gov.uk/government/publications/migration-and-global-environmental-change-future-challenges-and-opportunities):
+      Titel "Migration and global environmental change: future challenges and opportunities", Herausgeber
+      Government Office for Science, Veröffentlichung 20. Oktober 2011; dort sind vier Dokumente gelistet, darunter
+      "final project report" (BIS/11/1116, 234 Seiten), "executive summary" (BIS/11/1115), "action plan"
+      (BIS/11/1340) und "future scenarios" (BIS/11/1117). Diese Seite wurde nur über die Zusammenfassung eines
+      Hilfsmodells gelesen (WebFetch), nicht im Rohtext. KORREKTUR: "Final Project Report" ist demnach kein Teil des
+      Titels, sondern die Bezeichnung des Hauptdokuments; der Titel trägt den Untertitel "Future Challenges and
+      Opportunities". Dieselbe Titelform (Herausgeber Government Office for Science, London, 2011) zusätzlich gesehen im
+      Forschungsportal der University of Birmingham (dort als Working Paper geführt, Autorenliste Black, Adger, Arnell,
+      Dercon, Geddes, Thomas, ohne ISBN und ohne DOI; ebenfalls nur über Hilfsmodell-Zusammenfassung), bei GSDRC und im
+      UN-Migrationsnetzwerk (Datum dort 01.01.2011). Die Angabe "Projektleitung: Richard Black" wurde aus dem Zitat
+      entfernt, weil sie auf keiner gelesenen Verzeichnis- oder gov.uk-Seite zu sehen war (nur in Suchtreffer-Schnipseln
+      und bei Wikipedia, dort nicht geprüft). KEINE DOI: Crossref-Abfrage nach dem Titel liefert keinen Eintrag für
+      den Bericht (nur die ersten fünf Treffer angesehen, alles andere Zeitschriftenartikel); gov.uk und Birmingham
+      nennen keine DOI. Keine ISBN gefunden (gov.uk, Birmingham, GSDRC, UN-Netzwerk); WorldCat und British Library
+      wurden nicht abgerufen. Der Berichtstext selbst war nicht lesbar (PDF von gov.uk und UN-Kopie als Binärdaten,
+      auch die Zusammenfassung BIS/11/1115). Deshalb NICHT am Original gesehen, dass der Bericht das Konzept
+      "trapped populations" enthält. Es ist belegt über DeWaard et al. (2022, siehe unten) und über Sekundärtexte
+      (GSDRC-Zusammenfassung: "millions will be 'trapped' in vulnerable areas and unable to move"; Oxford Institute of
+      Population Ageing: Bericht behandle "trapped" populations; beide nur über Hilfsmodell gelesen, nicht von der
+      Regierungsseite). Die gov.uk-Seite selbst enthält das Wort in ihrer Beschreibung nicht.
   - zitat: "Black, R., Adger, W. N., Arnell, N. W., Dercon, S., Geddes, A., Thomas, D. (2011): The effect of environmental change on human migration. Global Environmental Change, 21 (Supplement 1), S3-S11"
     jahr: 2011
     doi: "10.1016/j.gloenvcha.2011.10.001"

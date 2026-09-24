@@ -74,22 +74,32 @@ quellen:
     jahr: 2011
     doi: "10.48550/arXiv.1102.4101 (arXiv-DOI, keine Zeitschriften-DOI)"
     rolle: gegenposition
-    citation_verified: false
+    citation_verified: true
     verifiziert_an: >
-      arXiv-Seite gelesen (Autor, Titel, Einreichung Februar 2011, Abstract). Es ist ein Vorabdruck; eine
-      Veröffentlichung in einer Zeitschrift wurde nicht gefunden/geprüft, daher keine Zeitschriftenangabe und
-      false. Aussage laut Abstract: Bei US-Daten zu Wirtschaftsleistung und Einkommen lasse sich ein Potenzgesetz
+      Nachprüfung 2026-09-23. arXiv-Seite https://arxiv.org/abs/1102.4101 abgerufen (WebFetch lieferte nur eine
+      Zusammenfassung eines Hilfsmodells, nicht den Rohtext der Seite). Dort gesehen: Autor Cosma Rohilla Shalizi;
+      Titel "Scaling and Hierarchy in Urban Economies"; arXiv-Nummer 1102.4101; Fassung v1 vom 20. Februar 2011,
+      v2 vom 8. April 2011; Vermerk "Submitted to PNAS" (keine Zeitschriften-Angabe, kein Journal-Ref); DOI
+      10.48550/arXiv.1102.4101 (arXiv-DOI). Es ist ein Vorabdruck. Eine Zeitschriftenfassung habe ich weder über die
+      Websuche noch über eine Crossref-Suche nach Titel und Autor gefunden; das ist keine Garantie, dass es keine
+      gibt. true gilt daher nur für die Angabe als arXiv-Vorabdruck. Aussage laut Abstract: Bei US-Daten zu Wirtschaftsleistung und Einkommen lasse sich ein Potenzgesetz
       nicht von anderen Funktionsformen (z. B. logarithmisches Wachstum) unterscheiden; die Größe erkläre wenig der
       Unterschiede zwischen Städten; der scheinbare Effekt komme stark daher, dass Gesamtwerte statt Pro-Kopf-Werte
       betrachtet werden.
-  - zitat: "Xu, G., Zhou, Z., Jiao, L., Dong, T., Li, R.: Cross-sectional Urban Scaling Fails in Predicting Temporal Growth of Cities. arXiv:1910.06732 (Vorabdruck)"
-    jahr: null
+  - zitat: "Xu, G., Zhou, Z., Jiao, L., Dong, T., Li, R. (2019): Cross-sectional Urban Scaling Fails in Predicting Temporal Growth of Cities. arXiv:1910.06732 [physics.soc-ph] (Vorabdruck)"
+    jahr: 2019
     doi: "10.48550/arXiv.1910.06732 (arXiv-DOI, keine Zeitschriften-DOI)"
     rolle: gegenposition
-    citation_verified: false
+    citation_verified: true
     verifiziert_an: >
-      Nur die arXiv-Seite (Autoren, Titel, Abstract) gelesen. Erscheinungsjahr und mögliche Zeitschriftenfassung
-      nicht geprüft, deshalb jahr: null und false. Aussage laut Abstract: bebaute Fläche skaliert im Querschnitt
+      Nachprüfung 2026-09-23. arXiv-Seite https://arxiv.org/abs/1910.06732 abgerufen (WebFetch lieferte nur eine
+      Zusammenfassung eines Hilfsmodells, nicht den Rohtext der Seite). Dort gesehen: Autoren Gang Xu, Zhengzi Zhou,
+      Limin Jiao, Ting Dong, Ruiqi Li (die Initialen im Zitat folgen daraus); Titel wie im Zitat; Kategorie
+      physics.soc-ph; v1 vom 13. Oktober 2019, v2 vom 17. Oktober 2019 (deshalb jahr: 2019); DOI 10.48550/arXiv.1910.06732
+      (arXiv-DOI); kein Journal-Ref und keine Kommentare auf der Seite angegeben. Eine Zeitschriftenfassung ist auf der
+      arXiv-Seite nicht vermerkt; auch eine Websuche und eine Crossref-Suche nach dem Titel fanden keine (das ist keine
+      Garantie, dass es keine gibt; Google Scholar und Semantic Scholar wurden nicht ausgewertet). true gilt daher nur
+      für die Angabe als arXiv-Vorabdruck. Aussage laut Abstract: bebaute Fläche skaliert im Querschnitt
       über Städte hinweg sublinear mit der Bevölkerung, einzelne Städte zeigen aber über die Zeit superlineares
       Skalieren (Landausdehnung schneller als Bevölkerung); der Querschnitt sagt das Wachstum einzelner Städte
       daher nicht voraus.
