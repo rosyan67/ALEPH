@@ -5,8 +5,10 @@ Aufruf (normalerweise über scripts/vnp46a3_status.sh):
 
 Zeigt: läuft der Prozess noch, wie viele Monate (und Jahre) fertig sind, was
 gerade läuft (Monat, Phase, Kacheln x von y), wann sich zuletzt etwas bewegt
-hat, gemessene Dauer und eine grobe Restzeit. Am Ende steht eine Ampel:
-OK / ACHTUNG / HÄNGT / GESTOPPT / FERTIG.
+hat, gemessene Dauer und eine grobe Restzeit. Außerdem: fertige Monate, offene
+Monate und die Liste der Monate, die nachgeholt werden müssen (im Protokoll als
+„ZURÜCKGESTELLT" vermerkt, siehe vnp46a3_lauf.py). Am Ende steht eine Ampel:
+OK / ACHTUNG / HÄNGT / GESTOPPT / FERTIG / FERTIG MIT LÜCKEN.
 """
 
 import re
@@ -32,6 +34,7 @@ _ZEIT = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) UTC\s+(.*)$")
 _MONAT_START = re.compile(r"^(\d{4})-(\d{2}): Start ")
 _MONAT_GEMELDET = re.compile(r"^(\d{4})-(\d{2}): (\d+) Kacheln bei NASA gemeldet")
 _MONAT_DOWNLOAD_FERTIG = re.compile(r"^(\d{4})-(\d{2}): Download fertig")
+_MONAT_ZURUECKGESTELLT = re.compile(r"^(\d{4})-(\d{2}): ZURÜCKGESTELLT")
 _MONAT_FERTIG = re.compile(
     r"^(\d{4})-(\d{2}): fertig, (\d+) Kacheln, .*Dauer gesamt ([\d.]+) Minuten "
     r"\(Download ([\d.]+), Verkleinern und Schreiben ([\d.]+)\)"
@@ -56,6 +59,11 @@ def lies_protokoll(zeilen: list[str]) -> dict:
     - `aktuell`: None oder dict(monat, gemeldet, download_fertig, start) für den
       Monat, der im letzten Lauf begonnen, aber nicht beendet wurde
     - `letzte_zeit`: Zeitpunkt der letzten Protokollzeile
+    - `zurueckgestellt`: dict Monat -> kurzer Grund, für Monate, bei denen zuletzt
+      „ZURÜCKGESTELLT" stand (nicht „fertig"). Gilt über Läufe hinweg, nicht nur
+      seit dem letzten Start: ein Monat bleibt nachzuholen, bis er fertig ist
+    - `lauf_beendet_offen`: True, wenn der letzte Lauf mit „Lauf beendet mit
+      offenen Monaten" endete
     """
     ergebnis = {
         "abgeschlossen": [],
@@ -64,6 +72,8 @@ def lies_protokoll(zeilen: list[str]) -> dict:
         "fehler": [],
         "aktuell": None,
         "letzte_zeit": None,
+        "zurueckgestellt": {},
+        "lauf_beendet_offen": False,
     }
     for zeile in zeilen:
         treffer = _ZEIT.match(zeile)
@@ -78,8 +88,11 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             ergebnis["lauf_fertig"] = False
             ergebnis["fehler"] = []
             ergebnis["aktuell"] = None
+            ergebnis["lauf_beendet_offen"] = False
         elif text.startswith("Lauf fertig"):
             ergebnis["lauf_fertig"] = True
+        elif text.startswith("Lauf beendet mit offenen Monaten"):
+            ergebnis["lauf_beendet_offen"] = True
         elif text.startswith("FEHLER") or text.startswith("ABBRUCH"):
             ergebnis["fehler"].append(zeile)
 
@@ -94,10 +107,17 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             ergebnis["aktuell"]["gemeldet"] = int(m.group(3))
         elif _MONAT_DOWNLOAD_FERTIG.match(text) and ergebnis["aktuell"]:
             ergebnis["aktuell"]["download_fertig"] = True
+        elif m := _MONAT_ZURUECKGESTELLT.match(text):
+            monat = (int(m.group(1)), int(m.group(2)))
+            # Grund: der Teil nach dem Standardsatz, gekürzt (die volle Meldung steht im Protokoll)
+            grund = text.split("Rohdaten bleiben erhalten.", 1)[-1].strip()
+            ergebnis["zurueckgestellt"][monat] = grund[:220]
+            ergebnis["aktuell"] = None
         elif m := _MONAT_FERTIG.match(text):
             ergebnis["abgeschlossen"].append(
                 (int(m.group(1)), int(m.group(2)), int(m.group(3)), float(m.group(4)), float(m.group(5)), float(m.group(6)))
             )
+            ergebnis["zurueckgestellt"].pop((int(m.group(1)), int(m.group(2))), None)
             ergebnis["aktuell"] = None
     return ergebnis
 
@@ -161,6 +181,16 @@ def main() -> int:
     jahre = sorted({j for j, _ in alle})
     je_jahr = "  ".join(f"{j}:{sum(1 for m in fertig if m[0] == j):>2}" for j in jahre)
     print(f"  je Jahr (von 12): {je_jahr}")
+    print(f"Offene Monate: {len(alle) - len(fertig)} von {len(alle)}")
+    # Ein Monat gilt nur dann als nachzuholen, wenn er im Würfel wirklich noch
+    # nicht fertig ist (das Protokoll allein könnte veraltet sein).
+    nachzuholen = {m: g for m, g in p["zurueckgestellt"].items() if m not in fertig}
+    if nachzuholen:
+        print(f"Nachzuholen (zurückgestellt, später erneut versuchen): {len(nachzuholen)} Monat(e)")
+        for (j, mo), grund in sorted(nachzuholen.items()):
+            print(f"  {j:04d}-{mo:02d}: {grund}")
+    else:
+        print("Nachzuholen (zurückgestellt): keine")
 
     ampel = "OK"
     grund = ""
@@ -189,6 +219,11 @@ def main() -> int:
                 ampel, grund = "ACHTUNG", f"seit über {WARNUNG_RECHNEN_MINUTEN} Minuten keine neue Protokollzeile"
     elif p["lauf_fertig"] and not prozesse:
         ampel = "FERTIG"
+    elif p["lauf_beendet_offen"] and not prozesse:
+        ampel, grund = "FERTIG MIT LÜCKEN", (
+            f"der Lauf ist zu Ende, aber {len(nachzuholen)} Monate müssen nachgeholt werden "
+            "(scripts/vnp46a3_start.sh startet einen neuen Versuch)"
+        )
     elif not prozesse:
         ampel, grund = "GESTOPPT", "der Prozess läuft nicht, der Lauf ist aber nicht als fertig protokolliert"
 

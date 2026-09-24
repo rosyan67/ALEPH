@@ -39,6 +39,24 @@ Eigenschaften:
   und beendet sich danach mit `os._exit`, damit hängende Hintergrund-Threads
   den Prozess nicht am wirklichen Beenden hindern.
 
+Fehlerverhalten (Auftrag 2026-09-24, nach dem Abbruch bei 2019-02 wegen zweier
+Kacheln mit HTTP 502):
+- Der Lauf endet NUR noch bei echten Blockern: kein Speicherplatz, SSD nicht
+  erreichbar, Anmeldung fehlgeschlagen (Meldung „ABBRUCH", Rückgabewert 1).
+- Ein Monat, bei dem nach allen Wiederholungen Kacheln fehlen, wird
+  ZURÜCKGESTELLT: nicht als fertig markiert, Rohdaten unangetastet, Vermerk im
+  Protokoll („ZURÜCKGESTELLT (später erneut versuchen)"), weiter mit dem
+  nächsten Monat. Dasselbe gilt für einen Verarbeitungsfehler in einem Monat
+  (z. B. eine unlesbare Kachel); nur `MAX_VERARBEITUNGSFEHLER_HINTEREINANDER`
+  davon in Folge beenden den Lauf (Verdacht auf Programm- oder
+  Datenträgerfehler statt auf ein Einzelproblem).
+- Am Ende werden die zurückgestellten Monate noch einmal versucht (Nachhol-
+  Durchgang). Gültige Kacheln aus dem ersten Versuch werden wiederverwendet.
+  Bleiben Monate offen, endet der Lauf mit Rückgabewert 2 und der Meldung
+  „Lauf beendet mit offenen Monaten"; ein Neustart versucht sie erneut.
+- Beim Start werden vorhandene Rohordner früherer Läufe NICHT mehr gelöscht,
+  sondern wiederverwendet.
+
 Das Wachhalten des Macs (caffeinate) und das Weiterlaufen nach Schließen
 des Terminals (nohup) übernimmt scripts/vnp46a3_start.sh, nicht dieses
 Modul.
@@ -55,6 +73,19 @@ from datetime import datetime, timezone
 
 from aleph.core import io
 from aleph.layers import vnp46a3
+
+# Echte Blocker: nur sie beenden den Lauf.
+BLOCKER = (io.SSDNichtGefunden, io.SpeicherZuKnapp, vnp46a3.AnmeldungFehlgeschlagen)
+
+# So viele Monate in Folge mit einem Verarbeitungsfehler (nicht Download)
+# beenden den Lauf: ein Einzelfall wird zurückgestellt, eine Serie deutet auf
+# einen Programm- oder Datenträgerfehler, und jeder weitere Monat würde eine
+# Stunde Download für nichts kosten.
+MAX_VERARBEITUNGSFEHLER_HINTEREINANDER = 3
+
+FERTIG = "fertig"
+ZURUECKGESTELLT = "zurückgestellt"
+VERARBEITUNGSFEHLER = "verarbeitungsfehler"
 
 
 def _monatsliste(start: str, ende: str) -> list[tuple[int, int]]:
@@ -107,13 +138,9 @@ def _stempel(zeitpunkt: datetime) -> str:
 
 def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_downloads: int) -> None:
     name = f"{jahr:04d}-{monat:02d}"
+    # Ein Rohordner aus einem früheren Versuch wird NICHT gelöscht: lade_monat
+    # verwendet die gültigen Kacheln darin wieder und lädt nur die fehlenden.
     raw_ordner = io.rohdaten_pfad("vnp46a3", name)
-    if raw_ordner.exists():
-        protokoll.schreibe(
-            f"{name}: unvollständiger Rohdaten-Ordner von einem "
-            "früheren Abbruch gefunden, wird gelöscht und neu geladen."
-        )
-        shutil.rmtree(raw_ordner)
 
     # Echte Uhrzeiten (Wanduhr, UTC) für Start und Ende; Dauern mit der
     # monotonen Uhr gemessen, damit eine Uhrumstellung sie nicht verfälscht.
@@ -122,9 +149,9 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
     protokoll.schreibe(f"{name}: Start {_stempel(start_wand)}.")
 
     # lade_monat prüft selbst die Vollständigkeit (Soll-Ist-Vergleich gegen
-    # die NASA-Abfrage) und bricht mit MonatUnvollstaendig ab, BEVOR etwas
-    # geschrieben oder gelöscht wird - die Rohdaten bleiben dann zur Prüfung
-    # liegen.
+    # die NASA-Abfrage) und bricht mit KachelnFehlen bzw. MonatUnvollstaendig
+    # ab, BEVOR etwas geschrieben oder gelöscht wird - die Rohdaten bleiben
+    # dann für den nächsten Versuch liegen.
     dateien = vnp46a3.lade_monat(
         jahr,
         monat,
@@ -161,6 +188,38 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
         f"(Download {(t_download - t0) / 60:.1f}, Verkleinern und Schreiben "
         f"{(t_wuerfel - t_download) / 60:.1f}), Manifest {manifest_pfad.name}."
     )
+
+
+def _bearbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_downloads: int) -> tuple[str, str]:
+    """Ein Monat, mit Fehlerbehandlung nach dem Auftrag vom 2026-09-24.
+
+    Rückgabe: (FERTIG | ZURUECKGESTELLT | VERARBEITUNGSFEHLER, Grund).
+    Echte Blocker (`BLOCKER`) werden NICHT abgefangen, sondern weitergereicht.
+    Bei jedem anderen Fehler bleiben Würfel und Rohdaten des Monats unberührt
+    (verarbeite_monat löscht Rohdaten erst als letzten Schritt).
+    """
+    name = f"{jahr:04d}-{monat:02d}"
+    try:
+        verarbeite_monat(jahr, monat, protokoll, gleichzeitige_downloads)
+        return FERTIG, ""
+    except BLOCKER:
+        raise
+    except (vnp46a3.KachelnFehlen, vnp46a3.DownloadHaengt, vnp46a3.MonatUnvollstaendig) as fehler:
+        grund = str(fehler)
+        protokoll.schreibe(
+            f"{name}: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert, "
+            f"Rohdaten bleiben erhalten. {grund}"
+        )
+        return ZURUECKGESTELLT, grund
+    except Exception as fehler:  # bewusst breit: ein Einzelfall darf den Lauf nicht beenden
+        # Ein Schreib- oder Verbindungsfehler kann ein Blocker sein (Platte voll, SSD weg).
+        vnp46a3.pruefe_blocker(fehler, None)
+        grund = f"{type(fehler).__name__}: {fehler}"
+        protokoll.schreibe(
+            f"{name}: ZURÜCKGESTELLT (später erneut versuchen), Verarbeitungsfehler, nicht als "
+            f"fertig markiert, Rohdaten bleiben erhalten. {grund}\n{traceback.format_exc()}"
+        )
+        return VERARBEITUNGSFEHLER, grund
 
 
 def main() -> int:
@@ -223,20 +282,66 @@ def main() -> int:
         + (f", erster Monat {offene_monate[0][0]:04d}-{offene_monate[0][1]:02d}." if offene_monate else ".")
     )
 
-    for jahr, monat in offene_monate:
-        try:
-            io.pruefe_speicher()
-        except (io.SSDNichtGefunden, io.SpeicherZuKnapp) as fehler:
-            protokoll.schreibe(f"ABBRUCH vor {jahr:04d}-{monat:02d}: {fehler}")
-            return 1
+    alte_rohordner = sorted(p.name for p in io.rohdaten_pfad("vnp46a3").glob("*") if p.is_dir())
+    if alte_rohordner:
+        protokoll.schreibe(
+            "Rohdaten aus früheren Versuchen vorhanden für: "
+            f"{', '.join(alte_rohordner)} (gültige Kacheln werden wiederverwendet, nicht neu geladen)."
+        )
 
-        try:
-            verarbeite_monat(jahr, monat, protokoll, args.gleichzeitig)
-        except Exception as fehler:  # bewusst breit: jeder Fehler soll klar im Protokoll stehen
-            protokoll.schreibe(
-                f"FEHLER bei {jahr:04d}-{monat:02d}: {fehler}\n{traceback.format_exc()}"
-            )
-            return 1
+    zurueckgestellt: dict[tuple[int, int], str] = {}  # Monat -> Grund, in der Reihenfolge des Zurückstellens
+    verarbeitungsfehler_in_folge = 0
+
+    def durchgang(monate: list[tuple[int, int]]) -> int | None:
+        """Bearbeitet die Monate; gibt einen Rückgabewert zurück, wenn der Lauf enden muss, sonst None."""
+        nonlocal verarbeitungsfehler_in_folge
+        for jahr, monat in monate:
+            name = f"{jahr:04d}-{monat:02d}"
+            try:
+                io.pruefe_speicher()
+                ergebnis, grund = _bearbeite_monat(jahr, monat, protokoll, args.gleichzeitig)
+            except BLOCKER as fehler:
+                protokoll.schreibe(f"ABBRUCH bei {name}: {fehler}")
+                return 1
+            if ergebnis == FERTIG:
+                zurueckgestellt.pop((jahr, monat), None)
+                verarbeitungsfehler_in_folge = 0
+                continue
+            zurueckgestellt[(jahr, monat)] = grund
+            verarbeitungsfehler_in_folge = verarbeitungsfehler_in_folge + 1 if ergebnis == VERARBEITUNGSFEHLER else 0
+            if verarbeitungsfehler_in_folge >= MAX_VERARBEITUNGSFEHLER_HINTEREINANDER:
+                protokoll.schreibe(
+                    f"ABBRUCH bei {name}: {verarbeitungsfehler_in_folge} Monate hintereinander mit "
+                    "Verarbeitungsfehler (nicht Download). Das sieht nach einem Programm- oder "
+                    "Datenträgerfehler aus, nicht nach einem Einzelfall; weitere Monate würden nur "
+                    "Download-Zeit kosten. Letzter Grund siehe oben."
+                )
+                return 1
+        return None
+
+    ende = durchgang(offene_monate)
+    if ende is not None:
+        return ende
+
+    if zurueckgestellt:
+        nachholen = list(zurueckgestellt)
+        protokoll.schreibe(
+            f"Nachhol-Durchgang: {len(nachholen)} zurückgestellte Monate werden noch einmal versucht: "
+            f"{', '.join(f'{j:04d}-{m:02d}' for j, m in nachholen)}."
+        )
+        ende = durchgang(nachholen)
+        if ende is not None:
+            return ende
+
+    if zurueckgestellt:
+        protokoll.schreibe(
+            f"Lauf beendet mit offenen Monaten: {len(zurueckgestellt)} Monate sind weiterhin nicht "
+            "fertig und müssen nachgeholt werden (Rohdaten bleiben erhalten; Neustart mit "
+            "scripts/vnp46a3_start.sh versucht sie erneut): "
+            + "; ".join(f"{j:04d}-{m:02d}" for j, m in zurueckgestellt)
+            + "."
+        )
+        return 2
 
     protokoll.schreibe("Lauf fertig: alle angefragten Monate stehen im Würfel.")
     return 0

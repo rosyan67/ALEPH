@@ -72,19 +72,42 @@ stille Drosselung ohne Fehlermeldung). Deshalb:
   ganzen Monat, und großzügig über der beobachteten Normaldauer einer
   einzelnen Kachel (rund 11 Sekunden im Schnitt bei einem vollständigen
   Monat mit voller Parallelität).
-- Hängt oder scheitert eine Kachel, wird sie bis zu `KACHEL_MAX_VERSUCHE`
-  mal erneut versucht, mit wachsender Wartezeit dazwischen
-  (`KACHEL_WARTEZEIT_BASIS_SEKUNDEN`, verdoppelt sich je Versuch).
 - `GLEICHZEITIGE_DOWNLOADS_STANDARD` begrenzt, wie viele Kacheln gleichzeitig
   angefragt werden (Vorschlag 2-4, siehe LOG.md 2026-09-23). Einstellbar je
   Aufruf (`lade_monat`, `download`) und über `--gleichzeitig` beim
   Hintergrund-Lauf (`vnp46a3_lauf.py`).
+
+Fehlerverhalten (geändert 2026-09-24, nachdem am 2026-09-24 05:25 UTC zwei
+Kacheln von 2019-02 nach je 4 Versuchen mit HTTP 502 - Serverfehler bei der
+NASA - den ganzen Lauf beendet und 6,5 Stunden gekostet hatten):
+- Vorübergehende Fehler (HTTP 5xx, Zeitüberschreitung, Verbindungsfehler,
+  ebenso 408 und 429, bei denen Warten hilft) werden hartnäckig wiederholt:
+  Wartezeit 20 s, verdoppelt sich, höchstens `KACHEL_WARTEZEIT_MAX_SEKUNDEN`
+  je Pause; insgesamt höchstens `KACHEL_RETRY_BUDGET_SEKUNDEN` (30 Minuten,
+  gezählt einschließlich der Versuche selbst) je Kachel.
+- Dauerhafte Fehler (HTTP 4xx wie 404 „nicht gefunden") führen sofort zum
+  Aufgeben dieser Kachel, ohne Wartezeit.
+- Echte Blocker beenden den Lauf, alles andere nicht: Anmeldung fehlgeschlagen
+  (`AnmeldungFehlgeschlagen`, auch bei HTTP 401 oder nicht akzeptierter EULA),
+  Speicherplatz voll (`io.SpeicherZuKnapp`, auch bei ENOSPC) und SSD nicht
+  erreichbar (`io.SSDNichtGefunden`) werden aus jeder Kachel-Wiederholung
+  durchgereicht.
+- Fehlen nach allen Versuchen einzelne Kacheln, meldet `lade_monat`
+  `KachelnFehlen`. Der Monat wird dann NICHT geschrieben und NICHT als fertig
+  markiert; die schon geladenen Kacheln bleiben im Rohordner. Beim nächsten
+  Versuch (Nachhol-Durchgang am Ende des Laufs oder Neustart) werden gültige
+  Kacheln wiederverwendet und nur die fehlenden geladen.
+- Scheitern in einem Monat `MAX_GESCHEITERTE_KACHELN_JE_MONAT` Kacheln, gilt der
+  Server als gestört: der Rest des Monats wird nicht mehr versucht (sonst
+  kostete ein Ausfall 30 Minuten je Kachel, hunderte Kacheln lang).
 """
 
 import concurrent.futures
+import errno
 import os
 import re
 import shutil
+import threading
 import time
 import warnings
 from calendar import monthrange
@@ -96,6 +119,7 @@ import numpy as np
 import xarray as xr
 
 import earthaccess
+from earthaccess.exceptions import DownloadFailure, EulaNotAccepted, ServiceOutage
 
 from aleph.core import io
 from aleph.core.auth import earthdata_login
@@ -165,13 +189,30 @@ DOWNLOAD_TIMEOUT_SEKUNDEN = 4 * 60 * 60  # 4 Stunden
 # rasch zu erkennen und neu zu versuchen.
 DATEI_TIMEOUT_SEKUNDEN = 10 * 60  # 10 Minuten
 
-# Wie oft eine einzelne Kachel neu versucht wird, bevor der Monat als
-# gescheitert gilt.
-KACHEL_MAX_VERSUCHE = 4
+# Zeit, die eine Kachel bei vorübergehenden Fehlern (5xx, Zeitüberschreitung)
+# insgesamt bekommt, Versuche und Pausen zusammengezählt. Danach wird der
+# Monat zurückgestellt (nicht der Lauf beendet). Ausgangslage: 4 Versuche in
+# rund 2 Minuten reichten am 2026-09-24 nicht für einen Serverfehler (502).
+KACHEL_RETRY_BUDGET_SEKUNDEN = 30 * 60
 
 # Wartezeit vor dem ersten erneuten Versuch; verdoppelt sich je Versuch
-# (20 s, 40 s, 80 s), damit eine kurzzeitige Drosselung Zeit hat, nachzulassen.
+# (20 s, 40 s, 80 s, ...), damit eine kurzzeitige Drosselung Zeit hat,
+# nachzulassen, aber höchstens KACHEL_WARTEZEIT_MAX_SEKUNDEN je Pause.
 KACHEL_WARTEZEIT_BASIS_SEKUNDEN = 20
+KACHEL_WARTEZEIT_MAX_SEKUNDEN = 5 * 60
+
+# Scheitern in einem Monat so viele Kacheln endgültig (Budget verbraucht oder
+# dauerhaft fehlend), wird der Rest des Monats nicht mehr versucht. Sonst
+# kostete ein Serverausfall 30 Minuten je Kachel (460 Kacheln, 3 gleichzeitig:
+# über 70 Stunden für einen einzigen Monat).
+MAX_GESCHEITERTE_KACHELN_JE_MONAT = 10
+
+# HTTP-Statuscodes aus der 4xx-Familie, bei denen Warten trotzdem hilft
+# (Zeitüberschreitung des Servers, Anfragebegrenzung).
+_HTTP_4XX_MIT_WARTEN = {408, 429}
+# Anmeldung fehlt oder abgelaufen: Blocker, kein Kachel-Problem.
+_HTTP_ANMELDUNG = {401}
+_STATUS_IM_TEXT = re.compile(r"Status code:\s*(\d{3})")
 
 # Zahl gleichzeitiger Kachel-Downloads. Vermutete Ursache der Hänger vom
 # 2026-09-22: zu viele gleichzeitige Verbindungen zum selben NASA/CloudFront-
@@ -198,6 +239,38 @@ class MonatUnvollstaendig(RuntimeError):
 
 class DownloadHaengt(RuntimeError):
     """Der Download hat länger als sein Zeitlimit nicht mehr reagiert."""
+
+
+class AnmeldungFehlgeschlagen(RuntimeError):
+    """Login bei NASA Earthdata fehlgeschlagen oder abgelaufen (echter Blocker: Lauf endet)."""
+
+
+class KachelNichtGeladen(RuntimeError):
+    """Eine Kachel konnte nicht geladen werden.
+
+    `dauerhaft`: True bei HTTP 4xx (Warten hilft nicht), False, wenn das
+    Wiederholungs-Budget bei vorübergehenden Fehlern (5xx, Zeitüberschreitung)
+    verbraucht wurde oder der Monat abgebrochen wurde. `status`: HTTP-Status,
+    wenn bekannt.
+    """
+
+    def __init__(self, meldung: str, dauerhaft: bool, status: int | None = None):
+        super().__init__(meldung)
+        self.dauerhaft = dauerhaft
+        self.status = status
+
+
+class KachelnFehlen(MonatUnvollstaendig):
+    """Ein Monat ist unvollständig, weil einzelne Kacheln nicht geladen werden konnten.
+
+    Kein Blocker: Der Lauf stellt den Monat zurück und macht weiter.
+    `dauerhaft`/`vorlaeufig`: Zahl der Kacheln je Art des Scheiterns.
+    """
+
+    def __init__(self, meldung: str, dauerhaft: int, vorlaeufig: int):
+        super().__init__(meldung)
+        self.dauerhaft = dauerhaft
+        self.vorlaeufig = vorlaeufig
 
 
 class WuerfelFormat(RuntimeError):
@@ -319,26 +392,101 @@ def _monatsspanne(jahr: int, monat: int) -> tuple[str, str]:
     return f"{jahr:04d}-{monat:02d}-01", f"{jahr:04d}-{monat:02d}-{letzter_tag:02d}"
 
 
+def _statuscode(fehler: BaseException) -> int | None:
+    """HTTP-Status aus der Fehlermeldung von earthaccess ("... Status code: 502").
+
+    earthaccess (`DownloadFailure`) gibt den Status nur im Meldungstext an,
+    nicht als eigenes Feld. Ändert sich der Text bei einem Update, liefert
+    diese Funktion None; der Fehler gilt dann als vorübergehend (Warten kostet
+    Zeit, verliert aber keine Daten). Ein Test hält das Format fest.
+    """
+    treffer = _STATUS_IM_TEXT.search(str(fehler))
+    return int(treffer.group(1)) if treffer else None
+
+
+def pruefe_blocker(fehler: BaseException, status: int | None) -> None:
+    """Reicht echte Blocker weiter (Login, Speicher, SSD); kehrt bei Kachel-Problemen zurück.
+
+    Nur diese Fälle dürfen den Lauf beenden (Auftrag 2026-09-24): kein
+    Speicherplatz, SSD weg, Anmeldung fehlgeschlagen.
+    """
+    if isinstance(fehler, (io.SSDNichtGefunden, io.SpeicherZuKnapp, AnmeldungFehlgeschlagen)):
+        raise fehler
+    if isinstance(fehler, EulaNotAccepted) or status in _HTTP_ANMELDUNG:
+        raise AnmeldungFehlgeschlagen(
+            f"NASA lehnt die Anmeldung ab ({fehler}). Zugangsdaten in .env prüfen "
+            "und bei NASA Earthdata die Nutzungsbedingungen (EULA) für LAADS DAAC akzeptieren."
+        ) from fehler
+    if isinstance(fehler, OSError):
+        if fehler.errno == errno.ENOSPC:
+            raise io.SpeicherZuKnapp(
+                "Schreibfehler: kein Speicherplatz mehr auf der SSD (ENOSPC). Lauf gestoppt. "
+                "Bereits fertig verarbeitete Monate bleiben erhalten."
+            ) from fehler
+        # Ein Schreib- oder Verbindungsfehler kann auch heißen, dass die SSD
+        # abgezogen wurde. aleph_data_dir() bricht dann mit SSDNichtGefunden ab.
+        io.aleph_data_dir()
+
+
+def _ist_vorlaeufig(fehler: BaseException, status: int | None) -> bool:
+    """True, wenn Warten und Wiederholen sinnvoll ist (5xx, Zeitüberschreitung, Verbindung).
+
+    HTTP 4xx (z. B. 404 „nicht gefunden") ist dauerhaft: Warten hilft nicht.
+    Ausnahmen sind 408 und 429 (Anfragebegrenzung). 403 zählt als dauerhaft
+    (nicht geprüft, ob NASA/CloudFront damit auch fehlende Dateien meldet;
+    bei 401 gilt der Login als abgelaufen, siehe `pruefe_blocker`). Ein
+    unbekannter Fehlertyp (z. B. Programmfehler) gilt als dauerhaft, damit er
+    nicht 30 Minuten je Kachel verbrennt.
+    """
+    if isinstance(fehler, (DownloadHaengt, ServiceOutage, OSError)):
+        return True
+    if isinstance(fehler, DownloadFailure):
+        return status is None or status >= 500 or status in _HTTP_4XX_MIT_WARTEN
+    return False
+
+
+def _warte(sekunden: float, stopp: threading.Event | None) -> bool:
+    """Wartet; gibt True zurück, wenn stattdessen `stopp` gesetzt wurde."""
+    if stopp is None:
+        time.sleep(sekunden)
+        return False
+    return stopp.wait(sekunden)
+
+
 def _lade_kachel(
     granule,
     ziel_ordner: Path,
     datei_timeout_sekunden: float = DATEI_TIMEOUT_SEKUNDEN,
-    max_versuche: int = KACHEL_MAX_VERSUCHE,
+    retry_budget_sekunden: float = KACHEL_RETRY_BUDGET_SEKUNDEN,
     wartezeit_basis_sekunden: float = KACHEL_WARTEZEIT_BASIS_SEKUNDEN,
+    wartezeit_max_sekunden: float = KACHEL_WARTEZEIT_MAX_SEKUNDEN,
+    stopp: threading.Event | None = None,
 ) -> Path:
     """Lädt eine einzelne Kachel über `earthaccess.download`, mit eigenem
-    Zeitlimit und Wiederholung bei Hänger oder Fehler.
+    Zeitlimit und hartnäckiger Wiederholung bei vorübergehenden Fehlern.
 
     `earthaccess.download` selbst kennt kein Zeitlimit (siehe Moduldoku
     oben). Jeder Versuch läuft deshalb in einem eigenen Thread; reagiert er
     nicht innerhalb von `datei_timeout_sekunden`, wird dieser Thread
     aufgegeben (er kann nicht sauber beendet werden, sein Ergebnis wird nur
-    ignoriert) und ein neuer Versuch gestartet, nach wachsender Wartezeit
-    (`wartezeit_basis_sekunden`, verdoppelt sich je Versuch). Nach
-    `max_versuche` erfolglosen Versuchen wird der letzte Fehler weitergereicht.
+    ignoriert) und ein neuer Versuch gestartet.
+
+    Fehlerverhalten (Auftrag 2026-09-24):
+    - vorübergehend (5xx, Zeitüberschreitung, Verbindung): warten
+      (`wartezeit_basis_sekunden`, verdoppelt sich, höchstens
+      `wartezeit_max_sekunden`) und wiederholen, bis `retry_budget_sekunden`
+      (Versuche und Pausen zusammen) verbraucht sind. Dann
+      `KachelNichtGeladen(dauerhaft=False)`.
+    - dauerhaft (4xx wie 404): sofort `KachelNichtGeladen(dauerhaft=True)`,
+      ohne Wartezeit.
+    - Blocker (Login, Speicher, SSD): sofort weitergereicht, nicht wiederholt.
+    `stopp`: wird er gesetzt (Monat abgebrochen), endet die Wiederholung.
     """
-    letzter_fehler: Exception | None = None
-    for versuch in range(1, max_versuche + 1):
+    verbraucht = 0.0
+    versuch = 0
+    while True:
+        versuch += 1
+        beginn = time.monotonic()
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         future = pool.submit(earthaccess.download, [granule], str(ziel_ordner))
         try:
@@ -347,18 +495,78 @@ def _lade_kachel(
             return Path(ergebnis[0])
         except concurrent.futures.TimeoutError:
             pool.shutdown(wait=False, cancel_futures=True)
-            letzter_fehler = DownloadHaengt(
+            fehler: BaseException = DownloadHaengt(
                 f"Kachel reagiert seit über {datei_timeout_sekunden / 60:.0f} "
-                f"Minuten nicht mehr (Versuch {versuch}/{max_versuche})."
+                f"Minuten nicht mehr (Versuch {versuch})."
             )
-        except Exception as fehler:  # bewusst breit: jeder Fehler löst einen neuen Versuch aus
+        except Exception as gefangen:  # bewusst breit: unten wird nach Art des Fehlers entschieden
             pool.shutdown(wait=False)
-            letzter_fehler = fehler
-        if versuch < max_versuche:
-            wartezeit = wartezeit_basis_sekunden * (2 ** (versuch - 1))
-            time.sleep(wartezeit)
-    assert letzter_fehler is not None
-    raise letzter_fehler
+            fehler = gefangen
+        verbraucht += time.monotonic() - beginn
+
+        status = _statuscode(fehler)
+        pruefe_blocker(fehler, status)
+        if not _ist_vorlaeufig(fehler, status):
+            raise KachelNichtGeladen(
+                f"{fehler} (dauerhafter Fehler, Warten hilft nicht, kein weiterer Versuch)",
+                dauerhaft=True,
+                status=status,
+            ) from fehler
+
+        wartezeit = min(wartezeit_basis_sekunden * (2 ** min(versuch - 1, 30)), wartezeit_max_sekunden)
+        if verbraucht + wartezeit > retry_budget_sekunden:
+            raise KachelNichtGeladen(
+                f"{fehler} (vorübergehender Fehler, nach {versuch} Versuchen in "
+                f"{verbraucht / 60:.0f} Minuten aufgegeben)",
+                dauerhaft=False,
+                status=status,
+            ) from fehler
+        if _warte(wartezeit, stopp):
+            raise KachelNichtGeladen(
+                f"{fehler} (Monat wurde abgebrochen, keine weiteren Versuche)",
+                dauerhaft=False,
+                status=status,
+            ) from fehler
+        verbraucht += wartezeit
+
+
+def _granule_dateiname(granule, jahr: int, monat: int) -> str | None:
+    """Dateiname der .h5-Kachel dieses Monats aus den Download-Links (None, wenn keiner passt)."""
+    for link in granule.data_links():
+        if link.endswith(".h5") and _passt_zum_monat(link, jahr, monat):
+            return link.rsplit("/", 1)[-1]
+    return None
+
+
+def _ist_lesbare_h5(pfad: Path) -> bool:
+    try:
+        with h5py.File(pfad, "r"):
+            return True
+    except OSError:
+        return False
+
+
+def _sichte_rohordner(ziel_ordner: Path) -> dict[str, Path]:
+    """Sichtet einen Rohordner aus einem früheren Versuch und gibt die brauchbaren Kacheln zurück.
+
+    earthaccess schreibt jede Kachel zuerst unter `partial_*` und benennt sie
+    erst nach dem vollständigen Download um; eine Datei mit Kachelnamen ist
+    also normalerweise vollständig. Zur Sicherheit wird trotzdem geprüft, dass
+    sie sich als HDF5 öffnen lässt. Nicht lesbare Dateien und übrig gebliebene
+    `partial_*`-Reste werden gelöscht (wertlos, und earthaccess würde eine
+    vorhandene Datei sonst überspringen); alles andere bleibt unberührt.
+    """
+    if not ziel_ordner.exists():
+        return {}
+    brauchbar: dict[str, Path] = {}
+    for pfad in sorted(ziel_ordner.iterdir()):
+        if not pfad.is_file() or pfad.name.startswith("."):
+            continue
+        if pfad.name.startswith("partial_") or (pfad.suffix == ".h5" and not _ist_lesbare_h5(pfad)):
+            pfad.unlink()
+        elif pfad.suffix == ".h5":
+            brauchbar[pfad.name] = pfad
+    return brauchbar
 
 
 def lade_monat(
@@ -371,37 +579,45 @@ def lade_monat(
     """Lädt alle VNP46A3-Kacheln eines Monats global nach `ziel_ordner`.
 
     Meldet sich vorher bei NASA Earthdata an (dieselbe Ladelogik wie alle
-    Layer, aleph/core/auth.py). Bricht mit klarer Meldung ab, wenn der
-    Login fehlschlägt.
+    Layer, aleph/core/auth.py). Bricht mit `AnmeldungFehlgeschlagen` ab, wenn
+    der Login fehlschlägt.
 
     Jede Kachel wird einzeln geladen, mit eigenem Zeitlimit und
-    Wiederholung bei Hänger (`_lade_kachel`), höchstens
-    `gleichzeitige_downloads` Kacheln gleichzeitig (Vorschlag 2-4, siehe
-    Moduldoku oben - vermutete Ursache der früheren Hänger war zu viel
+    hartnäckiger Wiederholung bei vorübergehenden Fehlern (`_lade_kachel`),
+    höchstens `gleichzeitige_downloads` Kacheln gleichzeitig (Vorschlag 2-4,
+    siehe Moduldoku oben - vermutete Ursache der früheren Hänger war zu viel
     Nebenläufigkeit zum selben NASA/CloudFront-Server).
 
-    Prüft danach die Vollständigkeit: die Zahl der heruntergeladenen
-    Kacheln muss genau der Zahl entsprechen, die NASA für diesen Monat
-    meldet (`pruefe_vollstaendigkeit`). Eine feste Zahl (z. B. "536-540")
-    wäre hier eine Scheinpräzision: Die tatsächliche Kachelzahl schwankt
-    real von Monat zu Monat (gemessen: Januar 2024 hat nur 460 Kacheln,
-    nicht 536-540 wie der grobe Mehrjahres-Schnitt im Steckbrief). Der
-    einzig robuste Vergleich ist gegen die Quelle selbst, nicht gegen einen
-    angenommenen Erfahrungswert.
+    Wiederaufnahme: Liegt im `ziel_ordner` schon etwas von einem früheren
+    Versuch, werden die brauchbaren Kacheln (`_sichte_rohordner`) wieder
+    verwendet und nur die fehlenden geladen. Der Rohordner wird hier nie
+    gelöscht.
+
+    Prüft danach die Vollständigkeit: die Zahl der Kacheln muss genau der
+    Zahl entsprechen, die NASA für diesen Monat meldet
+    (`pruefe_vollstaendigkeit`). Eine feste Zahl (z. B. "536-540") wäre hier
+    eine Scheinpräzision: Die tatsächliche Kachelzahl schwankt real von Monat
+    zu Monat (gemessen: Januar 2024 hat nur 460 Kacheln, nicht 536-540 wie
+    der grobe Mehrjahres-Schnitt im Steckbrief). Der einzig robuste Vergleich
+    ist gegen die Quelle selbst, nicht gegen einen angenommenen Erfahrungswert.
 
     `melde` (optional) ist eine Funktion, die einen Textbaustein bekommt,
     sobald die Zahl der bei NASA gemeldeten Kacheln feststeht (für das
     Protokoll des Hintergrund-Laufs, damit der Fortschritt eines Monats
     als „x von y Kacheln" sichtbar ist).
 
-    Bricht außerdem mit `DownloadHaengt` ab, wenn der GANZE Monat länger
-    als `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden) braucht - ein Sicherheitsnetz
-    über der Kachel-Wiederholung, falls z. B. sehr viele Kacheln gleichzeitig
-    Probleme machen. Oder wenn einzelne Kacheln auch nach allen Versuchen
-    nicht geladen werden konnten.
+    Fehler:
+    - `AnmeldungFehlgeschlagen`, `io.SpeicherZuKnapp`, `io.SSDNichtGefunden`:
+      echte Blocker, sofort weitergereicht.
+    - `KachelnFehlen`: einzelne Kacheln fehlen auch nach allen Versuchen (oder
+      der Monat wurde nach `MAX_GESCHEITERTE_KACHELN_JE_MONAT` Fehlschlägen
+      abgebrochen). Kein Blocker; die geladenen Kacheln bleiben im Rohordner.
+    - `DownloadHaengt`: der GANZE Monat brauchte länger als
+      `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden), ein Sicherheitsnetz über der
+      Kachel-Wiederholung. Ebenfalls kein Blocker.
     """
     if not earthdata_login():
-        raise RuntimeError("NASA-Earthdata-Login fehlgeschlagen. Zugangsdaten in .env prüfen.")
+        raise AnmeldungFehlgeschlagen("NASA-Earthdata-Login fehlgeschlagen. Zugangsdaten in .env prüfen.")
     start, ende = _monatsspanne(jahr, monat)
     treffer = earthaccess.search_data(
         short_name="VNP46A3",
@@ -421,39 +637,71 @@ def lade_monat(
     if melde is not None:
         melde(f"{len(treffer)} Kacheln bei NASA gemeldet, Download beginnt.")
 
+    vorhanden = _sichte_rohordner(ziel_ordner)
+    dateien: list[Path] = []
+    offen = []
+    for granule in treffer:
+        name = _granule_dateiname(granule, jahr, monat)
+        if name is not None and name in vorhanden:
+            dateien.append(vorhanden[name])
+        else:
+            offen.append(granule)
+    if dateien and melde is not None:
+        melde(
+            f"{len(dateien)} Kacheln aus einem früheren Versuch schon vorhanden und "
+            f"gültig, {len(offen)} werden noch geladen."
+        )
+
     start_zeit = time.time()
     frist = start_zeit + DOWNLOAD_TIMEOUT_SEKUNDEN
+    stopp = threading.Event()
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=max(1, gleichzeitige_downloads))
-    future_zu_granule = {pool.submit(_lade_kachel, g, ziel_ordner): g for g in treffer}
+    future_zu_granule = {pool.submit(_lade_kachel, g, ziel_ordner, stopp=stopp): g for g in offen}
 
-    dateien: list[Path] = []
     fehlgeschlagen: list[tuple[object, Exception]] = []
+    abgebrochen = False
     try:
         for future in concurrent.futures.as_completed(future_zu_granule, timeout=max(frist - time.time(), 0)):
             granule = future_zu_granule[future]
             try:
                 dateien.append(future.result())
+            except (io.SSDNichtGefunden, io.SpeicherZuKnapp, AnmeldungFehlgeschlagen):
+                raise  # echter Blocker: der Lauf endet
             except Exception as fehler:
                 fehlgeschlagen.append((granule, fehler))
+                if len(fehlgeschlagen) >= MAX_GESCHEITERTE_KACHELN_JE_MONAT:
+                    abgebrochen = True
+                    break  # Server scheint gestört: Rest des Monats nicht mehr versuchen
     except concurrent.futures.TimeoutError:
-        pool.shutdown(wait=False, cancel_futures=True)
         raise DownloadHaengt(
             f"{jahr:04d}-{monat:02d}: Download reagiert seit über "
             f"{DOWNLOAD_TIMEOUT_SEKUNDEN // 60} Minuten nicht mehr "
-            f"({len(dateien)} von {len(treffer)} Kacheln fertig). "
-            "scripts/vnp46a3_start.sh erneut ausführen - setzt beim letzten "
-            "fertigen Monat fort. Hängt es wieder, eine kleinere Zahl bei "
-            "--gleichzeitig probieren."
+            f"({len(dateien)} von {len(treffer)} Kacheln fertig). Die geladenen "
+            "Kacheln bleiben im Rohordner; der Monat wird später erneut versucht."
         ) from None
-    pool.shutdown(wait=False)
+    finally:
+        # Läuft auch bei einem Blocker: wartende Kacheln nicht mehr starten,
+        # laufende Wiederholungen beenden.
+        stopp.set()
+        pool.shutdown(wait=False, cancel_futures=True)
 
     if fehlgeschlagen:
-        beispiel_fehler = fehlgeschlagen[0][1]
-        raise DownloadHaengt(
-            f"{jahr:04d}-{monat:02d}: {len(fehlgeschlagen)} von {len(treffer)} "
-            f"Kacheln auch nach je {KACHEL_MAX_VERSUCHE} Versuchen nicht geladen. "
-            f"Beispiel: {beispiel_fehler}. Eine kleinere Zahl bei --gleichzeitig "
-            "probieren, statt zu raten."
+        dauerhaft = sum(1 for _, f in fehlgeschlagen if isinstance(f, KachelNichtGeladen) and f.dauerhaft)
+        vorlaeufig = len(fehlgeschlagen) - dauerhaft
+        fehlend = len(treffer) - len(dateien)
+        abbruch = (
+            f" Der Monat wurde nach {MAX_GESCHEITERTE_KACHELN_JE_MONAT} gescheiterten Kacheln "
+            "abgebrochen, weil der Server gestört scheint (übrige Kacheln nicht mehr versucht)."
+            if abgebrochen
+            else ""
+        )
+        raise KachelnFehlen(
+            f"{jahr:04d}-{monat:02d}: {fehlend} von {len(treffer)} Kacheln fehlen "
+            f"({vorlaeufig} nach Wiederholung vorübergehend nicht ladbar, {dauerhaft} dauerhaft "
+            f"nicht ladbar).{abbruch} Beispiel: {str(fehlgeschlagen[0][1])[:300]}. "
+            f"{len(dateien)} Kacheln bleiben im Rohordner.",
+            dauerhaft=dauerhaft,
+            vorlaeufig=vorlaeufig,
         )
 
     pruefe_vollstaendigkeit(jahr, monat, len(treffer), dateien)

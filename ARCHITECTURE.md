@@ -110,6 +110,12 @@ Alle Layer sind in `layers.yaml` registriert. Ein neuer Layer ist fertig, wenn `
 
 Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Download-Logik.
 
+**Fehlerverhalten bei langen Downloads** (Regel seit 2026-09-24, zuerst umgesetzt in `aleph/layers/vnp46a3.py` und `vnp46a3_lauf.py`; jeder weitere Layer mit Massen-Download folgt ihr):
+- Serverfehler (HTTP 5xx), Zeitüberschreitungen und Verbindungsfehler werden je Datei hartnäckig wiederholt (wachsende Wartezeit, höchstens 30 Minuten je Datei). Bei HTTP 4xx (z. B. „nicht gefunden") wird sofort aufgegeben.
+- Ein Monat, bei dem danach Dateien fehlen, wird nicht als fertig markiert und seine Rohdaten bleiben liegen. Er kommt auf die Liste „später erneut versuchen"; der Lauf geht zum nächsten Monat weiter und versucht die Liste am Ende noch einmal.
+- Der Lauf endet nur bei echten Blockern: kein Speicherplatz, SSD nicht erreichbar, Anmeldung fehlgeschlagen.
+- Die Statusanzeige nennt fertige Monate, offene Monate und die Monate, die nachgeholt werden müssen.
+
 **Kandidaten für die ersten Layer** (NASA-Daten zuerst, weil Space Apps sie verlangt):
 
 | Layer | Quelle | Warum |

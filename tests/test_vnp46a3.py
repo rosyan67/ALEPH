@@ -239,7 +239,7 @@ def test_lade_kachel_erfolg_im_ersten_versuch(monkeypatch, tmp_path):
 
     monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
     pfad = vnp46a3._lade_kachel(
-        "granule-1", tmp_path, datei_timeout_sekunden=1, max_versuche=3, wartezeit_basis_sekunden=0.01
+        "granule-1", tmp_path, datei_timeout_sekunden=1, retry_budget_sekunden=3, wartezeit_basis_sekunden=0.01
     )
     assert pfad == tmp_path / "kachel.h5"
     assert len(aufrufe) == 1
@@ -258,7 +258,7 @@ def test_lade_kachel_bei_haenger_neuer_versuch(monkeypatch, tmp_path):
 
     monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
     pfad = vnp46a3._lade_kachel(
-        "granule-1", tmp_path, datei_timeout_sekunden=0.1, max_versuche=3, wartezeit_basis_sekunden=0.01
+        "granule-1", tmp_path, datei_timeout_sekunden=0.1, retry_budget_sekunden=3, wartezeit_basis_sekunden=0.01
     )
     assert pfad == tmp_path / "kachel.h5"
     assert versuche["n"] == 2
@@ -272,29 +272,30 @@ def test_lade_kachel_wartezeit_waechst(monkeypatch, tmp_path):
     def fake_download(granules, local_path):
         versuche["n"] += 1
         if versuche["n"] < 3:
-            raise RuntimeError("simulierter Fehler")
+            raise OSError("simulierter Verbindungsfehler")
         return [str(Path(local_path) / "kachel.h5")]
 
     monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
     monkeypatch.setattr(vnp46a3.time, "sleep", lambda s: wartezeiten.append(s))
     pfad = vnp46a3._lade_kachel(
-        "granule-1", tmp_path, datei_timeout_sekunden=1, max_versuche=4, wartezeit_basis_sekunden=20
+        "granule-1", tmp_path, datei_timeout_sekunden=1, retry_budget_sekunden=1800, wartezeit_basis_sekunden=20
     )
     assert pfad == tmp_path / "kachel.h5"
     assert versuche["n"] == 3
     assert wartezeiten == [20, 40]
 
 
-def test_lade_kachel_gibt_nach_max_versuchen_auf(monkeypatch, tmp_path):
+def test_lade_kachel_gibt_nach_verbrauchtem_budget_auf(monkeypatch, tmp_path):
     def fake_download(granules, local_path):
-        raise RuntimeError("dauerhafter Fehler")
+        raise OSError("vorübergehender Verbindungsfehler")
 
     monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
     monkeypatch.setattr(vnp46a3.time, "sleep", lambda s: None)
-    with pytest.raises(RuntimeError, match="dauerhafter Fehler"):
+    with pytest.raises(vnp46a3.KachelNichtGeladen, match="vorübergehender Verbindungsfehler") as info:
         vnp46a3._lade_kachel(
-            "granule-1", tmp_path, datei_timeout_sekunden=1, max_versuche=3, wartezeit_basis_sekunden=0.01
+            "granule-1", tmp_path, datei_timeout_sekunden=1, retry_budget_sekunden=1, wartezeit_basis_sekunden=0.2
         )
+    assert info.value.dauerhaft is False
 
 
 # --- lade_monat: Nebenläufigkeit einstellbar, Fehler werden gesammelt ------
@@ -325,7 +326,7 @@ def test_lade_monat_nutzt_gleichzeitige_downloads_und_sammelt_dateien(monkeypatc
 
     aufrufe = []
 
-    def fake_lade_kachel(granule, ziel_ordner):
+    def fake_lade_kachel(granule, ziel_ordner, **kwargs):
         aufrufe.append(granule)
         pfad = ziel_ordner / f"kachel_{len(aufrufe)}.h5"
         pfad.touch()
@@ -342,11 +343,11 @@ def test_lade_monat_meldet_kacheln_die_auch_nach_wiederholung_scheitern(monkeypa
     granules = _attrappen_granules(2)
     monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: granules)
 
-    def fake_lade_kachel(granule, ziel_ordner):
+    def fake_lade_kachel(granule, ziel_ordner, **kwargs):
         raise vnp46a3.DownloadHaengt("simulierter dauerhafter Hänger")
 
     monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
-    with pytest.raises(vnp46a3.DownloadHaengt, match="nicht geladen"):
+    with pytest.raises(vnp46a3.KachelnFehlen, match="fehlen"):
         vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2)
 
 
@@ -466,7 +467,7 @@ def test_lade_monat_meldet_kachelzahl(monkeypatch, tmp_path):
     monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: True)
     monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: _attrappen_granules(3))
 
-    def fake_lade_kachel(granule, ziel_ordner):
+    def fake_lade_kachel(granule, ziel_ordner, **kwargs):
         pfad = ziel_ordner / f"kachel_{id(granule)}.h5"
         pfad.touch()
         return pfad
