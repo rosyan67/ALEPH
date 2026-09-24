@@ -165,11 +165,19 @@ Pro Layer, pro Gitterzelle, pro Monat:
 2. **Robuste Abweichung.** Abstand zum Median, geteilt durch die typische Streuung (MAD). Robust gegen einzelne Ausreißer in der Vergangenheit.
 3. **Mindest-Datenlage.** Zellen mit zu wenigen gültigen Beobachtungen oder zu kurzer Basislinie werden nicht bewertet, sondern als „Datenlage unzureichend" markiert.
 4. **Schutz vor Zufallstreffern.** Bei rund einer Million Zellen pro Monat entstehen allein durch Zufall tausende auffällige Werte. Deshalb:
-   - Korrektur für multiples Testen (Benjamini-Hochberg, kontrolliert den erwarteten Anteil falscher Meldungen),
+   - Korrektur für multiples Testen (Benjamini-Hochberg; kontrolliert den erwarteten Anteil falscher Zellen nur bei exakten p-Werten und unabhängigen oder positiv abhängigen Tests, siehe Umsetzungsvermerk unten),
    - Mindestgröße: Ein Ereignis braucht mehrere benachbarte auffällige Zellen,
    - optional Dauer: auffällig in mehr als einem Monat.
 5. **Ausgabe in Bändern.** auffällig / stark / extrem, dazu Richtung (Anstieg/Rückgang) und Datenlage (gut/mittel/dünn).
 6. **Änderungen am Messsystem.** Viele Quellen verändern sich selbst: mehr AIS-Empfänger, mehr OpenSky-Sensoren, mehr Nachrichtenquellen in GDELT, Sensorwechsel (MODIS → VIIRS). Das erzeugt scheinbare Trends. Solche Brüche werden pro Layer in `META` dokumentiert und, wo möglich, herausgerechnet (z. B. Werte relativ zur Gesamtabdeckung im selben Monat). Wo das nicht geht, wird der Zeitraum getrennt bewertet.
+
+**Umsetzung, Version 0.1 (`aleph/detect/`, Stand 2026-09-24, nur mit künstlichen Daten getestet, nicht auf echte Daten angewandt):**
+- Lesen nur über `aleph/detect/wuerfel.py`: Es werden ausschließlich Monate mit `monat_fertig == 1` geliefert; ein nicht geladener Monat ist nie „keine Daten" und wird in `erkenne_zeitraum` ausdrücklich als „nicht geladen" ausgewiesen.
+- Basislinie: derselbe Kalendermonat nur **früherer** Jahre (fertig und mit ausreichender Datenlage), mindestens 5 Jahre. Aufgefüllte Pixel (Quality 2) zählen nie als beobachtet; unter 50 % beobachteten Pixeln ist die Zelle „Datenlage unzureichend".
+- Robuste Abweichung mit Median und MAD, dazu eine gemeinsame Mindest-Streuung aus allen Zellen (die reine MAD-Statistik hat bei wenigen Basisjahren viel schwerere Ränder als jede Normal- oder t-Verteilung; Simulation im Modulkopf von `anomalie.py`). Die p-Werte sind **nominell**; eine Falschalarmrate wird nicht behauptet. Zusätzlich Mindestwert |z| ≥ 5 je Zelle, Mindestgröße 4 Zellen, Bänder auffällig ≥ 5, stark ≥ 8, extrem ≥ 12 (nach |z|).
+- Alle Schwellen sind Startwerte (Klasse `Schwellen`), festzulegen im Kalibrierungszeitraum (9a). Bekannte Grenzen (Rückgänge schwerer erkennbar als Anstiege, Trends, räumlich zusammenhängende Störungen, gemeinsame Verschiebungen) stehen im Modulkopf.
+- **Endtest-Sperre:** Monate ab 2023-01 werden ohne ausdrückliche `endtest_freigabe=True` verweigert. Wegen der Ladereihenfolge (2018–2025 zuerst) sind vor dem Laden von 2013–2017 überhaupt nur Monate ab 2023 bewertbar. Jede Freigabe löst eine Warnung aus; der Code kann „nur einmal pro Hauptversion“ nicht erzwingen. Der Endtest ist bei der Datenqualität vorbelastet: Die 50-%-Grenze für beobachtete Pixel wurde nach den Anteilen aufgefüllter Pixel des Testmonats 2024-01 gewählt (nur Datenqualität, nicht Ereignisse).
+- Offen für die Kalibrierung: Mit „nur frühere Jahre" und mindestens 5 Basisjahren hat der Zeitraum 2013–2019 nur 24 bewertbare Monate (2018–2019); Abschnitt 9 (Blindtest 2019–2024) und 9a (Endtest 2023–2025) widersprechen sich in den Zeiträumen.
 
 ## 7. Anomalien benennen
 
