@@ -87,6 +87,13 @@ NASA - den ganzen Lauf beendet und 6,5 Stunden gekostet hatten):
   gezählt einschließlich der Versuche selbst) je Kachel.
 - Dauerhafte Fehler (HTTP 4xx wie 404 „nicht gefunden") führen sofort zum
   Aufgeben dieser Kachel, ohne Wartezeit.
+- HTTP 403 ist ein Sonderfall (Änderung 2026-09-24): NASA antwortet bei einem
+  abgelaufenen oder ungültigen Zugang oft mit 403 statt 401. Eine einzelne 403
+  bleibt ein Kachelfehler. Mehr als `ZUGANG_403_HINTEREINANDER_MAX` (5)
+  403-Antworten hintereinander (eine erfolgreich geladene Kachel setzt den
+  Zähler zurück) oder 403 bei ALLEN Kacheln eines Monats gelten als Blocker
+  „Anmeldung prüfen" (`AnmeldungFehlgeschlagen`) und beenden den Lauf, statt
+  tagelang ohne Ergebnis weiterzulaufen.
 - Echte Blocker beenden den Lauf, alles andere nicht: Anmeldung fehlgeschlagen
   (`AnmeldungFehlgeschlagen`, auch bei HTTP 401 oder nicht akzeptierter EULA),
   Speicherplatz voll (`io.SpeicherZuKnapp`, auch bei ENOSPC) und SSD nicht
@@ -212,6 +219,11 @@ MAX_GESCHEITERTE_KACHELN_JE_MONAT = 10
 _HTTP_4XX_MIT_WARTEN = {408, 429}
 # Anmeldung fehlt oder abgelaufen: Blocker, kein Kachel-Problem.
 _HTTP_ANMELDUNG = {401}
+
+# HTTP 403: einzeln ein Kachelfehler, gehäuft ein Zugangsproblem. Mehr als so
+# viele 403 hintereinander (ohne dazwischen erfolgreich geladene Kachel) beenden
+# den Lauf als „Anmeldung prüfen".
+ZUGANG_403_HINTEREINANDER_MAX = 5
 _STATUS_IM_TEXT = re.compile(r"Status code:\s*(\d{3})")
 
 # Zahl gleichzeitiger Kachel-Downloads. Vermutete Ursache der Hänger vom
@@ -287,6 +299,43 @@ class MonatSchonVorhanden(RuntimeError):
 
 class WuerfelSchreibFehler(RuntimeError):
     """Die Rückprüfung nach dem Schreiben fand Werte, die nicht den geschriebenen entsprechen."""
+
+
+class _ZugangsWaechter:
+    """Zählt HTTP-403-Antworten hintereinander, über Kacheln, Monate und Threads hinweg.
+
+    Eine erfolgreich geladene Kachel beweist, dass der Zugang funktioniert, und
+    setzt den Zähler zurück. Andere Fehler (404, 5xx) ändern ihn nicht.
+    """
+
+    def __init__(self) -> None:
+        self._sperre = threading.Lock()
+        self._folge = 0
+
+    def erfolg(self) -> None:
+        with self._sperre:
+            self._folge = 0
+
+    def melde_403(self) -> int:
+        with self._sperre:
+            self._folge += 1
+            return self._folge
+
+    def zuruecksetzen(self) -> None:
+        self.erfolg()
+
+
+ZUGANG = _ZugangsWaechter()
+
+
+def _zugang_pruefen_meldung(befund: str) -> str:
+    return (
+        f"Anmeldung prüfen: {befund} HTTP 403 (Zugriff verweigert). Das deutet auf einen "
+        "abgelaufenen oder ungültigen Zugang hin, nicht auf einzelne fehlende Kacheln. "
+        "Zugangsdaten in .env und das Earthdata-Konto prüfen (auch die Nutzungsbedingungen "
+        "für LAADS DAAC). Lauf beendet; fertige Monate und geladene Rohdaten bleiben "
+        "erhalten, ein Neustart setzt fort."
+    )
 
 
 def _kachel_position(pfad: Path) -> tuple[int, int, int, int]:
@@ -432,9 +481,11 @@ def _ist_vorlaeufig(fehler: BaseException, status: int | None) -> bool:
     """True, wenn Warten und Wiederholen sinnvoll ist (5xx, Zeitüberschreitung, Verbindung).
 
     HTTP 4xx (z. B. 404 „nicht gefunden") ist dauerhaft: Warten hilft nicht.
-    Ausnahmen sind 408 und 429 (Anfragebegrenzung). 403 zählt als dauerhaft
-    (nicht geprüft, ob NASA/CloudFront damit auch fehlende Dateien meldet;
-    bei 401 gilt der Login als abgelaufen, siehe `pruefe_blocker`). Ein
+    Ausnahmen sind 408 und 429 (Anfragebegrenzung). 403 zählt einzeln als
+    dauerhaft (nicht geprüft, ob NASA/CloudFront damit auch fehlende Dateien
+    meldet); gehäufte 403 sind ein Zugangsproblem und werden vorher in
+    `_lade_kachel` als Blocker gemeldet (`ZUGANG`). Bei 401 gilt der Login als
+    abgelaufen, siehe `pruefe_blocker`. Ein
     unbekannter Fehlertyp (z. B. Programmfehler) gilt als dauerhaft, damit er
     nicht 30 Minuten je Kachel verbrennt.
     """
@@ -492,6 +543,7 @@ def _lade_kachel(
         try:
             ergebnis = future.result(timeout=datei_timeout_sekunden)
             pool.shutdown(wait=False)
+            ZUGANG.erfolg()
             return Path(ergebnis[0])
         except concurrent.futures.TimeoutError:
             pool.shutdown(wait=False, cancel_futures=True)
@@ -506,6 +558,10 @@ def _lade_kachel(
 
         status = _statuscode(fehler)
         pruefe_blocker(fehler, status)
+        if status == 403 and ZUGANG.melde_403() > ZUGANG_403_HINTEREINANDER_MAX:
+            raise AnmeldungFehlgeschlagen(
+                _zugang_pruefen_meldung(f"mehr als {ZUGANG_403_HINTEREINANDER_MAX} Kacheln hintereinander mit")
+            ) from fehler
         if not _ist_vorlaeufig(fehler, status):
             raise KachelNichtGeladen(
                 f"{fehler} (dauerhafter Fehler, Warten hilft nicht, kein weiterer Versuch)",
@@ -608,7 +664,9 @@ def lade_monat(
 
     Fehler:
     - `AnmeldungFehlgeschlagen`, `io.SpeicherZuKnapp`, `io.SSDNichtGefunden`:
-      echte Blocker, sofort weitergereicht.
+      echte Blocker, sofort weitergereicht. Dazu zählt gehäuftes HTTP 403
+      (mehr als 5 hintereinander oder alle Kacheln des Monats), einzelne 403
+      bleiben Kachelfehler.
     - `KachelnFehlen`: einzelne Kacheln fehlen auch nach allen Versuchen (oder
       der Monat wurde nach `MAX_GESCHEITERTE_KACHELN_JE_MONAT` Fehlschlägen
       abgebrochen). Kein Blocker; die geladenen Kacheln bleiben im Rohordner.
@@ -684,6 +742,15 @@ def lade_monat(
         # laufende Wiederholungen beenden.
         stopp.set()
         pool.shutdown(wait=False, cancel_futures=True)
+
+    if (
+        fehlgeschlagen
+        and len(fehlgeschlagen) == len(treffer)
+        and all(isinstance(f, KachelNichtGeladen) and f.status == 403 for _, f in fehlgeschlagen)
+    ):
+        raise AnmeldungFehlgeschlagen(
+            _zugang_pruefen_meldung(f"alle {len(treffer)} Kacheln von {jahr:04d}-{monat:02d} mit")
+        )
 
     if fehlgeschlagen:
         dauerhaft = sum(1 for _, f in fehlgeschlagen if isinstance(f, KachelNichtGeladen) and f.dauerhaft)

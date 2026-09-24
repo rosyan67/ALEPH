@@ -41,6 +41,14 @@ def fake_ssd(tmp_path, monkeypatch):
     return tmp_path
 
 
+@pytest.fixture(autouse=True)
+def zugangszaehler_zuruecksetzen():
+    """Der 403-Zähler gilt für den ganzen Prozess; jeder Test beginnt mit 0."""
+    vnp46a3.ZUGANG.zuruecksetzen()
+    yield
+    vnp46a3.ZUGANG.zuruecksetzen()
+
+
 def _fehler(status: int) -> DownloadFailure:
     return DownloadFailure(MELDUNG_502.replace("502", str(status)))
 
@@ -488,7 +496,8 @@ def test_lauf_stellt_monat_mit_fehlender_kachel_zurueck_und_macht_weiter(monkeyp
     text = _protokoll(fake_ssd)
     assert "2018-02: ZURÜCKGESTELLT (später erneut versuchen)" in text
     assert text.index("2018-02: ZURÜCKGESTELLT") < text.index("2018-03: fertig")
-    assert "Nachhol-Durchgang: 1 zurückgestellte Monate" in text
+    assert "Nachhol-Durchgang 1 von höchstens 3: 1 zurückgestellte Monate" in text
+    assert "kein Monat dazugekommen" in text  # ohne Fortschritt kein zweiter Durchgang und keine Pause
     assert "Lauf beendet mit offenen Monaten" in text and "2018-02" in text.split("Lauf beendet mit offenen Monaten")[1]
     assert "Lauf fertig" not in text
     assert "ABBRUCH" not in text and "FEHLER" not in text
@@ -661,3 +670,252 @@ def test_status_ohne_zurueckgestellte_monate(monkeypatch, fake_ssd, capsys):
     monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: [])
     vnp46a3_status.main()
     assert "Nachzuholen (zurückgestellt): keine" in capsys.readouterr().out
+
+
+# --- 403: einzeln ein Kachelfehler, gehäuft ein Zugangsproblem (2026-09-24) --
+#
+# NASA antwortet bei abgelaufenem oder ungültigem Zugang oft mit 403 statt 401.
+# Ohne diese Regel liefe der Lauf tagelang weiter, ohne etwas zu laden.
+
+
+def _lade_mit_status(monkeypatch, tmp_path, ergebnisse: list):
+    """Ruft `_lade_kachel` je Eintrag einmal auf: Zahl = HTTP-Fehler mit diesem Status, 'ok' = Erfolg.
+
+    Gibt die Ausgänge zurück: 'KachelNichtGeladen', 'AnmeldungFehlgeschlagen' oder 'ok'.
+    """
+    reihe = iter(ergebnisse)
+
+    def fake_download(granules, local_path):
+        nächster = next(reihe)
+        if nächster == "ok":
+            return [str(Path(local_path) / "kachel.h5")]
+        raise _fehler(nächster)
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    _schlaf_rekorder(monkeypatch)
+    ausgaenge = []
+    for _ in ergebnisse:
+        try:
+            vnp46a3._lade_kachel("granule-1", tmp_path, datei_timeout_sekunden=1)
+            ausgaenge.append("ok")
+        except vnp46a3.KachelNichtGeladen:
+            ausgaenge.append("KachelNichtGeladen")
+        except vnp46a3.AnmeldungFehlgeschlagen:
+            ausgaenge.append("AnmeldungFehlgeschlagen")
+    return ausgaenge
+
+
+def test_einzelne_403_bleibt_ein_kachelfehler(monkeypatch, tmp_path):
+    assert _lade_mit_status(monkeypatch, tmp_path, [403]) == ["KachelNichtGeladen"]
+
+
+def test_fuenf_403_hintereinander_sind_noch_kachelfehler_die_sechste_ist_ein_blocker(monkeypatch, tmp_path):
+    ausgaenge = _lade_mit_status(monkeypatch, tmp_path, [403] * 6)
+    assert ausgaenge == ["KachelNichtGeladen"] * 5 + ["AnmeldungFehlgeschlagen"]
+
+
+def test_erfolgreiche_kachel_setzt_den_403_zaehler_zurueck(monkeypatch, tmp_path):
+    ausgaenge = _lade_mit_status(monkeypatch, tmp_path, [403] * 5 + ["ok"] + [403] * 5)
+    assert "AnmeldungFehlgeschlagen" not in ausgaenge
+    assert ausgaenge[5] == "ok"
+
+
+def test_404_dazwischen_unterbricht_die_403_folge_nicht(monkeypatch, tmp_path):
+    ausgaenge = _lade_mit_status(monkeypatch, tmp_path, [403, 403, 403, 404, 403, 403, 403])
+    assert ausgaenge[-1] == "AnmeldungFehlgeschlagen"
+
+
+def test_403_blocker_meldung_sagt_klar_was_zu_tun_ist(monkeypatch, tmp_path):
+    def fake_download(granules, local_path):
+        raise _fehler(403)
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    _schlaf_rekorder(monkeypatch)
+    for _ in range(5):
+        with pytest.raises(vnp46a3.KachelNichtGeladen):
+            vnp46a3._lade_kachel("granule-1", tmp_path, datei_timeout_sekunden=1)
+    with pytest.raises(vnp46a3.AnmeldungFehlgeschlagen, match="Anmeldung prüfen.*403.*\\.env"):
+        vnp46a3._lade_kachel("granule-1", tmp_path, datei_timeout_sekunden=1)
+
+
+def test_lade_monat_mit_dauerhaft_403_beendet_sich_als_blocker_und_laedt_nicht_alles_durch(monkeypatch, tmp_path):
+    granules = [_Granule(h) for h in range(40)]
+    monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: True)
+    monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: granules)
+    aufrufe = {"n": 0}
+
+    def fake_download(granules_, local_path):
+        aufrufe["n"] += 1
+        time.sleep(0.02)
+        raise _fehler(403)
+
+    monkeypatch.setattr(vnp46a3.earthaccess, "download", fake_download)
+    with pytest.raises(vnp46a3.AnmeldungFehlgeschlagen, match="Anmeldung prüfen"):
+        vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1)
+    assert aufrufe["n"] <= 10  # nach der sechsten 403 Schluss, nicht alle 40 Kacheln
+
+
+def test_alle_kacheln_eines_kleinen_monats_mit_403_sind_ein_blocker(monkeypatch, tmp_path, monat_mit_5_kacheln):
+    def fake_lade_kachel(granule, ziel_ordner, **kwargs):
+        raise vnp46a3.KachelNichtGeladen("403", dauerhaft=True, status=403)
+
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
+    with pytest.raises(vnp46a3.AnmeldungFehlgeschlagen, match="alle 5 Kacheln"):
+        vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1)
+
+
+def test_eine_403_kachel_in_einem_monat_bleibt_ein_kachelfehler(monkeypatch, tmp_path, monat_mit_5_kacheln):
+    granules = monat_mit_5_kacheln
+
+    def fake_lade_kachel(granule, ziel_ordner, **kwargs):
+        if granule is granules[2]:
+            raise vnp46a3.KachelNichtGeladen("403", dauerhaft=True, status=403)
+        return _schreibe_gueltige_kachel(ziel_ordner, granule)
+
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
+    with pytest.raises(vnp46a3.KachelnFehlen):
+        vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1)
+
+
+def test_fortsetzung_mit_zwei_fehlenden_403_kacheln_ist_kein_alle_kacheln_fall(
+    monkeypatch, tmp_path, monat_mit_5_kacheln
+):
+    """Sind 3 von 5 Kacheln schon da und die restlichen 2 bekommen 403, sind es nicht 'alle Kacheln des Monats'."""
+    granules = monat_mit_5_kacheln
+    for g in granules[:3]:
+        _schreibe_gueltige_kachel(tmp_path, g)
+
+    def fake_lade_kachel(granule, ziel_ordner, **kwargs):
+        raise vnp46a3.KachelNichtGeladen("403", dauerhaft=True, status=403)
+
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
+    with pytest.raises(vnp46a3.KachelnFehlen):
+        vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1)
+
+
+def test_lauf_endet_bei_gehaeuften_403_mit_klarer_meldung(monkeypatch, fake_ssd):
+    lauf = LaufAttrappe(
+        monkeypatch,
+        fake_ssd,
+        plan={(2018, 2): vnp46a3.AnmeldungFehlgeschlagen(vnp46a3._zugang_pruefen_meldung("alle 460 Kacheln von 2018-02 mit"))},
+    )
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-03") == 1
+    assert lauf.aufrufe == [(2018, 1), (2018, 2)]
+    text = _protokoll(fake_ssd)
+    assert "ABBRUCH bei 2018-02: Anmeldung prüfen" in text and "403" in text
+
+
+# --- Nachhol-Durchgang: wiederholen, solange etwas dazukommt (2026-09-24) -----
+
+
+def _schlaf_rekorder_lauf(monkeypatch) -> list[float]:
+    pausen: list[float] = []
+    monkeypatch.setattr(vnp46a3_lauf.time, "sleep", lambda s: pausen.append(s))
+    return pausen
+
+
+def test_nachhol_durchgang_wiederholt_sich_solange_ein_monat_dazukommt(monkeypatch, fake_ssd):
+    pausen = _schlaf_rekorder_lauf(monkeypatch)
+    # A klappt im 1. Nachhol-Durchgang, B erst im 2.
+    lauf = LaufAttrappe(monkeypatch, fake_ssd, plan={(2018, 1): ["502", "ok"], (2018, 2): ["502", "502", "ok"]})
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-02") == 0
+
+    assert vnp46a3.vorhandene_monate() == {(2018, 1), (2018, 2)}
+    assert pausen == [30 * 60]  # genau eine Pause von 30 Minuten zwischen Durchgang 1 und 2
+    assert lauf.aufrufe == [(2018, 1), (2018, 2), (2018, 1), (2018, 2), (2018, 2)]
+    text = _protokoll(fake_ssd)
+    assert "Nachhol-Durchgang 1 von höchstens 3" in text and "Nachhol-Durchgang 2 von höchstens 3" in text
+    assert "Pause 30 Minuten, dann Durchgang 2" in text
+    assert "Lauf fertig" in text
+
+
+def test_nachhol_durchgang_hoert_ohne_fortschritt_auf_und_pausiert_nicht(monkeypatch, fake_ssd):
+    pausen = _schlaf_rekorder_lauf(monkeypatch)
+    lauf = LaufAttrappe(monkeypatch, fake_ssd, plan={(2018, 2): "502"})
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-02") == 2
+    assert pausen == []
+    assert lauf.aufrufe.count((2018, 2)) == 2  # Hauptdurchgang + ein Nachhol-Durchgang
+    assert "kein Monat dazugekommen" in _protokoll(fake_ssd)
+
+
+def test_nachhol_durchgaenge_sind_auf_drei_begrenzt(monkeypatch, fake_ssd):
+    pausen = _schlaf_rekorder_lauf(monkeypatch)
+    # Je Durchgang kommt ein Monat dazu, aber D klappt nie: nach dem 3. Durchgang ist Schluss.
+    plan = {
+        (2018, 1): ["502", "ok"],
+        (2018, 2): ["502", "502", "ok"],
+        (2018, 3): ["502", "502", "502", "ok"],
+        (2018, 4): "502",
+    }
+    lauf = LaufAttrappe(monkeypatch, fake_ssd, plan=plan)
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-04") == 2
+
+    assert vnp46a3.vorhandene_monate() == {(2018, 1), (2018, 2), (2018, 3)}
+    assert pausen == [30 * 60, 30 * 60]  # zwei Pausen zwischen drei Durchgängen
+    assert lauf.aufrufe.count((2018, 4)) == 4  # Hauptdurchgang + 3 Nachhol-Durchgänge, kein vierter
+    text = _protokoll(fake_ssd)
+    assert "Nachhol-Durchgang 4" not in text
+    assert "Höchstzahl an Durchgängen erreicht" in text
+    assert "Lauf beendet mit offenen Monaten" in text and "2018-04" in text.split("Lauf beendet mit offenen Monaten")[1]
+
+
+def test_blocker_im_nachhol_durchgang_beendet_den_lauf_ebenfalls(monkeypatch, fake_ssd):
+    _schlaf_rekorder_lauf(monkeypatch)
+    LaufAttrappe(monkeypatch, fake_ssd, plan={(2018, 1): ["502", vnp46a3.AnmeldungFehlgeschlagen("Login weg")]})
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-02") == 1
+    assert "ABBRUCH bei 2018-01: Login weg" in _protokoll(fake_ssd)
+
+
+# --- Status: Sonderfall fortgesetzter Monat, Nachhol-Anzeige ------------------
+
+
+def _fertig_zeile(monat: str, minuten: float, download: float) -> str:
+    return (
+        f"2026-09-24 12:00:00 UTC  {monat}: fertig, 460 Kacheln, Start x, Ende y, Dauer gesamt {minuten} Minuten "
+        f"(Download {download}, Verkleinern und Schreiben 5.0), Manifest {monat}.txt."
+    )
+
+
+def test_status_erkennt_fortgesetzte_monate():
+    zeilen = [
+        "2026-09-24 10:25:55 UTC  Lauf gestartet: Test.",
+        "2026-09-24 10:26:00 UTC  2019-02: 458 Kacheln aus einem früheren Versuch schon vorhanden und gültig, 2 werden noch geladen.",
+    ]
+    assert vnp46a3_status.lies_protokoll(zeilen)["wiederaufgenommen"] == {(2019, 2)}
+
+
+def test_status_rechnet_fortgesetzten_monat_aus_der_restzeit_heraus(monkeypatch, fake_ssd, capsys):
+    protokoll = fake_ssd / "protokoll"
+    protokoll.mkdir(parents=True)
+    (protokoll / "vnp46a3.log").write_text(
+        "2026-09-24 00:00:00 UTC  Lauf gestartet: Test.\n"
+        + _fertig_zeile("2018-12", 70.0, 65.0) + "\n"
+        + "2026-09-24 10:26:00 UTC  2019-02: 458 Kacheln aus einem früheren Versuch schon vorhanden und gültig, 2 werden noch geladen.\n"
+        + _fertig_zeile("2019-02", 7.5, 0.4) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vnp46a3, "vorhandene_monate", lambda: {(2018, 12), (2019, 2)})
+    monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: [])
+    vnp46a3_status.main()
+    ausgabe = capsys.readouterr().out
+    assert "Gemessen an 1 vollständig geladenen Monat(en)" in ausgabe
+    assert "Nicht eingerechnet (Sonderfall" in ausgabe and "2019-02" in ausgabe
+    assert "Ø 70.0 Minuten/Monat" in ausgabe  # nicht (70,0 + 7,5) / 2 = 38,8
+    # 154 offene Monate * 539 Kacheln * (70 min / 460 Kacheln) ergibt Tage in der Größenordnung von 9,
+    # nicht die zu optimistischen rund 5 mit dem 7,5-Minuten-Monat
+    assert "etwa 9 bis 9 Tage" in ausgabe
+
+
+def test_status_zeigt_den_nachhol_durchgang_waehrend_der_pause(monkeypatch, fake_ssd, capsys):
+    protokoll = fake_ssd / "protokoll"
+    protokoll.mkdir(parents=True)
+    (protokoll / "vnp46a3.log").write_text(
+        "2026-09-24 12:00:00 UTC  Lauf gestartet: Test.\n"
+        "2026-09-24 12:01:00 UTC  2018-02: ZURÜCKGESTELLT (später erneut versuchen). Rohdaten bleiben erhalten. x\n"
+        "2026-09-24 12:02:00 UTC  Nachhol-Durchgang 1: 1 Monat(e) dazugekommen, 1 weiterhin offen. Pause 30 Minuten, dann Durchgang 2.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vnp46a3, "vorhandene_monate", lambda: set())
+    monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: ["123"])
+    vnp46a3_status.main()
+    assert "Nachholen: Nachhol-Durchgang 1: 1 Monat(e) dazugekommen" in capsys.readouterr().out

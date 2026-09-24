@@ -50,10 +50,18 @@ Kacheln mit HTTP 502):
   (z. B. eine unlesbare Kachel); nur `MAX_VERARBEITUNGSFEHLER_HINTEREINANDER`
   davon in Folge beenden den Lauf (Verdacht auf Programm- oder
   Datenträgerfehler statt auf ein Einzelproblem).
-- Am Ende werden die zurückgestellten Monate noch einmal versucht (Nachhol-
-  Durchgang). Gültige Kacheln aus dem ersten Versuch werden wiederverwendet.
-  Bleiben Monate offen, endet der Lauf mit Rückgabewert 2 und der Meldung
-  „Lauf beendet mit offenen Monaten"; ein Neustart versucht sie erneut.
+- Am Ende werden die zurückgestellten Monate in einem Nachhol-Durchgang noch
+  einmal versucht. Gültige Kacheln aus dem ersten Versuch werden
+  wiederverwendet. Kam dabei mindestens ein Monat dazu und sind noch welche
+  offen, folgt nach `NACHHOL_PAUSE_SEKUNDEN` (30 Minuten) ein weiterer Durchgang,
+  insgesamt höchstens `NACHHOL_MAX_DURCHGAENGE` (3). Ein Durchgang ohne
+  Fortschritt beendet das Nachholen (der Server ist dann vermutlich weiter
+  gestört; jetzt zu warten brächte nichts). Bleiben Monate offen, endet der
+  Lauf mit Rückgabewert 2 und der Meldung „Lauf beendet mit offenen Monaten";
+  ein Neustart versucht sie erneut.
+- Häufen sich HTTP-403-Antworten (mehr als 5 hintereinander oder alle Kacheln
+  eines Monats), endet der Lauf als Blocker „Anmeldung prüfen"
+  (aleph.layers.vnp46a3, `ZUGANG`); einzelne 403 sind ein Kachelfehler.
 - Beim Start werden vorhandene Rohordner früherer Läufe NICHT mehr gelöscht,
   sondern wiederverwendet.
 
@@ -82,6 +90,11 @@ BLOCKER = (io.SSDNichtGefunden, io.SpeicherZuKnapp, vnp46a3.AnmeldungFehlgeschla
 # einen Programm- oder Datenträgerfehler, und jeder weitere Monat würde eine
 # Stunde Download für nichts kosten.
 MAX_VERARBEITUNGSFEHLER_HINTEREINANDER = 3
+
+# Nachhol-Durchgänge am Ende des Laufs: solange im vorigen Durchgang mindestens
+# ein Monat dazukam, mit Pause dazwischen; insgesamt höchstens so viele.
+NACHHOL_MAX_DURCHGAENGE = 3
+NACHHOL_PAUSE_SEKUNDEN = 30 * 60
 
 FERTIG = "fertig"
 ZURUECKGESTELLT = "zurückgestellt"
@@ -323,15 +336,39 @@ def main() -> int:
     if ende is not None:
         return ende
 
-    if zurueckgestellt:
+    for durchgang_nr in range(1, NACHHOL_MAX_DURCHGAENGE + 1):
+        if not zurueckgestellt:
+            break
         nachholen = list(zurueckgestellt)
         protokoll.schreibe(
-            f"Nachhol-Durchgang: {len(nachholen)} zurückgestellte Monate werden noch einmal versucht: "
+            f"Nachhol-Durchgang {durchgang_nr} von höchstens {NACHHOL_MAX_DURCHGAENGE}: "
+            f"{len(nachholen)} zurückgestellte Monate werden noch einmal versucht: "
             f"{', '.join(f'{j:04d}-{m:02d}' for j, m in nachholen)}."
         )
         ende = durchgang(nachholen)
         if ende is not None:
             return ende
+        nachgeholt = len(nachholen) - len(zurueckgestellt)
+        if not zurueckgestellt:
+            break
+        if nachgeholt == 0:
+            protokoll.schreibe(
+                f"Nachhol-Durchgang {durchgang_nr}: kein Monat dazugekommen, {len(zurueckgestellt)} weiterhin "
+                "offen. Kein weiterer Durchgang (die Ursache ist vermutlich nicht vorübergehend)."
+            )
+            break
+        if durchgang_nr == NACHHOL_MAX_DURCHGAENGE:
+            protokoll.schreibe(
+                f"Nachhol-Durchgang {durchgang_nr}: {nachgeholt} Monat(e) dazugekommen, "
+                f"{len(zurueckgestellt)} weiterhin offen. Höchstzahl an Durchgängen erreicht."
+            )
+            break
+        protokoll.schreibe(
+            f"Nachhol-Durchgang {durchgang_nr}: {nachgeholt} Monat(e) dazugekommen, "
+            f"{len(zurueckgestellt)} weiterhin offen. Pause {NACHHOL_PAUSE_SEKUNDEN // 60} Minuten, "
+            f"dann Durchgang {durchgang_nr + 1}."
+        )
+        time.sleep(NACHHOL_PAUSE_SEKUNDEN)
 
     if zurueckgestellt:
         protokoll.schreibe(

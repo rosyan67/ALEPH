@@ -34,6 +34,7 @@ _ZEIT = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) UTC\s+(.*)$")
 _MONAT_START = re.compile(r"^(\d{4})-(\d{2}): Start ")
 _MONAT_GEMELDET = re.compile(r"^(\d{4})-(\d{2}): (\d+) Kacheln bei NASA gemeldet")
 _MONAT_DOWNLOAD_FERTIG = re.compile(r"^(\d{4})-(\d{2}): Download fertig")
+_MONAT_WIEDERAUFGENOMMEN = re.compile(r"^(\d{4})-(\d{2}): \d+ Kacheln aus einem früheren Versuch schon vorhanden")
 _MONAT_ZURUECKGESTELLT = re.compile(r"^(\d{4})-(\d{2}): ZURÜCKGESTELLT")
 _MONAT_FERTIG = re.compile(
     r"^(\d{4})-(\d{2}): fertig, (\d+) Kacheln, .*Dauer gesamt ([\d.]+) Minuten "
@@ -64,6 +65,10 @@ def lies_protokoll(zeilen: list[str]) -> dict:
       seit dem letzten Start: ein Monat bleibt nachzuholen, bis er fertig ist
     - `lauf_beendet_offen`: True, wenn der letzte Lauf mit „Lauf beendet mit
       offenen Monaten" endete
+    - `wiederaufgenommen`: Monate, bei denen Kacheln aus einem früheren Versuch
+      übernommen wurden (nur der Rest wurde geladen). Ihre Dauer ist keine
+      Messung eines ganzen Monats und bleibt aus der Restzeit-Schätzung heraus
+    - `nachhol`: letzte Protokollzeile „Nachhol-Durchgang ..." (oder None)
     """
     ergebnis = {
         "abgeschlossen": [],
@@ -74,6 +79,8 @@ def lies_protokoll(zeilen: list[str]) -> dict:
         "letzte_zeit": None,
         "zurueckgestellt": {},
         "lauf_beendet_offen": False,
+        "wiederaufgenommen": set(),
+        "nachhol": None,
     }
     for zeile in zeilen:
         treffer = _ZEIT.match(zeile)
@@ -89,6 +96,9 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             ergebnis["fehler"] = []
             ergebnis["aktuell"] = None
             ergebnis["lauf_beendet_offen"] = False
+            ergebnis["nachhol"] = None
+        elif text.startswith("Nachhol-Durchgang"):
+            ergebnis["nachhol"] = text
         elif text.startswith("Lauf fertig"):
             ergebnis["lauf_fertig"] = True
         elif text.startswith("Lauf beendet mit offenen Monaten"):
@@ -107,6 +117,8 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             ergebnis["aktuell"]["gemeldet"] = int(m.group(3))
         elif _MONAT_DOWNLOAD_FERTIG.match(text) and ergebnis["aktuell"]:
             ergebnis["aktuell"]["download_fertig"] = True
+        elif m := _MONAT_WIEDERAUFGENOMMEN.match(text):
+            ergebnis["wiederaufgenommen"].add((int(m.group(1)), int(m.group(2))))
         elif m := _MONAT_ZURUECKGESTELLT.match(text):
             monat = (int(m.group(1)), int(m.group(2)))
             # Grund: der Teil nach dem Standardsatz, gekürzt (die volle Meldung steht im Protokoll)
@@ -191,6 +203,8 @@ def main() -> int:
             print(f"  {j:04d}-{mo:02d}: {grund}")
     else:
         print("Nachzuholen (zurückgestellt): keine")
+    if p["nachhol"] and prozesse and not p["lauf_fertig"]:
+        print(f"Nachholen: {p['nachhol']}")
 
     ampel = "OK"
     grund = ""
@@ -227,18 +241,28 @@ def main() -> int:
     elif not prozesse:
         ampel, grund = "GESTOPPT", "der Prozess läuft nicht, der Lauf ist aber nicht als fertig protokolliert"
 
-    if p["abgeschlossen"]:
-        n = len(p["abgeschlossen"])
-        gesamt_min = sum(a[3] for a in p["abgeschlossen"])
-        kacheln = sum(a[2] for a in p["abgeschlossen"])
-        print(f"Gemessen an {n} Monat(en) im neuen Protokollformat:")
+    # Wiederaufgenommene Monate (nur der Rest geladen, z. B. 2019-02 mit 7,5 Minuten)
+    # sind keine Messung eines ganzen Monats und würden die Schätzung zu
+    # optimistisch machen.
+    messbar = [a for a in p["abgeschlossen"] if (a[0], a[1]) not in p["wiederaufgenommen"]]
+    ausgenommen = sorted((a[0], a[1]) for a in p["abgeschlossen"] if (a[0], a[1]) in p["wiederaufgenommen"])
+    if messbar:
+        n = len(messbar)
+        gesamt_min = sum(a[3] for a in messbar)
+        kacheln = sum(a[2] for a in messbar)
+        print(f"Gemessen an {n} vollständig geladenen Monat(en) im neuen Protokollformat:")
+        if ausgenommen:
+            print(
+                "  Nicht eingerechnet (Sonderfall: aus früherem Versuch fortgesetzt, nur der Rest wurde geladen): "
+                + ", ".join(f"{j:04d}-{m:02d}" for j, m in ausgenommen) + "."
+            )
         print(
-            f"  Ø {gesamt_min / n:.1f} Minuten/Monat gesamt (Download Ø {sum(a[4] for a in p['abgeschlossen']) / n:.1f}, "
-            f"Verkleinern und Schreiben Ø {sum(a[5] for a in p['abgeschlossen']) / n:.1f}), "
+            f"  Ø {gesamt_min / n:.1f} Minuten/Monat gesamt (Download Ø {sum(a[4] for a in messbar) / n:.1f}, "
+            f"Verkleinern und Schreiben Ø {sum(a[5] for a in messbar) / n:.1f}), "
             f"{gesamt_min * 60 / kacheln:.1f} Sekunden je Kachel."
         )
         offen = len(alle) - len(fertig)
-        raten = [a[3] * 60 / a[2] for a in p["abgeschlossen"]]  # Sekunden je Kachel, je Monat
+        raten = [a[3] * 60 / a[2] for a in messbar]  # Sekunden je Kachel, je Monat
         tage_je_rate = lambda r: offen * MITTLERE_KACHELN_JE_MONAT * r / 86400
         untere, obere = tage_je_rate(min(raten)), tage_je_rate(max(raten))
         print(
@@ -247,7 +271,10 @@ def main() -> int:
             f"Kachelzahl je Monat mit Ø {MITTLERE_KACHELN_JE_MONAT:.0f} angenommen, echte Monate schwanken, z. B. hatte 2024-01 nur 460)."
         )
     else:
-        print("Noch kein Monat im neuen Protokollformat abgeschlossen, keine Zeitmessung und keine Restzeit-Schätzung möglich.")
+        print(
+            "Noch kein vollständig geladener Monat im neuen Protokollformat abgeschlossen, keine Zeitmessung "
+            "und keine Restzeit-Schätzung möglich."
+        )
 
     if p["fehler"]:
         print(f"Fehler seit Lauf-Start:\n  {p['fehler'][-1]}")
