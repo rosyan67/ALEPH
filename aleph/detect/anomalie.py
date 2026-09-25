@@ -302,7 +302,7 @@ class _Zellbewertung:
 
 
 def _variablen(feld: str) -> list[str]:
-    return [f"{feld}_mittel", f"{feld}_gueltige_pixel", f"{feld}_aufgefuellt_pixel"]
+    return [f"{feld}_mittel", f"{feld}_mittel_beobachtet", f"{feld}_gueltige_pixel", f"{feld}_beobachtete_pixel", f"{feld}_aufgefuellt_pixel"]
 
 
 def _nanmedian0(stapel: np.ndarray) -> np.ndarray:
@@ -349,7 +349,11 @@ def _bewerte_monat(ziel: dict, basis: dict, s: Schwellen) -> _Zellbewertung:
     `basis`: Arrays (n, y, x) derselben Größen der Basismonate (nur frühere Jahre, nur fertige).
     """
     pixel = s.pixel_pro_zelle
-    x = ziel["mittel"].astype("float64")
+    # Anomalieerkennung nutzt ausschließlich das Mittel über beobachtete Pixel
+    # (ohne aufgefüllte). Das allgültige Mittel (`mittel`) bleibt im Würfel
+    # zur Referenz; es wird hier nicht verwendet, damit aufgefüllte Daten aus
+    # der Basislinie nicht in die Abweichung eingehen können.
+    x = ziel["obs"].astype("float64")
     beob_ziel = _beobachtet_anteil(ziel["gueltig"], ziel["aufgefuellt"], pixel)
     ok_ziel = (beob_ziel >= s.min_beobachtet_anteil) & np.isfinite(x)
 
@@ -589,21 +593,25 @@ def _lade(wuerfel, monat, feld, s: Schwellen):
     achse = lesen.zeitachse_monate(wuerfel)
     basis_monate, fehlend = _basis_monate(fertig, achse, monat)
     ds = lesen.lies_monate(wuerfel, [monat] + basis_monate, _variablen(feld))  # Fehler, wenn `monat` nicht fertig ist
-    v_mittel, v_gueltig, v_aufg = _variablen(feld)
+    v_mittel, v_obs, v_gueltig, v_beob, v_aufg = _variablen(feld)
     ziel = {
         "mittel": ds[v_mittel].isel(zeit=0).values,
+        "obs": ds[v_obs].isel(zeit=0).values,
         "gueltig": ds[v_gueltig].isel(zeit=0).values,
+        "beobachtet": ds[v_beob].isel(zeit=0).values,
         "aufgefuellt": ds[v_aufg].isel(zeit=0).values,
     }
     if basis_monate:
         basis = {
             "mittel": ds[v_mittel].isel(zeit=slice(1, None)).values,
+            "obs": ds[v_obs].isel(zeit=slice(1, None)).values,
             "gueltig": ds[v_gueltig].isel(zeit=slice(1, None)).values,
+            "beobachtet": ds[v_beob].isel(zeit=slice(1, None)).values,
             "aufgefuellt": ds[v_aufg].isel(zeit=slice(1, None)).values,
         }
     else:
         leer = np.zeros((0,) + ziel["mittel"].shape)
-        basis = {"mittel": leer, "gueltig": leer, "aufgefuellt": leer}
+        basis = {"mittel": leer, "obs": leer, "gueltig": leer, "beobachtet": leer, "aufgefuellt": leer}
     return ziel, basis, ds["breite"].values, ds["laenge"].values, basis_monate, fehlend
 
 

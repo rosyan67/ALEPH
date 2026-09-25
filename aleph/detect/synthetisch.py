@@ -19,7 +19,7 @@ from dataclasses import dataclass
 import numpy as np
 import xarray as xr
 
-FELDER = ("mittel", "gueltige_pixel", "num", "aufgefuellt_pixel")
+FELDER = ("mittel", "mittel_beobachtet", "gueltige_pixel", "beobachtete_pixel", "num", "aufgefuellt_pixel")
 
 
 @dataclass(frozen=True)
@@ -130,10 +130,16 @@ def kuenstlicher_wuerfel(
         fertig[i] = 0  # Werte bleiben stehen, wie nach einem Absturz vor dem Fertig-Markieren
 
     dims = ("zeit", "breite", "laenge")
+    beobachtet = np.clip(gueltig - aufgefuellt, 0, 3600).astype("int16")
+    # Für künstliche Daten sind aufgefüllte Pixel wertunabhängig verteilt,
+    # daher ist das Mittel über beobachtete Pixel ≈ das Gesamt-Mittel.
+    mittel_beobachtet = np.where(beobachtet > 0, mittel, np.nan).astype("float32")
     return xr.Dataset(
         {
             f"{feld}_mittel": (dims, mittel),
+            f"{feld}_mittel_beobachtet": (dims, mittel_beobachtet),
             f"{feld}_gueltige_pixel": (dims, gueltig),
+            f"{feld}_beobachtete_pixel": (dims, beobachtet),
             f"{feld}_num": (dims, num),
             f"{feld}_aufgefuellt_pixel": (dims, aufgefuellt),
             "monat_fertig": (("zeit",), fertig),

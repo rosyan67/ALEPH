@@ -3,16 +3,20 @@
 Steckbrief: docs/sources/vnp46a3.md. Nutzt dieselbe Ladelogik wie alle
 anderen Layer (aleph/core/io.py, aleph/core/auth.py).
 
-Zwei Datenfelder werden mitgeführt (Entscheidung 2026-09-22: beide
-speichern, Vergleich in Etappe 2):
-- NearNadir_Composite_Snow_Free  (Vorschlag Hauptfeld, wenig Winkelfehler)
-- AllAngle_Composite_Snow_Free   (Vorschlag Vergleichsfeld, mehr Beobachtungen)
+Zwei Datenfelder werden mitgeführt (Entscheidung 2026-09-24: AllAngle als
+Standardfeld, NearNadir als Gegenprobe):
+- AllAngle_Composite_Snow_Free    (Standardfeld: mehr Beobachtungen, weniger
+  aufgefüllte Pixel)
+- NearNadir_Composite_Snow_Free   (Gegenprobe: gleichbleibende Blickgeometrie)
 
 Pro Feld und Gitterzelle (0,25°, 60 x 60 Rohpixel) wird gespeichert:
-- `<feld>_mittel`: Mittelwert der gültigen Pixel (nW·cm⁻²·sr⁻¹)
+- `<feld>_mittel`: Mittelwert aller gültigen Pixel (beobachtet und aufgefüllt
+  gemeinsam) (nW·cm⁻²·sr⁻¹)
+- `<feld>_mittel_beobachtet`: Mittelwert nur über beobachtete Pixel
+  (Quality != 2)
 - `<feld>_gueltige_pixel`: Zahl der Pixel ohne Fehlwert (Datenlage, 0-3600)
-- `<feld>_num`: Mittelwert von `_Num` der gültigen Pixel (Zahl der Nächte je
-  Pixel, die ins Monatskomposit eingingen)
+- `<feld>_beobachtete_pixel`: Zahl der beobachteten Pixel (gültig und
+  Quality != 2)
 - `<feld>_aufgefuellt_pixel`: Zahl der Pixel mit Quality=2 ("gap filled NTL
   based on historical data", Steckbrief Abschnitt 8) unter den gültigen
   Pixeln. Diese Pixel sind keine direkte Messung des Monats, sondern aus
@@ -392,9 +396,11 @@ def _lies_kachel(pfad: Path) -> dict[str, np.ndarray]:
     """Liest eine Kachel und verkleinert sie auf 40 x 40 Gitterzellen.
 
     Fehlwerte werden vor jedem Mittelwert maskiert (−999,9 beim Komposit,
-    65535 bei `_Num`). Rückgabe je Feldpaar: `<name>_mittel`,
-    `<name>_gueltige_pixel`, `<name>_num`, `<name>_aufgefuellt_pixel`, je
-    40 x 40.
+    65535 bei `_Num`). Rückgabe je Feldpaar: `<name>_mittel` (Mittelwert
+    aller gültigen Pixel, beobachtet und aufgefüllt gemeinsam),
+    `<name>_mittel_beobachtet` (Mittelwert nur über beobachtete Pixel,
+    Quality != 2), `<name>_gueltige_pixel`, `<name>_beobachtete_pixel`,
+    `<name>_aufgefuellt_pixel`, `<name>_num`, je 40 x 40.
     """
     ergebnis: dict[str, np.ndarray] = {}
     block_form = (ZELLEN_PRO_KACHEL, PIXEL_PRO_ZELLE, ZELLEN_PRO_KACHEL, PIXEL_PRO_ZELLE)
@@ -419,18 +425,25 @@ def _lies_kachel(pfad: Path) -> dict[str, np.ndarray]:
             aufgefuellt_bloecke = (
                 (qualitaet == QUALITAET_AUFGEFUELLT) & gueltig
             ).reshape(block_form)
+            beobachtet_bloecke = gueltig_bloecke & (~aufgefuellt_bloecke)
 
             with np.errstate(invalid="ignore"), warnings.catch_warnings():
                 # Zellen ohne einen einzigen gültigen Pixel sind erwartbar
                 # (z. B. am Kachelrand); "Mean of empty slice" ist dann kein Fehler.
                 warnings.filterwarnings("ignore", message="Mean of empty slice")
                 mittel = np.nanmean(komposit_masked, axis=(1, 3))
+                mittel_beobachtet = np.nanmean(
+                    np.where(beobachtet_bloecke, komposit, np.nan), axis=(1, 3)
+                )
                 num_mittel = np.nanmean(num_masked, axis=(1, 3))
             gueltige_pixel = gueltig_bloecke.sum(axis=(1, 3)).astype("int16")
+            beobachtete_pixel = beobachtet_bloecke.sum(axis=(1, 3)).astype("int16")
             aufgefuellte_pixel = aufgefuellt_bloecke.sum(axis=(1, 3)).astype("int16")
 
             ergebnis[f"{name}_mittel"] = mittel.astype("float32")
+            ergebnis[f"{name}_mittel_beobachtet"] = mittel_beobachtet.astype("float32")
             ergebnis[f"{name}_gueltige_pixel"] = gueltige_pixel
+            ergebnis[f"{name}_beobachtete_pixel"] = beobachtete_pixel
             ergebnis[f"{name}_num"] = num_mittel.astype("float32")
             ergebnis[f"{name}_aufgefuellt_pixel"] = aufgefuellte_pixel
     return ergebnis
@@ -844,7 +857,13 @@ def verkleinere_monat(kachel_dateien: list[Path], erwarteter_monat: tuple[int, i
     variablen: dict[str, np.ndarray] = {}
     for name in FELD_TRIPEL:
         variablen[f"{name}_mittel"] = np.full((GITTER_BREITE, GITTER_LAENGE), np.nan, dtype="float32")
+        variablen[f"{name}_mittel_beobachtet"] = np.full(
+            (GITTER_BREITE, GITTER_LAENGE), np.nan, dtype="float32"
+        )
         variablen[f"{name}_gueltige_pixel"] = np.zeros((GITTER_BREITE, GITTER_LAENGE), dtype="int16")
+        variablen[f"{name}_beobachtete_pixel"] = np.zeros(
+            (GITTER_BREITE, GITTER_LAENGE), dtype="int16"
+        )
         variablen[f"{name}_num"] = np.full((GITTER_BREITE, GITTER_LAENGE), np.nan, dtype="float32")
         variablen[f"{name}_aufgefuellt_pixel"] = np.zeros((GITTER_BREITE, GITTER_LAENGE), dtype="int16")
 
@@ -892,7 +911,9 @@ def _wuerfel_variablen() -> dict[str, str]:
     variablen: dict[str, str] = {}
     for name in FELD_TRIPEL:
         variablen[f"{name}_mittel"] = "float32"
+        variablen[f"{name}_mittel_beobachtet"] = "float32"
         variablen[f"{name}_gueltige_pixel"] = "int16"
+        variablen[f"{name}_beobachtete_pixel"] = "int16"
         variablen[f"{name}_num"] = "float32"
         variablen[f"{name}_aufgefuellt_pixel"] = "int16"
     return variablen

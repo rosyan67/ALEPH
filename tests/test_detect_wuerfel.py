@@ -8,7 +8,7 @@ from aleph.detect import wuerfel as w
 from aleph.detect.synthetisch import kuenstlicher_wuerfel
 
 FELD = "allangle"
-VARS = [f"{FELD}_mittel", f"{FELD}_gueltige_pixel", f"{FELD}_aufgefuellt_pixel"]
+VARS = [f"{FELD}_mittel", f"{FELD}_gueltige_pixel", f"{FELD}_beobachtete_pixel", f"{FELD}_aufgefuellt_pixel"]
 
 
 @pytest.fixture
@@ -111,7 +111,7 @@ def test_konstanten_und_variablennamen_passen_zum_echten_layer():
     assert w.FERTIG_VARIABLE == vnp46a3.FERTIG_VARIABLE
     echte = set(vnp46a3._wuerfel_variablen())
     for feld in vnp46a3.FELD_TRIPEL:
-        for v in (f"{feld}_mittel", f"{feld}_gueltige_pixel", f"{feld}_aufgefuellt_pixel"):
+        for v in (f"{feld}_mittel", f"{feld}_gueltige_pixel", f"{feld}_beobachtete_pixel", f"{feld}_aufgefuellt_pixel"):
             assert v in echte, v
     assert vnp46a3.PIXEL_PRO_ZELLE**2 == 3600  # Standard von Schwellen.pixel_pro_zelle
 

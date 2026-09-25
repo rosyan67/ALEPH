@@ -25,3 +25,5 @@ Die Agenten liegen unter `.claude/agents/`.
 - Nach jeder Änderung an Analyse-Code wird `statistik-pruefer` eingesetzt.
 - Vor jedem neuen Layer wird `datenquellen-scout` eingesetzt.
 - Für jede neue Theorie wird `theorie-kurator` eingesetzt.
+- Vor jedem Ergebnis, das ich zu sehen bekomme, wird `plausibilitaets-pruefer` eingesetzt.
+- Neue Layer werden mit `layer-bauer` gebaut.

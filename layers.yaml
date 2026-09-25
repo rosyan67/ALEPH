@@ -1,0 +1,27 @@
+# ALEPH Layer Register
+# Jeder Layer hat eine eindeutige ID, Metadaten und einen Status.
+# Einträge werden mit dem layer-bauer-Agenten gepflegt.
+
+layers:
+  - id: vnp46a3
+    name: VNP46A3 Black Marble Nightlights
+    status: fertig
+    datei: aleph/layers/vnp46a3.py
+    raster: 0.25°
+    zeitraum: 2013-2025
+    felder:
+      - allangle
+      - near_nadir
+    erstellt: 2026-09-22
+
+  - id: gpm_imerg
+    name: GPM IMERG Precipitation
+    status: in Arbeit
+    datei: aleph/layers/gpm_imerg.py
+    raster: 0.25° (von 0.1° aggregiert)
+    zeitraum: 2013-2025
+    felder:
+      - precipitation
+    erstellt: 2026-09-25
+    hinweis: >-
+      Flächengewichtete Aggregation 0.1° → 0.5° → 0.25°
