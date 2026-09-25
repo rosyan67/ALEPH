@@ -1,0 +1,264 @@
+# Theorie-Eintrag nach ARCHITECTURE.md Abschnitt 8.
+# Verfasst am 2026-09-23, bevor irgendein ALEPH-Testergebnis angesehen wurde.
+# Erwartungen in diesem Eintrag werden nachträglich nicht geändert; Ergebnisse stehen nur in "prüfergebnisse".
+#
+# UMBENENNUNG (2026-09-23, nach Sichtung der Prüfberichte, vor jeder ALEPH-Auswertung):
+# Früherer Name: "Gravitationsmodell der Migration, mit PPML geschätzt" (id gravitation-migration-ppml).
+# Der alte Name war nicht ehrlich. Erwartungen, Quellen, Gleichungen und Verzögerung sind unverändert;
+# geändert wurden nur Name (id, titel), Status und die Vermerke dazu.
+#
+# WICHTIG ZUM NAMEN: Die klassische Gravitationsform (Herkunft UND Ziel UND Distanz) ist mit den
+# geplanten ALEPH-Daten NICHT prüfbar. Das volle Gravitationsmodell bräuchte bilaterale Wanderungsdaten
+# (Herkunfts-Ziel-Paare) und Distanzen; beides ist nirgends geplant. Es ist deshalb Einordnung (C),
+# nicht prüfbar, und steht in "teilstatus" mit "Daten unzureichend".
+# Geprüft wird nur eine herkunftsseitige Vereinfachung (Einordnung B; ALEPH-Vereinfachung, steht so in
+# keiner der geprüften Quellen). Siehe Feld "modell" und "fallstricke".
+
+id: abwanderung-herkunftsseitig-ppml
+titel: >
+  Abwanderung als Reaktion auf herkunftsseitige Faktoren (PPML-Schätzung): Schocks im Herkunftsgebiet
+  und Ausreise bzw. Vertreibung, angelehnt an die Gravitationsliteratur
+disziplin: Migrationsökonomik / Ökonometrie (angelehnt an Gravitationsmodelle)
+
+quellen:
+  - zitat: "Ravenstein, E. G. (1885): The Laws of Migration. Journal of the Statistical Society of London, Band 48, Heft 2, S. 167-227 (Seitenangabe laut Oxford-Academic-Seite)"
+    jahr: 1885
+    doi: "10.2307/2979181"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autor, Jahr, Titel, Zeitschrift, Band/Heft und DOI gesehen bei Oxford Academic (academic.oup.com/jrsssa/article/48/2/167)
+      und in der Crossref-Datenbank (Crossref nennt nur die Startseite 167). Abweichung zum Auftrag: Der Nutzer nannte
+      S. 167-235; die Oxford-Seite nennt 167-227, andere Treffer nennen beides. Die Endseite ist nicht einheitlich
+      bestätigt und wird deshalb nicht als Fakt verwendet. Der Text selbst wurde nicht gelesen.
+  - zitat: "Ravenstein, E. G. (1889): The Laws of Migration. Journal of the Royal Statistical Society, Band 52, Heft 2, S. 241-301 (Seitenangabe laut Oxford-Academic-Seite; Startseite 241 zusätzlich bei Crossref)"
+    jahr: 1889
+    doi: "10.2307/2979333"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autor, Jahr, Titel, Zeitschrift, Band/Heft und DOI 10.2307/2979333 gesehen in der Crossref-Datenbank; dieselbe Arbeit
+      trägt bei Oxford Academic (academic.oup.com/jrsssa/article/52/2/241) die DOI 10.1111/j.2397-2335.1889.tb00043.x
+      (zwei DOIs für denselben Artikel, JSTOR-Form und Verlagsform). Abweichung: Ein Suchtreffer nannte S. 241-305, Oxford nennt
+      241-301; Endseite nicht sicher, deshalb nicht als Fakt verwendet. Der Text selbst wurde nicht gelesen.
+  - zitat: "Grigg, D. B. (1977): E. G. Ravenstein and the 'laws of migration'. Journal of Historical Geography, Band 3, Heft 1, S. 41-54"
+    jahr: 1977
+    doi: "10.1016/0305-7488(77)90143-8"
+    rolle: gegenposition   # historische Einordnung: Ravensteins "Gesetze" sind eher Hypothesen, nicht alle bestätigt
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autor, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen; Zusammenfassung
+      (Abstract) über die ScienceDirect-Trefferseite gelesen, nicht der Volltext. Das Abstract nennt: elf Hypothesen
+      aus drei Aufsätzen; Wanderung überwiegend über kurze Distanz bestätigt; Ravensteins Stufen-Hypothese bleibt ungeprüft.
+  - zitat: "Santos Silva, J. M. C., Tenreyro, S. (2006): The Log of Gravity. The Review of Economics and Statistics, Band 88, Heft 4, S. 641-658"
+    jahr: 2006
+    doi: "10.1162/rest.88.4.641"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen; zusätzlich Abstract im
+      Repositorium der University of Essex (repository.essex.ac.uk/3567) und Verzeichniseintrag bei MIT Press. Die DOI aus dem
+      Auftrag (vermutet) stimmt. Der Volltext war nicht lesbar (PDF-Kompression); die Aussage zu Nullwerten stützt sich auf die
+      Autorenseite personal.lse.ac.uk/tenreyro/lgw.html (keine begutachtete Quelle), das Abstract belegt Heteroskedastizität/Verzerrung.
+  - zitat: "Anderson, J. E., van Wincoop, E. (2003): Gravity with Gravitas: A Solution to the Border Puzzle. American Economic Review, Band 93, Heft 1, S. 170-192"
+    jahr: 2003
+    doi: "10.1257/000282803321455214"
+    rolle: methode   # gilt für den HANDEL; Migration nur indirekt (siehe Bertoli und Fernández-Huertas Moraga 2013)
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI bei der American Economic Association (aeaweb.org) und in der
+      Crossref-Datenbank gesehen. Es geht um Handel, nicht um Migration. Das Abstract nennt: Gravitationsgleichungen ohne
+      theoretische Grundlage führen zu Verzerrung durch ausgelassene Variablen.
+  - zitat: "Bertoli, S., Fernández-Huertas Moraga, J. (2013): Multilateral resistance to migration. Journal of Development Economics, Band 102, S. 79-100"
+    jahr: 2013
+    doi: "10.1016/j.jdeveco.2012.12.001"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band/Seiten und DOI in der Crossref-Datenbank gesehen; Zusammenfassung über
+      IDEAS/RePEc gelesen (Kernaussage: Die Wanderungsrate zwischen zwei Ländern hängt auch von der Attraktivität alternativer
+      Ziele ab; Berücksichtigung mit dem Common-Correlated-Effects-Schätzer). Nur Abstract gelesen, nicht der Volltext.
+  - zitat: "Beine, M., Bertoli, S., Fernández-Huertas Moraga, J. (2016): A Practitioners' Guide to Gravity Models of International Migration. The World Economy, Band 39, Heft 4, S. 496-512"
+    jahr: 2016
+    doi: "10.1111/twec.12265"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen (online 2015, gedruckt 2016);
+      Abstract bei EconPapers/RePEc gelesen (Themen: theoretische Grundlage, Migrationsdaten, multilateraler Widerstand,
+      Endogenität). Der Volltext war nicht lesbar; Einzelheiten zu Herkunftseffekten und Zufallsnutzenmodellen stammen
+      deshalb aus Ramos (2016), nicht direkt aus diesem Aufsatz.
+  - zitat: "Ramos, R. (2016): Gravity models: A tool for migration analysis. IZA World of Labor, Artikel 239"
+    jahr: 2016
+    doi: "10.15185/izawol.239"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autor, Jahr, Titel, Reihe und DOI in der Crossref-Datenbank gesehen; Inhalt über die IZA-Webseite (wol.iza.org, Langfassung)
+      gelesen, Autor zusätzlich über EconStor-Eintrag. Das ist ein Überblicksartikel (Politikreihe), keine Originalstudie.
+      Er belegt: Herkunfts-/Zieleffekte je Jahr gegen multilateralen Widerstand, Probleme mit Nullströmen und PPML,
+      Bestand vs. Strom, Endogenität von Netzwerken und Politik, Zufallsnutzenmodelle.
+  - zitat: "Karemera, D., Oguledo, V. I., Davis, B. (2000): A gravity model analysis of international migration to North America. Applied Economics, Band 32, Heft 13, S. 1745-1755"
+    jahr: 2000
+    doi: "10.1080/000368400421093"
+    rolle: methode   # frühe Anwendung; Beispiel für die klassische bilaterale Form
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI in der Crossref-Datenbank gesehen; Abstract über die
+      Trefferseiten gelesen: 70 Herkunftsländer, Zuwanderung nach USA und Kanada, 1976-1986, 1540 Beobachtungen; Bevölkerung
+      des Herkunftslandes und Einkommen des Ziellandes sind die wichtigsten Einflussgrößen. Nur Abstract gelesen.
+  - zitat: "Beyer, R. M., Schewe, J., Lotze-Campen, H. (2022): Gravity models do not explain, and cannot predict, international migration dynamics. Humanities and Social Sciences Communications, Band 9, Artikel 56"
+    jahr: 2022
+    doi: "10.1057/s41599-022-01067-x"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Autoren, Jahr, Titel, Zeitschrift, Band/Artikel-Nr. und DOI in der Crossref-Datenbank gesehen; Abstract über IDEAS/RePEc
+      gelesen. Nur Abstract gelesen, nicht der Volltext.
+
+modell: >
+  (1) Klassische Form (Ravensteins Beobachtung "Wanderung nimmt mit der Distanz ab", später als Gleichung formuliert; eine Gleichung steht bei
+  Ravenstein selbst nicht, das ist eine spätere Lesart): M_ij = G * (P_i^a * P_j^c) / D_ij^d * e_ij.
+  Symbole: M_ij = Wanderungsstrom von Herkunft i nach Ziel j; P_i, P_j = Bevölkerung (oder Wirtschaftsgröße) von Herkunft bzw. Ziel;
+  D_ij = Distanz; G = Konstante; a, c, d = Stärke des jeweiligen Einflusses; e_ij = Fehlerterm.
+  (2) PPML-Schätzform nach Santos Silva und Tenreyro (2006): E[M_ij,t | X] = exp(b0 + b1 ln P_i,t + b2 ln P_j,t - d ln D_ij + Kontrollen + a_it + c_jt).
+  Statt die Gleichung zu logarithmieren und per OLS zu schätzen, wird der Erwartungswert in Niveaus modelliert. Das ist bei
+  Heteroskedastizität nicht verzerrt (Jensen-Effekt) und verträgt Nullströme. a_it und c_jt sind Herkunft-Jahr- bzw. Ziel-Jahr-Effekte; sie fangen
+  laut Ramos (2016) den multilateralen Widerstand ab (Attraktivität aller anderen Ziele). Wichtig: Herkunftseffekte in dieser Bedeutung
+  (Origin fixed effects) sind Standard in der Literatur, ABER als Ergänzung zur bilateralen Gleichung, nicht als Ersatz.
+  (3) ALEPH-Vereinfachung (steht so in keiner der geprüften Quellen, eigene Festlegung): E[A_it | S] = exp(a_i + g_t + b1 ln P_i,t + b2 * S_i,t-L),
+  mit A_it = Ausreise bzw. Vertreibung aus Herkunftsland/-region i im Jahr t (Summe über alle Ziele; Wirkungsvariable aus IDMC/UNHCR),
+  P_i,t = Bevölkerung der Herkunft, S_i,t-L = Schockmaß im Herkunftsgebiet mit Verzögerung L (Konfliktereignisse aus ACLED, Niederschlagsdefizit
+  aus IMERG, Nachtlicht-Rückgang aus VNP46A3), a_i = feste Herkunftseffekte, g_t = Jahreseffekte (fangen weltweite Schocks ab).
+  Geschätzt mit PPML. Erwartet: b2 > 0 (mehr Push-Faktor, mehr Ausreise). Wird b1 auf 1 gesetzt, ist A_it eine Rate pro Einwohner.
+  Achtung: Bei Herkunft-Jahr-Effekten (a_it) würden Herkunftsschocks mit aufgesogen und wären nicht mehr schätzbar; deshalb nur a_i und g_t
+  (das ist eine methodische Überlegung des Kurators, keine Aussage einer Quelle).
+
+ursache: {layer: [acled, niederschlag, nachtlicht], richtung: [konfliktereignisse anstieg, niederschlagsdefizit, nachtlicht-rückgang als Proxy für Wirtschaftseinbruch]}
+wirkung: {layer: idmc_unhcr, richtung: anstieg, zusätzlich: "Ausreise/Vertreibung aus der Herkunftsregion; Nachtlicht dient NICHT als Wirkungsmaß"}
+verzögerung_monate: [0, 24]
+# Herkunft der Verzögerung: In den gelesenen Quellen (Abstracts, Ramos-Überblick) wurde KEINE feste Verzögerung für Push-Schocks gefunden.
+# Die Spanne 0 bis 24 Monate ist eine ALEPH-Festlegung vor den Daten, keine Aussage der Literatur.
+# Die Zielgrößen (IDMC/UNHCR) sind Jahresdaten: eine Jahresverzögerung L = 1 entspricht 12 Monaten, L = 2 entspricht 24 Monaten,
+# L = 0 bedeutet Schock und Ausreise im selben Kalenderjahr. Feinere Monatsauflösung ist mit Jahresdaten nicht prüfbar.
+
+geltungsbereich: >
+  In den geprüften Quellen: bilaterale Wanderungsströme zwischen Ländern (Beispiel Karemera et al. 2000: 70 Herkunftsländer, Ziel USA/Kanada,
+  1976-1986). Die ALEPH-Vereinfachung gilt nur auf Länder- oder größerer Regionenebene und nur für 2013-2025 (Nachtlichtzeitraum),
+  und nur für die Art von Ausreise, die IDMC/UNHCR erfassen: Flucht und Vertreibung. Arbeitsmigration, Familiennachzug und Studienwanderung
+  werden damit nicht erfasst. Aussagen über einzelne 0,25-Grad-Zellen sind nicht gedeckt, weil Vertreibungsdaten Länderdaten sind.
+
+mechanismus: >
+  Ravenstein (1885, 1889) beschrieb aus Zensusdaten Regelmäßigkeiten der Wanderung (u. a. überwiegend kurze Distanzen, Zug in Handelszentren);
+  laut Grigg (1977) sind das eher elf Hypothesen als Gesetze, teils später bestätigt (kurze Distanz, Land-Stadt), teils ungeprüft
+  (Stufenwanderung). Das ist historische Beobachtung, keine Ökonometrie. Die Gravitationsform überträgt die Idee auf Ströme zwischen Ländern:
+  größere Herkunft und größeres Ziel, mehr Wanderung; mehr Distanz, weniger Wanderung (Karemera et al. 2000: Bevölkerung des Herkunftslandes und
+  Einkommen des Ziellandes wichtig, nur Abstract gelesen). Santos Silva und Tenreyro (2006) zeigen für den Handel, dass das Logarithmieren
+  bei Heteroskedastizität die Elastizitäten verzerrt, und schlagen PPML vor. Für ALEPH ist die Erwartung: Ein Schock im Herkunftsgebiet
+  (Gewalt, Dürre, Wirtschaftseinbruch) erhöht die Zahl der Menschen, die das Gebiet verlassen. Forschungsstand: Die Gravitationsform als
+  Beschreibung räumlicher Muster ist weit verbreitet, aber umstritten als Erklärung und Prognose der zeitlichen Entwicklung
+  (siehe gegenpositionen). Ob Push-Schocks Wanderung erhöhen, ist ein empirischer Streitpunkt; dieser Eintrag behauptet es nicht als Tatsache,
+  sondern formuliert es als zu prüfende Erwartung.
+bedingungen: >
+  Erwartete Richtung nur unter Vorbehalt: Bei sehr armen Bevölkerungen kann Auswanderung nach einem Schock sinken, weil Mittel für die Reise fehlen;
+  dazu siehe Eintrag klimamigration-gefangene-bevoelkerung (nur Verweis, Inhalt hier nicht übernommen). Stärker zu erwarten bei starken
+  Netzwerken im Ausland und offenen Zielen; schwächer bei geschlossenen Grenzen. Diese Bedingungen sind aus Ramos (2016) (Netzwerke, Politik als
+  Einflussgrößen) und eigener Überlegung abgeleitet, nicht als geprüfte Effektgrößen.
+  Geplante Prüfung in ALEPH (vor den Daten festgelegt): PPML-Panel auf Länderebene mit Herkunfts- und Jahreseffekten, Schocks aus den ALEPH-Layern
+  aggregiert auf Länder-Jahr, Kalibrierung auf früheren Jahren, Test auf späteren Jahren, Vergleich mit Permutationstest (Abschnitt 8),
+  Bevölkerung als Kontrolle. Bestätigt wäre nur die herkunftsseitige Aussage "Schock steht mit Ausreise in Zusammenhang", nicht die Gravitationsform.
+  Zur Benennung: Ohne Ziel- und Distanzinformation ist das kein Gravitationsmodell im Sinne der Quellen. Es ist ein PPML-Paneldatenmodell
+  mit Gravitations-Herkunft (Bevölkerungsgröße als Skalierung). Der Eintrag heißt deshalb nicht mehr "Gravitationsmodell"; in der Oberfläche
+  ist er so zu bezeichnen ("herkunftsseitiges Ausreisemodell, angelehnt an die Gravitationsliteratur"), nicht als "Gravitationsmodell der Migration".
+  Das volle Gravitationsmodell (bilateral: M_ij mit Ziel und Distanz) bräuchte bilaterale Wanderungsdaten und Distanzen, ist mit den geplanten
+  Layern nicht schätzbar und damit Einordnung (C), nicht prüfbar.
+
+gegenpositionen:
+  - >
+    Beyer, Schewe und Lotze-Campen (2022, Quelle in quellen): Gravitationsmodelle beschreiben räumliche Muster (welche Länderpaare viel Wanderung haben)
+    gut, erfassen aber nicht einmal die einfache zeitliche Entwicklung und sind dabei oft schlechter als der zeitlich konstante Durchschnitt
+    der früheren Ströme. Ihrer Ansicht nach können Aussagen über den zeitlichen Einfluss einzelner Variablen statistische Artefakte sein.
+    Das trifft die ALEPH-Prüfung direkt, denn ALEPH testet zeitliche Veränderung (Schock heute, Ausreise später). Nur Abstract gelesen.
+  - >
+    Anderson und van Wincoop (2003, Handel): Gravitationsgleichungen ohne theoretische Fundierung führen zu Verzerrung durch ausgelassene
+    Variablen (multilateraler Widerstand). Für Migration zeigen Bertoli und Fernández-Huertas Moraga (2013), dass die Wanderung zwischen zwei Ländern
+    auch von der Attraktivität alternativer Ziele abhängt. Eine reine Herkunftsseite ignoriert das.
+  - >
+    Ramos (2016) beschreibt Zufallsnutzenmodelle (Random Utility Models) als Alternative mit theoretischer Grundlage, die aber annehmen, dass die
+    Attraktivität eines Ziels nicht von der Wanderung selbst beeinflusst wird; Gravitationsmodelle erfassen Rückwirkungen zweiter Ordnung ebenfalls
+    nicht. Eine ausdrückliche Kritik "Gravitationsmodelle seien atheoretisch" für Migration wurde in den geprüften Quellen nicht im Wortlaut gefunden
+    (die Kritik an fehlender Theorie steht bei Anderson und van Wincoop für den Handel); die Aussage zu Random-Utility-Modellen stammt aus dem
+    Überblick von Ramos, nicht aus einer Originalstudie dazu.
+  - >
+    Zu PPML selbst (Ramos 2016): Die Methode gewichtet Ströme mit großen Werten stark und kann Konvergenzprobleme haben. Nicht jeder hält PPML daher
+    für die beste Wahl bei Wanderungsdaten; die Autoren der Ursprungsarbeit sehen es anders (Autorenseite: PPML bleibt bei richtigem Erwartungswert
+    konsistent, auch wenn die Varianz nicht proportional ist). Hier gibt es also Streit über die Schätzmethode, nicht über die Grundidee.
+  - >
+    Zu Ravenstein (Grigg 1977): Seine "Gesetze" sind eher Hypothesen; die Stufenwanderung blieb ungeprüft. Wer Ravenstein als Beleg für die
+    Gravitationsgleichung anführt, geht über das hinaus, was das Abstract von Grigg stützt.
+
+fallstricke:
+  - >
+    Log-Linearisierung: Wanderungsströme enthalten viele Nullen und sind heteroskedastisch. OLS auf Logarithmen verwirft Nullen oder verzerrt
+    (Santos Silva und Tenreyro 2006; Ramos 2016 nennt die üblichen Notlösungen, Nullen weglassen oder 0,5 bzw. 1 addieren, als problematisch).
+    Deshalb PPML. Nachteile von PPML siehe gegenpositionen.
+  - >
+    Fehlender multilateraler Widerstand: Die ALEPH-Herkunftsvariante hat keine Zielinformation. Herkunftseffekte a_i fangen nur das zeitlich
+    Konstante ab; zeitlich veränderliche Attraktivität der Ziele (z. B. Konjunktur in Europa) steckt im Fehlerterm. Nur die Jahreseffekte g_t
+    fangen den gemeinsamen Teil ab. Ist ein Herkunftsschock mit Zielbedingungen korreliert, ist b2 verzerrt.
+  - >
+    Herkunft-Jahr-Effekte (a_it), wie sie die Literatur zur Kontrolle des multilateralen Widerstands nennt, würden die Herkunftsschocks selbst aufsaugen.
+    Ein reines Herkunftsmodell kann sie deshalb nicht verwenden. (Kuratorenüberlegung aus der Modellstruktur.)
+  - >
+    Endogenität: Netzwerke (Diaspora im Ausland) und Politik (Visa, Grenzen) beeinflussen Wanderung und hängen mit Schocks oder Herkunft zusammen;
+    Umgekehrte Kausalität ist möglich (Politik reagiert auf Zuwanderung). Gute Instrumente sind laut Ramos (2016) schwer zu finden. In ALEPH nicht
+    kontrollierbar, weil die Daten fehlen.
+  - >
+    Bestände statt Ströme: Bilaterale Wanderungsdaten sind oft Bestände (Zahl der Migranten im Zielland). Änderungen von Beständen umfassen auch
+    Rückkehr und Weiterwanderung und sind laut Ramos (2016) kein sauberes Maß für Bruttoströme. IDMC/UNHCR liefern Vertreibungs- bzw.
+    Flüchtlingszahlen mit eigenen Definitionen; das sind nicht alle Wanderer. Definition und Zählweise sind vor der Prüfung zu klären (ungeprüft).
+  - >
+    Nachtlicht misst keine Wanderung. Bevölkerungsverlagerung ist nur indirekt und schwach erkennbar (Proxy). Zirkularität: Nachtlicht-Rückgang kann
+    Ursache (Wirtschaftseinbruch) UND Folge (Abwanderung, Zerstörung) sein. Deshalb nicht gleichzeitig Ursache und Wirkung mit demselben Layer messen.
+  - >
+    Ebenenfehler: Vertreibungs- und Ausreisedaten liegen als Länderjahre vor, ALEPH-Signale als 0,25-Grad-Zellen und Monate. Beim Zusammenfassen
+    gehen Ort und Zeitfeinheit verloren; Schlüsse auf Zellen sind nicht zulässig (Ökologischer Fehlschluss).
+  - >
+    Zeitliche Vorhersage ist der schwache Punkt der Gravitationsmodelle (Beyer et al. 2022). Ein Fit über Länderunterschiede beweist nichts über
+    Veränderungen im Zeitverlauf; ALEPH prüft nur die Veränderungen innerhalb einer Herkunft (Herkunftseffekte), was die richtige, aber härtere Frage ist.
+  - >
+    Bekannte gemeinsame Treiber (Bevölkerungswachstum, Konjunktur, Kriege in Nachbarländern) müssen als Kontrolle oder über Jahreseffekte berücksichtigt
+    werden. Konflikt (ACLED) und Dürre können selbst zusammenhängen (siehe Theorie Klima und Konflikt); Doppelzählung vermeiden.
+  - >
+    ACLED-Lizenz schränkt die öffentliche Anzeige ein; Ergebnisse dürfen nur zusammengefasst gezeigt werden. Nachtlicht: Teile der "gültigen" Pixel
+    sind aufgefüllt (Qualität siehe docs/sources/vnp46a3.md); Zellen mit dünner Datenlage nicht bewerten.
+
+datenbedarf:
+  - {layer: nachtlicht, rolle: ursache, status: in Arbeit, anmerkung: "VNP46A3, nur Suomi-NPP, 2013-2025, 0,25 Grad, monatlich; ein Testmonat vorhanden, großer Lauf läuft; Proxy für Wirtschaftseinbruch, kein Wanderungsmaß; Datenlage über _Num und Zahl gültiger Pixel mitführen"}
+  - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "GPM IMERG, Steckbrief vorhanden, noch nichts geladen; Niederschlagsdefizit als Dürre-Schock"}
+  - {layer: acled, rolle: ursache, status: geplant, anmerkung: "Steckbrief vorhanden, noch nichts geladen; Lizenz schränkt öffentliche Anzeige ein, Ergebnisse nur zusammengefasst zeigen"}
+  - {layer: idmc_unhcr, rolle: wirkung, status: geplant, anmerkung: "nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief; Definitionen (Vertreibung, Flüchtlinge, Bestand oder Strom) und Länderjahr-Auflösung noch zu klären; erfasst nur Flucht/Vertreibung, nicht alle Wanderung"}
+  - {layer: bevoelkerung, rolle: kontrolle, status: geplant, anmerkung: "GHSL/WorldPop nur in Abschnitt 5 geplant, kein Steckbrief; für P_i nötig. Weltbank-Länderdaten (Steckbrief vorhanden, geplant) könnten Bevölkerung pro Land liefern; ob der Indikator dort enthalten ist, wurde nicht geprüft"}
+  - {layer: weltbank, rolle: kontrolle, status: vorhanden, anmerkung: "STAND 2026-09-23: geladen (laender/weltbank.parquet). Frühere Angabe: Steckbrief vorhanden, noch nichts geladen; jährlich, nur Länderebene; Wirtschaftskontrolle möglich"}
+  - {layer: bilaterale_wanderung, rolle: wirkung, status: fehlt, anmerkung: "Bestände oder Ströme nach Herkunfts-Ziel-Paar; nirgends geplant. Ohne sie ist die volle Gravitationsform (M_ij) nicht schätzbar"}
+  - {layer: distanz_zielland, rolle: kontrolle, status: fehlt, anmerkung: "bilaterale Distanzen, Merkmale der Zielländer (Einkommen, Arbeitsmarkt), multilaterale Widerstandsterme; nirgends geplant"}
+  - {layer: netzwerk_politik, rolle: kontrolle, status: fehlt, anmerkung: "Diaspora-Größe und Visa-/Grenzpolitik; nirgends geplant"}
+
+status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+# Der Status gilt für die herkunftsseitige Vereinfachung, also den Gegenstand dieses Eintrags (Einordnung B).
+# Ihr fehlt noch der Wirkungs-Layer IDMC/UNHCR (geplant, kein Steckbrief); er ist noch nicht geladen.
+teilstatus:
+  - teil: "Volle bilaterale Gravitationsform (Herkunft, Ziel und Distanz, M_ij), Einordnung C"
+    status: Daten unzureichend
+    grund: "Bilaterale Wanderungsdaten und Distanzen/Zielland-Merkmale sind nirgends geplant (datenbedarf: bilaterale_wanderung, distanz_zielland: fehlt). Nicht schätzbar, nicht prüfbar."
+prüfergebnisse: []

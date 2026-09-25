@@ -54,12 +54,13 @@ Karte mit Filtern, Zeitreihen, Theorie-Status und Nachrichtenkontext
 **Räumlich (Vorschlag):** globales Gitter mit 0,25° Kantenlänge (am Äquator ca. 28 km), 1440 × 720 Zellen.
 - Feiner aufgelöste Quellen (z. B. Nachtlicht 500 m) werden pro Zelle zusammengefasst: Mittelwert und Anzahl gültiger Beobachtungen.
 - Zweite räumliche Ebene: **Verwaltungseinheiten** (Länder, später Regionen). Wirtschaftsdaten wie BIP oder Handel gibt es nur auf dieser Ebene. Sie werden dort verknüpft und nie künstlich auf Gitterzellen verteilt.
+- **Ländergrenzen** (seit 2026-09-25): nur aus Natural Earth, Admin 0 – Countries, 1:10m, Version 5.1.1, Standarddatei („de facto“ nach Anbieterregel, nicht die Kontrolle vor Ort), geladen mit `aleph/layers/natural_earth.py` nach `raw/natural_earth/5.1.1/`. Verknüpfungsschlüssel zur Weltbank ist `land_iso3` (Feld ISO_A3_EH plus Korrekturen Kosovo → XKX, Jersey/Guernsey → CHI). Scheitert der Download, bricht das Modul ab; Grenzen werden nie fest in den Code geschrieben oder nachgebaut. Steckbrief: `docs/sources/natural_earth.md`. Wie Zellen Ländern zugeordnet werden (Zellmitte oder Flächenanteil), ist noch nicht entschieden: Bei Zuordnung über die Zellmitte bekommen 26 der 217 Weltbank-Länder keine Zelle.
 
 **Zeitlich (Vorschlag):** monatlich.
 - Tagesdaten werden zu Monatswerten zusammengefasst.
 - Jahresdaten (z. B. BIP) bleiben jährlich und werden nur mit Jahresaggregaten verglichen.
 
-**Speicher:** Datenwürfel als Zarr-Dateien (über `xarray`), Tabellen als Parquet-Dateien, Abfragen mit DuckDB. Kein Datenbankserver.
+**Speicher:** Datenwürfel als Zarr-Dateien (über `xarray`), Tabellen als Parquet-Dateien, Abfragen mit DuckDB. Kein Datenbankserver. Jeder Datenwürfel hat von Anfang an die feste Zeitachse des Untersuchungszeitraums (E3: 2013-01 bis 2025-12, 156 Monate), leer angelegt; jeder Monat wird an seine Position geschrieben, nie hinten angehängt, damit die Zeitachse unabhängig von der Lade-Reihenfolge sortiert bleibt. Eine Variable `monat_fertig` (0/1 je Monat) wird erst nach erfolgreichem Zurücklesen gesetzt; ein leerer, nicht geladener Monat ist so von einem Monat mit Daten und einem Monat ohne Messungen unterscheidbar. Alle Rohdaten und Würfel liegen auf einer externen SSD; der Pfad steht in `.env` unter `ALEPH_DATA_DIR` (Vorlage ohne Wert in `.env.example`). `aleph/core/io.py` liest diesen Pfad und bricht mit klarer Meldung ab, wenn die SSD nicht angeschlossen ist.
 
 ## 4a. Fokusgebiete: feinere Analyse für Kriegs- und Krisengebiete
 
@@ -106,7 +107,15 @@ Jede Datenquelle ist ein Modul `aleph/layers/<name>.py` mit genau diesen Bestand
 
 Alle Layer sind in `layers.yaml` registriert. Ein neuer Layer ist fertig, wenn `to_cube()` einen Würfel liefert, der den automatischen Prüftest `tests/test_layer_contract.py` besteht.
 
+**Layer auf Länderebene** (Wirtschaftsdaten, Abschnitt 4: nie auf das Raster verteilt) liefern statt `to_cube()` die Funktion `to_table()`: eine Parquet-Tabelle im Langformat (eine Zeile je Land, Jahr und Indikator) unter `data/laender/<layer>.parquet`. Fehlende Werte bleiben leer und werden nie aufgefüllt. Erster Layer dieser Art: `aleph/layers/weltbank.py`.
+
 Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Download-Logik.
+
+**Fehlerverhalten bei langen Downloads** (Regel seit 2026-09-24, zuerst umgesetzt in `aleph/layers/vnp46a3.py` und `vnp46a3_lauf.py`; jeder weitere Layer mit Massen-Download folgt ihr):
+- Serverfehler (HTTP 5xx), Zeitüberschreitungen und Verbindungsfehler werden je Datei hartnäckig wiederholt (wachsende Wartezeit, höchstens 30 Minuten je Datei). Bei HTTP 4xx (z. B. „nicht gefunden") wird sofort aufgegeben. Ausnahme HTTP 403: einzeln ein Dateifehler, aber mehr als 5 hintereinander oder 403 bei allen Dateien eines Monats gelten als Zugangsproblem und beenden den Lauf („Anmeldung prüfen“).
+- Ein Monat, bei dem danach Dateien fehlen, wird nicht als fertig markiert und seine Rohdaten bleiben liegen. Er kommt auf die Liste „später erneut versuchen"; der Lauf geht zum nächsten Monat weiter und versucht die Liste am Ende erneut, in bis zu drei Durchgängen mit 30 Minuten Pause dazwischen, solange im vorigen Durchgang mindestens ein Monat dazukam.
+- Der Lauf endet nur bei echten Blockern: kein Speicherplatz, SSD nicht erreichbar, Anmeldung fehlgeschlagen.
+- Die Statusanzeige nennt fertige Monate, offene Monate und die Monate, die nachgeholt werden müssen.
 
 **Kandidaten für die ersten Layer** (NASA-Daten zuerst, weil Space Apps sie verlangt):
 
@@ -157,11 +166,19 @@ Pro Layer, pro Gitterzelle, pro Monat:
 2. **Robuste Abweichung.** Abstand zum Median, geteilt durch die typische Streuung (MAD). Robust gegen einzelne Ausreißer in der Vergangenheit.
 3. **Mindest-Datenlage.** Zellen mit zu wenigen gültigen Beobachtungen oder zu kurzer Basislinie werden nicht bewertet, sondern als „Datenlage unzureichend" markiert.
 4. **Schutz vor Zufallstreffern.** Bei rund einer Million Zellen pro Monat entstehen allein durch Zufall tausende auffällige Werte. Deshalb:
-   - Korrektur für multiples Testen (Benjamini-Hochberg, kontrolliert den erwarteten Anteil falscher Meldungen),
+   - Korrektur für multiples Testen (Benjamini-Hochberg; kontrolliert den erwarteten Anteil falscher Zellen nur bei exakten p-Werten und unabhängigen oder positiv abhängigen Tests, siehe Umsetzungsvermerk unten),
    - Mindestgröße: Ein Ereignis braucht mehrere benachbarte auffällige Zellen,
    - optional Dauer: auffällig in mehr als einem Monat.
 5. **Ausgabe in Bändern.** auffällig / stark / extrem, dazu Richtung (Anstieg/Rückgang) und Datenlage (gut/mittel/dünn).
 6. **Änderungen am Messsystem.** Viele Quellen verändern sich selbst: mehr AIS-Empfänger, mehr OpenSky-Sensoren, mehr Nachrichtenquellen in GDELT, Sensorwechsel (MODIS → VIIRS). Das erzeugt scheinbare Trends. Solche Brüche werden pro Layer in `META` dokumentiert und, wo möglich, herausgerechnet (z. B. Werte relativ zur Gesamtabdeckung im selben Monat). Wo das nicht geht, wird der Zeitraum getrennt bewertet.
+
+**Umsetzung, Version 0.1 (`aleph/detect/`, Stand 2026-09-24, nur mit künstlichen Daten getestet, nicht auf echte Daten angewandt):**
+- Lesen nur über `aleph/detect/wuerfel.py`: Es werden ausschließlich Monate mit `monat_fertig == 1` geliefert; ein nicht geladener Monat ist nie „keine Daten" und wird in `erkenne_zeitraum` ausdrücklich als „nicht geladen" ausgewiesen.
+- Basislinie: derselbe Kalendermonat nur **früherer** Jahre (fertig und mit ausreichender Datenlage), mindestens 5 Jahre. Aufgefüllte Pixel (Quality 2) zählen nie als beobachtet; unter 50 % beobachteten Pixeln ist die Zelle „Datenlage unzureichend".
+- Robuste Abweichung mit Median und MAD, dazu eine gemeinsame Mindest-Streuung aus allen Zellen (die reine MAD-Statistik hat bei wenigen Basisjahren viel schwerere Ränder als jede Normal- oder t-Verteilung; Simulation im Modulkopf von `anomalie.py`). Die p-Werte sind **nominell**; eine Falschalarmrate wird nicht behauptet. Zusätzlich Mindestwert |z| ≥ 5 je Zelle, Mindestgröße 4 Zellen, Bänder auffällig ≥ 5, stark ≥ 8, extrem ≥ 12 (nach |z|).
+- Alle Schwellen sind Startwerte (Klasse `Schwellen`), festzulegen im Kalibrierungszeitraum (9a). Bekannte Grenzen (Rückgänge schwerer erkennbar als Anstiege, Trends, räumlich zusammenhängende Störungen, gemeinsame Verschiebungen) stehen im Modulkopf.
+- **Endtest-Sperre:** Monate ab 2023-01 werden ohne ausdrückliche `endtest_freigabe=True` verweigert. Wegen der Ladereihenfolge (2018–2025 zuerst) sind vor dem Laden von 2013–2017 überhaupt nur Monate ab 2023 bewertbar. Jede Freigabe löst eine Warnung aus; der Code kann „nur einmal pro Hauptversion“ nicht erzwingen. Der Endtest ist bei der Datenqualität vorbelastet: Die 50-%-Grenze für beobachtete Pixel wurde nach den Anteilen aufgefüllter Pixel des Testmonats 2024-01 gewählt (nur Datenqualität, nicht Ereignisse).
+- Offen für die Kalibrierung: Mit „nur frühere Jahre" und mindestens 5 Basisjahren hat der Zeitraum 2013–2019 nur 24 bewertbare Monate (2018–2019); Abschnitt 9 (Blindtest 2019–2024) und 9a (Endtest 2023–2025) widersprechen sich in den Zeiträumen.
 
 ## 7. Anomalien benennen
 
@@ -201,7 +218,14 @@ id: duerre-migration
 titel: Dürre verstärkt Abwanderung aus ländlichen Regionen
 disziplin: Umweltökonomie / Migrationsforschung
 quellen:
-  - "<Literaturangabe>"
+  - zitat: "<Autoren (Jahr): Titel. Zeitschrift, Band, Seiten>"
+    jahr: 2000
+    doi: "<DOI oder null, wenn es keinen gibt>"
+    rolle: original          # original | gegenposition | methode | daten
+    citation_verified: false # PFLICHT je Quelle, siehe unten
+    verifiziert_umfang: metadaten   # PFLICHT je Quelle: metadaten | originaltext (Bedeutung siehe unten)
+    verifiziert_an: "<wo und wie geprüft, z. B. Verlagsseite/Crossref; sonst was fehlt>"
+modell: "<Gleichung, z. B. y_it = a_i + g_t + b * x_i,t-L + e_it, mit Erklärung der Symbole>"
 ursache: {layer: niederschlag, richtung: rückgang}
 wirkung: {layer: nachtlicht, richtung: rückgang, zusätzlich: abwanderung}
 verzögerung_monate: [3, 24]
@@ -210,9 +234,32 @@ mechanismus: >
   Ernteausfälle senken Einkommen, Haushalte wandern in Städte ab.
 bedingungen: >
   Stärker bei geringer Bewässerung und schwachen sozialen Sicherungssystemen.
+gegenpositionen:
+  - "<Studie oder Position mit abweichendem Ergebnis, mit Verweis auf die Quelle in quellen>"
+fallstricke:
+  - "<bekanntes methodisches Problem dieser Theorie>"
+datenbedarf:
+  - {layer: niederschlag, rolle: ursache, status: geplant, anmerkung: "<z. B. Steckbrief vorhanden, noch nicht geladen>"}
 status: ungeprüft   # ungeprüft | bestätigt | nicht bestätigt | Daten unzureichend
+teilstatus:         # optional: nur wenn ein Teil des Eintrags einen anderen Stand hat als das Ganze
+  - {teil: "<Teilaussage>", status: Daten unzureichend, grund: "<welcher Layer fehlt>"}
 prüfergebnisse: []
 ```
+
+**Status `Daten unzureichend`:** Er gilt, wenn ein Layer, der für die Kernaussage nötig ist, nirgends geplant ist (`fehlt` im `datenbedarf`) oder wenn die Kernaussage mit den geplanten Layern nicht messbar ist. Fehlt nur ein Layer für eine Nebenprüfung (z. B. eine Kontrollvariable), bleibt es bei `ungeprüft`, und die Lücke steht im `datenbedarf`. Hat nur ein Teil des Eintrags dieses Problem (z. B. der SPEI-Teil eines Dürreindex-Eintrags), bleibt `status` beim Stand des Ganzen und `teilstatus` benennt den Teil mit Grund.
+
+**Pflichtfelder für Qualität und Ehrlichkeit** (jeder Eintrag muss sie ausfüllen):
+- `verifiziert_umfang` (je Quelle): **wie weit** die Prüfung ging. Zwei Werte:
+  - `metadaten`: Autoren, Jahr, Titel und Fundstelle wurden in einem Verzeichnis gesehen (Crossref, Verlag, arXiv, Katalog). Auch ein gelesener Abstract oder eine Zusammenfassung durch ein Hilfsmodell bleibt `metadaten`: Die Quelle existiert und ist richtig zitiert, aber ihre inhaltliche Aussage ist nicht am Text geprüft.
+  - `originaltext`: die inhaltliche Aussage, die ALEPH sich auf die Quelle stützt, wurde im Volltext gelesen (nicht nur im Abstract und nicht nur in einer Zusammenfassung durch ein Hilfsmodell). Nur mit `citation_verified: true` zulässig.
+  - Im Zweifel `metadaten`. `null` ist nur erlaubt, wenn `citation_verified: false` ist und nicht einmal die Metadaten belastbar gesehen wurden (z. B. nur Suchergebnisse). `verifiziert_an` nennt weiterhin die Einzelheiten.
+  - Für Aussagen, die in einer Präsentation oder Veröffentlichung verwendet werden, ist `originaltext` Pflicht (CLAUDE.md).
+- `citation_verified` (je Quelle, `true`/`false`): `true` nur, wenn Autoren, Jahr, Titel, Zeitschrift und DOI tatsächlich an der Originalquelle oder einem Verzeichnis (Verlag, Crossref) geprüft wurden, nicht aus dem Gedächtnis. Alles andere ist `false`, und `verifiziert_an` sagt, was fehlt. Eine Quellenangabe wird nie erfunden.
+- `fallstricke`: bekannte methodische Probleme der Theorie (Messfehler, Zirkularität, Streit in der Fachwelt, Fehlschlüsse beim Übertragen auf Satellitendaten).
+- `datenbedarf`: welche Layer die Prüfung braucht und ob wir sie haben. `status` je Layer: `vorhanden` (Würfel geladen), `in Arbeit` (Download läuft), `geplant` (Steckbrief oder Eintrag in Abschnitt 5, noch nicht geladen), `fehlt` (nirgends geplant).
+- `modell` (Gleichung) und `gegenpositionen` (mindestens eine, sonst ausdrücklich „keine gefunden") sind ebenfalls Pflicht.
+
+Die Angaben im Eintrag sind Aussagen der Literatur, nicht ALEPH-Ergebnisse. Bis zur Prüfung gilt eine Theorie in ALEPH nur als Hypothese; zusammenfallende Ereignisse tragen höchstens `beobachtet` (siehe „Evidenzstufen der Verknüpfung“).
 
 **Beispiele für erste Theorie-Einträge** (Bereiche, nicht abschließend; jede Theorie ist in der Forschung umstritten und wird genau deshalb geprüft):
 
@@ -316,7 +363,9 @@ ALEPH/
 ├── web/                   Oberfläche
 ├── tests/                 automatische Tests
 ├── reports/               Blindtest- und Prüfberichte
-└── data/                  (nicht in Git) raw/, cube/, events/
+├── scripts/               einfache Start-/Status-Befehle für Hintergrund-Läufe
+├── logs/                  (nicht in Git) Absturz-Auffangprotokoll; Details stehen auf der SSD
+└── data/                  (nicht in Git, liegt auf externer SSD, ALEPH_DATA_DIR) raw/, cube/, laender/, events/
 ```
 
 ## 12. Entscheidungen (bestätigt am 2026-09-21)

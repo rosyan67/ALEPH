@@ -1,0 +1,262 @@
+id: urban-scaling-flaechenausdehnung
+titel: Städtische Kennzahlen wachsen als Potenzgesetz der Einwohnerzahl (Urban Scaling); Stadtfläche wächst mit der Bevölkerung
+disziplin: Stadtforschung / Komplexitätsforschung / Stadtgeographie (Fernerkundung)
+
+# Eingangs-Hinweis zur Zuordnung (Korrektur gegenüber der Auftragsformulierung):
+# "Bettencourt & West 2007, PNAS" ist so nicht richtig. Die PNAS-Arbeit von 2007 hat fünf Autoren
+# (Bettencourt, Lobo, Helbing, Kühnert, West). "Bettencourt & West" als Autorenpaar gehört zu
+# "A unified theory of urban living", Nature 2010 (ein kurzer Beitrag, kein Datenaufsatz).
+# Beide werden unten getrennt und richtig zitiert.
+
+quellen:
+  - zitat: "Bettencourt, L. M. A., Lobo, J., Helbing, D., Kühnert, C., West, G. B. (2007): Growth, innovation, scaling, and the pace of life in cities. Proceedings of the National Academy of Sciences 104(17), 7301-7306"
+    jahr: 2007
+    doi: "10.1073/pnas.0610172104"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band, Seiten, DOI) und Zusammenfassung (Abstract)
+      dort gelesen. ABWEICHUNG vom Auftrag: (1) Es sind fünf Autoren, nicht "Bettencourt & West".
+      (2) Der Abstract nennt für Wohlstand/Innovation beta ungefähr 1,2 und für Infrastruktur beta ungefähr 0,8.
+      Die im Auftrag genannten Werte 1,15 und 0,85 habe ich in dieser Quelle NICHT bestätigen können
+      (sie stehen laut Sekundärquellen in späterer Literatur, das habe ich nicht am Original geprüft).
+      Der Wert beta ungefähr 1 für individuelle Bedürfnisse steht nicht im Abstract; nicht bestätigt.
+      Tabelle 1 mit den einzelnen Exponenten und Konfidenzintervallen war nicht lesbar
+      (PNAS-Seite gesperrt, PMC nur mit Sicherheitsabfrage, PDF nur als Binärdatei);
+      keine Einzelzahlen übernommen.
+  - zitat: "Bettencourt, L., West, G. (2010): A unified theory of urban living. Nature 467, 912-913"
+    jahr: 2010
+    doi: "10.1038/467912a"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band, Seiten, DOI) gelesen. Der Inhalt selbst
+      (Nature-Seite verlangt Anmeldung) wurde NICHT gelesen. Nur als Verweis auf das Autorenpaar
+      Bettencourt & West und als kurze Zusammenfassung der Idee genutzt; keine Zahlen von dort übernommen.
+  - zitat: "Seto, K. C., Fragkias, M., Güneralp, B., Reilly, M. K. (2011): A Meta-Analysis of Global Urban Land Expansion. PLoS ONE 6(8), e23777"
+    jahr: 2011
+    doi: "10.1371/journal.pone.0023777"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Artikelnummer, DOI) und
+      PLOS-ONE-Seite (Abstract) gelesen; beides stimmt mit dem Auftrag überein. Inhalt laut Abstract:
+      Auswertung von 326 Fallstudien an 292 Orten in 67 Ländern (181 Fachartikel), Zeitraum 1970-2000,
+      Fernerkundungsdaten; weltweiter Zuwachs städtischer Landfläche 58 000 km2 (1970-2000); die Zuwachsraten
+      der Stadtfläche sind höher oder gleich den Wachstumsraten der Stadtbevölkerung; der Einfluss des
+      Pro-Kopf-BIP ist je Region verschieden (China: etwa die Hälfte des Flächenzuwachses, Indien und Afrika:
+      eher mäßig, dort vor allem Bevölkerungswachstum). Nur 48 der 100 größten Stadtgebiete kamen in den
+      Studien vor. Vollständige Tabellen nicht gelesen; keine Einzelkoeffizienten übernommen.
+  - zitat: "Arcaute, E., Hatna, E., Ferguson, P., Youn, H., Johansson, A., Batty, M. (2015): Constructing cities, deconstructing scaling laws. Journal of The Royal Society Interface 12(102), 20140745"
+    jahr: 2015
+    doi: "10.1098/rsif.2014.0745"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Artikelnummer, DOI) und Abstract gelesen.
+      Abstract: Städte für England und Wales auf tausende verschiedene Arten abgegrenzt (Pendlerströme,
+      Dichteschwellen); Einwohnerzahl allein reicht nicht, um den Zustand einer Stadt zu beschreiben; die
+      erwarteten Skalengesetze werden nicht bestätigt; die meisten Kennzahlen skalieren linear, unabhängig von
+      der Abgrenzung; wo Nichtlinearität auftritt, schwankt der Exponent stark. Geltungsbereich: England und Wales.
+  - zitat: "Leitão, J. C., Miotto, J. M., Gerlach, M., Altmann, E. G. (2016): Is this scaling nonlinear? Royal Society Open Science 3(7), 150649"
+    jahr: 2016
+    doi: "10.1098/rsos.150649"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Artikelnummer, DOI) sowie arXiv-Seite
+      1604.02872 (Abstract) gelesen. Kernaussage laut Abstract: ob beta ungleich 1 gilt, hängt davon ab, wie die
+      Streuung der Daten modelliert wird (und von der schiefen Verteilung der Stadtgrößen); mit fünf Modellen an
+      fünfzehn Datensätzen; Nichtlinearität wird nicht überall gestützt. Die Arbeit liefert zugleich ein
+      Verfahren, das Exponent, Konfidenzintervall und Evidenz für beta ungleich 1 sauber ausweist. Einzelergebnisse
+      je Datensatz nicht gelesen.
+  - zitat: "Shalizi, C. R. (2011): Scaling and Hierarchy in Urban Economies. arXiv:1102.4101 (Vorabdruck, laut arXiv-Seite bei PNAS eingereicht)"
+    jahr: 2011
+    doi: "10.48550/arXiv.1102.4101 (arXiv-DOI, keine Zeitschriften-DOI)"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Nachprüfung 2026-09-23. arXiv-Seite https://arxiv.org/abs/1102.4101 abgerufen (WebFetch lieferte nur eine
+      Zusammenfassung eines Hilfsmodells, nicht den Rohtext der Seite). Dort gesehen: Autor Cosma Rohilla Shalizi;
+      Titel "Scaling and Hierarchy in Urban Economies"; arXiv-Nummer 1102.4101; Fassung v1 vom 20. Februar 2011,
+      v2 vom 8. April 2011; Vermerk "Submitted to PNAS" (keine Zeitschriften-Angabe, kein Journal-Ref); DOI
+      10.48550/arXiv.1102.4101 (arXiv-DOI). Es ist ein Vorabdruck. Eine Zeitschriftenfassung habe ich weder über die
+      Websuche noch über eine Crossref-Suche nach Titel und Autor gefunden; das ist keine Garantie, dass es keine
+      gibt. true gilt daher nur für die Angabe als arXiv-Vorabdruck. Aussage laut Abstract: Bei US-Daten zu Wirtschaftsleistung und Einkommen lasse sich ein Potenzgesetz
+      nicht von anderen Funktionsformen (z. B. logarithmisches Wachstum) unterscheiden; die Größe erkläre wenig der
+      Unterschiede zwischen Städten; der scheinbare Effekt komme stark daher, dass Gesamtwerte statt Pro-Kopf-Werte
+      betrachtet werden.
+  - zitat: "Xu, G., Zhou, Z., Jiao, L., Dong, T., Li, R. (2019): Cross-sectional Urban Scaling Fails in Predicting Temporal Growth of Cities. arXiv:1910.06732 [physics.soc-ph] (Vorabdruck)"
+    jahr: 2019
+    doi: "10.48550/arXiv.1910.06732 (arXiv-DOI, keine Zeitschriften-DOI)"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Nachprüfung 2026-09-23. arXiv-Seite https://arxiv.org/abs/1910.06732 abgerufen (WebFetch lieferte nur eine
+      Zusammenfassung eines Hilfsmodells, nicht den Rohtext der Seite). Dort gesehen: Autoren Gang Xu, Zhengzi Zhou,
+      Limin Jiao, Ting Dong, Ruiqi Li (die Initialen im Zitat folgen daraus); Titel wie im Zitat; Kategorie
+      physics.soc-ph; v1 vom 13. Oktober 2019, v2 vom 17. Oktober 2019 (deshalb jahr: 2019); DOI 10.48550/arXiv.1910.06732
+      (arXiv-DOI); kein Journal-Ref und keine Kommentare auf der Seite angegeben. Eine Zeitschriftenfassung ist auf der
+      arXiv-Seite nicht vermerkt; auch eine Websuche und eine Crossref-Suche nach dem Titel fanden keine (das ist keine
+      Garantie, dass es keine gibt; Google Scholar und Semantic Scholar wurden nicht ausgewertet). true gilt daher nur
+      für die Angabe als arXiv-Vorabdruck. Aussage laut Abstract: bebaute Fläche skaliert im Querschnitt
+      über Städte hinweg sublinear mit der Bevölkerung, einzelne Städte zeigen aber über die Zeit superlineares
+      Skalieren (Landausdehnung schneller als Bevölkerung); der Querschnitt sagt das Wachstum einzelner Städte
+      daher nicht voraus.
+  - zitat: "Puente-Ajovín, M., Sanso-Navarro, M., Vera-Cabello, M. (2024): Comparing city size distributions: Gridded population versus nighttime lights. Journal of Regional Science 64(4), 1323-1358"
+    jahr: 2024
+    doi: "10.1111/jors.12703"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band/Heft, Seiten, DOI) und Abstract gelesen.
+      Laut Abstract: Bevölkerung ist auf Länderebene gleichmäßiger verteilt als Licht; die Nachtlicht-Verteilung folgt
+      keiner Pareto-Funktion; der Zusammenhang zwischen Bevölkerung und Licht über Städte ist "nichtlinear und
+      uneinheitlich". Direkt relevant für den Schritt Bevölkerung -> Nachtlicht. Volltext nicht gelesen.
+  - zitat: "Gomez-Lievano, A., Youn, H., Bettencourt, L. M. A. (2012): The Statistics of Urban Scaling and Their Connection to Zipf's Law. PLoS ONE 7(7), e40393"
+    jahr: 2012
+    doi: "10.1371/journal.pone.0040393"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: >
+      Crossref-Datensatz (Autoren, Jahr, Titel, Zeitschrift, Band, Artikelnummer, DOI) gelesen; Ausgabe ist 2012.
+      Inhalt nur aus einer Suchergebnis-Zusammenfassung bekannt (Statistik der Streuung um Skalengesetze, Bezug
+      zu Zipf-Gesetz); Volltext nicht gelesen. HINWEIS: Diese Arbeit stammt aus dem Umfeld der Urheber der Theorie
+      und ist keine Gegenposition, anders als im Auftrag angedeutet. Nur als Methodenverweis für den Umgang mit
+      der Streuung genutzt.
+  - zitat: "GHSL (Global Human Settlement Layer, Europäische Kommission, JRC): Bevölkerungsraster GHS-POP (R2023A) und Städteabgrenzung GHS Urban Centre Database (UCDB, R2019A bzw. spätere Fassung)"
+    jahr: null
+    doi: null
+    rolle: daten
+    citation_verified: false
+    verifiziert_umfang: null   # nur über Suchergebnisse gesehen, nicht belastbar
+    verifiziert_an: >
+      Nur JRC/Copernicus-Katalogseiten über die Suche gesehen, nicht im Wortlaut gelesen; keine DOI geprüft
+      (deshalb doi: null). Gesehen: GHS-POP R2023A hat Epochen im 5-Jahres-Abstand 1975-2020 (Bevölkerung
+      aus Volkszählungs- und Verwaltungsdaten auf Gitter verteilt, mit Hilfe der Bebauung) und Projektionen für
+      2025 und 2030; Auflösung 100 m bzw. 1 km (und 3 bzw. 30 Bogensekunden in WGS84). Die UCDB R2019A
+      beschreibt "Urban Centres" für die Epochen 1975, 1990, 2000 und 2015; eine neuere Fassung
+      (R2024A, "UCDB 2025") ist gelistet. Für den Prüfplan muss ein Steckbrief (datenquellen-scout) angelegt werden.
+
+modell: >
+  Prüfplan in drei Teilen; Teil A ist die Hauptaussage, Teil B und C sind ausdrücklich Zusatzfragen.
+
+  Teil A (Querschnitt, Hauptprüfung): log L_c = log L0 + beta * log N_c + e_c. Symbole: c = Stadt;
+  N_c = Einwohner der Stadt c in einem Bezugsjahr (GHSL, Epoche 2015 bzw. 2020); L_c = Nachtlichtsumme der Stadt
+  im selben Jahr (Summe der Strahldichte über die Stadtfläche, aus den Monatswerten des Jahres gemittelt);
+  L0 = Normierungskonstante; beta = Skalenexponent (beta = 1: Licht wächst proportional zur Bevölkerung, beta > 1:
+  überproportional, beta < 1: unterproportional); e_c = Streuung der einzelnen Stadt. Die Literatur (Bettencourt
+  et al. 2007) beschreibt das Potenzgesetz Y = Y0 * N^beta für viele Stadtkennzahlen, mit beta ungefähr 1,2 für
+  Wohlstand und Innovation (überproportional), ungefähr 0,8 für Infrastruktur (unterproportional). Die Werte 1,15
+  und 0,85 und beta ungefähr 1 für individuelle Bedürfnisse sind vom Nutzer genannt, nicht bestätigt.
+  Die Gleichung selbst wurde in der Literatur für Kennzahlen wie Patente, Einkommen und Kabellängen gezeigt,
+  NICHT für Nachtlichtsummen; dass Licht als Ersatzgröße für Wirtschaftsleistung solches Skalieren zeigt,
+  ist eine Annahme von ALEPH, keine Aussage der Quellen. Schätzung: Kleinste Quadrate auf den Logarithmen
+  (Standardverfahren), Konfidenzintervall für beta, ZUSÄTZLICH ein Gegenprüfmodell mit ausdrücklich modellierter
+  Streuung nach Leitão et al. (2016), weil das Ergebnis von der Streuungsannahme abhängen kann. Das Ergebnis
+  wird für mindestens drei Stadtabgrenzungen (Variante 1: GHSL-Urban-Centre; Variante 2: alle Zellen mit
+  Einwohnerdichte über einer Schwelle; Variante 3: feste Kreise um das Stadtzentrum) getrennt berichtet, weil
+  Arcaute et al. (2015) zeigen, dass der Exponent von der Abgrenzung abhängt.
+
+  Teil B (beleuchtete Fläche, Zusatzfrage): log A_c = log A0 + alpha * log N_c + e_c. A_c = beleuchtete
+  Fläche der Stadt c (Fläche der Bildpunkte mit Strahldichte über der Rauschschwelle 0,5 nW/(cm2 sr), unter der
+  VNP46A3 die Werte auf 0 setzt); alpha = Flächen-Exponent. Aus den verifizierten Quellen lässt sich der Wert von
+  alpha nicht ablesen (Seto et al. beschreiben Zuwachsraten, keinen Querschnitts-Exponenten; die Arbeit von
+  Xu et al., ein nicht geprüfter Vorabdruck, nennt im Querschnitt sublineare Skalierung der bebauten Fläche).
+  Es wird deshalb keine Zahl und nur eine schwache Richtungserwartung festgelegt (siehe wirkung). Dieser Teil
+  braucht die 500-m-Auflösung (nicht das 0,25-Grad-Raster); siehe datenbedarf und fallstricke.
+
+  Teil C (Zeitvergleich nach Seto et al., Zusatzfrage): Delta ln A_c = gamma * Delta ln N_c + e_c, mit
+  Delta = Veränderung zwischen zwei Epochen (z. B. 2015 -> 2020, also 60 Monate; GHSL liefert 5-Jahres-Schritte).
+  gamma >= 1 heißt: die Fläche wächst mindestens so schnell wie die Bevölkerung (Seto et al. 2011 finden das
+  im Mittel für 1970-2000; anderer Zeitraum, andere Datenart, kein Nachtlicht). Wirtschaftskraft (BIP pro Kopf)
+  gibt es nur auf Länderebene (Weltbank) und kann daher nur grob als Kontrolle je Land dienen.
+
+  Aufteilung nach Abschnitt 8: Kalibrierung mit Epoche 2015, Test mit Epoche 2020 (GHS-POP 2025 ist eine
+  Projektion und wird nicht als Testdatum verwendet). Zufallsvergleich: Städte-Bevölkerung wird über Städte
+  vertauscht (Permutation), ggf. innerhalb von Länder-Gruppen, um Länderunterschiede zu erhalten.
+
+ursache: {layer: bevoelkerung, richtung: Größe der Stadt (Einwohnerzahl N), zusätzlich: "höhere Einwohnerzahl gleich mehr Nachtlicht und mehr beleuchtete Fläche"}
+wirkung: {layer: nachtlicht, richtung: "Anstieg mit der Stadtgröße, erwartet überproportional (beta > 1) für die Lichtsumme; Richtung für die beleuchtete Fläche nicht festgelegt, schwach sublinear im Querschnitt (alpha < 1) vermutet", zusätzlich: "Nachtlicht dient als Ersatzgröße für wirtschaftliche Aktivität bzw. städtische Ausdehnung"}
+verzögerung_monate: [0, 0]
+# Erklärung zur Verzögerung: Teil A ist ein Querschnitt (alle Städte im selben Jahr), es gibt keine Verzögerung.
+# Das Bevölkerungsraster liegt nur in 5-Jahres-Epochen vor (2015, 2020; 2025 ist Projektion); Nachtlicht wird
+# auf das Epochenjahr gemittelt. Der Zeitvergleich (Teil C) betrachtet Änderungen über 60 Monate (eine
+# Epochenstufe) und ist damit eine Langfrist-Aussage über Jahre, keine Monats-Aussage. Für ALEPH's monatliche
+# Anomalieerkennung ergibt sich aus dieser Theorie keine Verzögerung.
+geltungsbereich: >
+  Städte weltweit, die groß genug sind, um im 0,25-Grad-Raster als eigene Gruppe von Zellen aufgelöst zu werden
+  (ungefähr ab mehreren Zellen Fläche; die genaue Mindestgröße wird vor der Prüfung festgelegt und die Zahl der
+  verbleibenden Städte offen berichtet). Die Literatur zeigt Skalengesetze vor allem für Städte in einem
+  gemeinsamen Land bzw. Städtesystem (USA, Europa, China u. a.); Exponenten können sich zwischen Ländern
+  unterscheiden (nicht an den Quellen einzeln geprüft). Nicht gültig für einzelne Stadtviertel, für Zellen
+  innerhalb einer Stadt und nicht für Monatsschwankungen.
+
+mechanismus: >
+  Nach Bettencourt et al. (2007) sind viele Eigenschaften von Städten Potenzgesetze der Einwohnerzahl: Größere
+  Städte erzeugen pro Kopf mehr Wohlstand und Innovation (beta ungefähr 1,2, "zunehmende Erträge") und brauchen
+  pro Kopf weniger Infrastruktur (beta ungefähr 0,8, "Skaleneffekte"). Bettencourt & West (2010) fassen das
+  als "einheitliche Theorie" zusammen (Inhalt dort nicht gelesen). Für die Fläche beschreiben Seto et al. (2011)
+  ein Muster in Beobachtungsdaten, keine Theorie: Städte dehnen sich im Mittel mindestens so schnell aus, wie
+  ihre Bevölkerung wächst; der Einfluss der Wirtschaftskraft unterscheidet sich je Region.
+  STREIT IN DER FACHWELT: Ob die Potenzgesetze allgemein gelten, ist umstritten. Arcaute et al. (2015) finden
+  bei England und Wales, dass die Ergebnisse von der Stadtabgrenzung abhängen und die meisten Kennzahlen linear
+  skalieren. Leitão et al. (2016) zeigen, dass die Schlussfolgerung beta ungleich 1 von der Annahme über die
+  Streuung abhängt. Shalizi (2011, Vorabdruck) hält Potenzgesetz und andere Formen für nicht unterscheidbar und
+  sieht die Wirkung großenteils als Effekt von Gesamtwerten statt Pro-Kopf-Werten. Xu et al. (Vorabdruck, nicht
+  geprüft) sehen einen Gegensatz zwischen Querschnitt und Zeitverlauf bei der bebauten Fläche.
+  VERKNÜPFUNG: Dieser Eintrag hängt mit "nachtlicht-wirtschaft" zusammen. Dort geht es um Nachtlicht als
+  Ersatzgröße für Wirtschaft; hier um die Frage, wie Licht mit der Stadtgröße wächst. Ein Teil des Lichts ist
+  Straßenbeleuchtung, also Infrastruktur, für die die Theorie unterproportionales Wachstum erwartet, ein anderer
+  Teil Geschäfts- und Wirtschaftsaktivität, für die überproportionales erwartet wird. Das gemessene beta der
+  Lichtsumme ist darum eine Mischung; weder beta < 1 noch beta > 1 lässt sich ohne Weiteres als Aussage über
+  "die Wirtschaft" lesen (Fallstrick sublinear/superlinear, siehe dort).
+
+bedingungen: >
+  Stärker aussagekräftig, wenn (a) die Stadtgrenze fachlich begründet und in mehreren Varianten getestet wird,
+  (b) die Stadtgrößen mehrere Größenordnungen abdecken (bei ALEPH wegen der Zellgröße wahrscheinlich nur eine
+  bis zwei; nicht quantifiziert), (c) Städte innerhalb eines Landes bzw. Städtesystems verglichen werden, und
+  (d) Lichtsumme nicht durch Sättigung, Überstrahlung oder Winkelabhängigkeit verzerrt ist. Die Theorie ist
+  eine Aussage über den Durchschnitt vieler Städte, nicht über eine einzelne Stadt. ALEPH nutzt sie deshalb
+  nicht, um einzelne Anomalien zu erklären, sondern als Prüfstein dafür, ob Nachtlicht Stadtgröße und
+  Ausdehnung plausibel abbildet.
+
+gegenpositionen:
+  - "Arcaute et al. (2015, J. R. Soc. Interface): Bei tausenden Abgrenzungen englischer und walisischer Städte werden die erwarteten Skalengesetze nicht bestätigt; die meisten Kennzahlen skalieren linear; wo nicht, schwankt der Exponent stark mit der Abgrenzung (Quelle in quellen)."
+  - "Leitão et al. (2016, R. Soc. Open Sci.): Ob beta ungleich 1 gilt, hängt von der Modellierung der Streuung und der Verteilung der Stadtgrößen ab; nicht in allen fünfzehn geprüften Datensätzen gestützt (Quelle in quellen)."
+  - "Shalizi (2011, Vorabdruck): Für US-Daten sei ein Potenzgesetz nicht von anderen Formen unterscheidbar; Gesamtwerte statt Pro-Kopf-Werte erzeugen den Anschein von Skalieren (Quelle in quellen; nicht Peer-Review-geprüft belegt)."
+  - "Puente-Ajovín et al. (2024, J. Regional Sci.): Der Zusammenhang zwischen Bevölkerung und Nachtlicht über Städte ist nichtlinear und uneinheitlich, und Nachtlicht-Verteilungen folgen keiner Pareto-Funktion; beides erschwert die Annahme eines einfachen, einheitlichen Exponenten für Licht (Quelle in quellen)."
+  - "Xu et al. (Vorabdruck, nicht geprüft): Bebaute Fläche skaliert im Querschnitt sublinear, in einzelnen Städten über die Zeit aber superlinear; Querschnittsexponenten sagen das Wachstum einer Stadt nicht voraus (Quelle in quellen)."
+
+fallstricke:
+  - "Abgrenzung der Stadt (modifiable areal unit problem): Das Ergebnis hängt davon ab, wo die Stadtgrenze gezogen wird (Arcaute et al. 2015). Im ALEPH-Raster kommt hinzu, dass Stadtgrenzen nicht mit Gitterzellen zusammenfallen: Eine Zelle ist am Äquator ca. 28 km breit (ca. 770 km2 Fläche), in höheren Breiten schmaler. Viele Städte belegen weniger als eine Zelle, andere mehrere; Zellen mischen oft Nachbarstädte, Umland und Wasser. Ergebnisse sind daher nur für Stadtabgrenzungen über mehrere Zellen aussagekräftig, und jede Abgrenzung (z. B. GHSL-Urban-Centre) muss als Variante gemeldet werden."
+  - "Zu wenige und zu ähnlich große Städte: Nur Städte, die mehrere Zellen füllen, lassen sich einzeln auflösen. Wie viele das sind und über welches Größenspektrum, ist nicht bekannt und wird erst beim Zählen offen berichtet. Ein schmales Größenspektrum macht den Exponenten sehr ungenau; Konfidenzintervalle müssen gezeigt werden, keine Einzelzahl."
+  - "Beleuchtete Fläche ist im 0,25-Grad-Raster praktisch nicht messbar: Die Fläche einer Stadt käme nur in Vielfachen von etwa 770 km2 vor. Teil B braucht die 500-m-Kacheln der Rohdaten. Ob diese Rohkacheln aufbewahrt werden, ist nicht geprüft."
+  - "Sättigung und Überstrahlung des Nachtlichts (Blooming): Helle Stadtkerne und beleuchtete Ränder können Licht in Nachbarpixel streuen und die Fläche aufblähen; das ist hier als bekannte Fehlerquelle genannt, aber für VNP46A3 nicht belegt. Belegt (Steckbrief) ist: VNP46A3 Version 2 speichert Fließkommawerte ohne die Sättigung von Version 1 bei 6553,5; der Anbieter warnt vor starker Winkelabhängigkeit gerade in dichten Stadtzentren; Werte unter 0,5 nW/(cm2 sr) werden auf 0 gesetzt, wodurch schwach beleuchtete Randgebiete abgeschnitten werden."
+  - "Datenqualität von VNP46A3: Ein großer Teil der 'gültigen' Pixel ist aufgefüllt bzw. hat wenige Nächte (siehe docs/sources/vnp46a3.md). Für Jahressummen muss die Datenlage je Stadt und Monat mitgeführt und Städte mit dünner Datenlage (z. B. hohe Breiten im Sommer, Schnee im Winter) getrennt behandelt oder ausgeschlossen werden. Die Summen setzen aus dem gespeicherten Zellmittel und der Zahl gültiger Pixel zusammen; das ist eine Näherung und sollte gegen die 500-m-Daten geprüft werden."
+  - "Summe gegen Mittelwert (extensive gegen intensive Größe): Die Lichtsumme einer Stadt und ihre Einwohnerzahl hängen schon durch die Stadtfläche zusammen; das kann Skalieren erzeugen, das nichts über 'Wirtschaft' aussagt (Shalizi 2011: Gesamtwerte statt Pro-Kopf-Werte). Es muss auch die Pro-Kopf- bzw. Dichte-Form berichtet werden."
+  - "Sublinear gegen superlinear (Verbindung zu nachtlicht-wirtschaft): Licht mischt Infrastruktur (Straßenbeleuchtung, erwartet beta < 1) und wirtschaftliche Aktivität (erwartet beta > 1). Ein gemessenes beta kann deshalb nicht einfach als Hinweis für oder gegen Wirtschaft-Skalieren gelesen werden. Für die Prüfung von nachtlicht-wirtschaft dürfen die hier gewonnenen Exponenten nicht zur nachträglichen Deutung herangezogen werden."
+  - "Querschnitt ist nicht Zeitverlauf: Ein Exponent aus vielen Städten in einem Jahr sagt nichts sicher über das Wachstum einer einzelnen Stadt (Xu et al., Vorabdruck). Seto et al. (2011) betrachten Zuwachsraten 1970-2000, andere Zeit, andere Daten (Fernerkundungsstudien, kein Nachtlicht); ihre Zahlen sind für 2013-2025 nicht übertragbar."
+  - "Unterschiede zwischen Ländern: Exponenten und Stadtdefinitionen können sich zwischen Ländern unterscheiden; ein weltweiter Sammelwert kann Länderunterschiede und Stromversorgungsniveau (Elektrifizierung, Lichtmuster) vermischen. Ergebnisse nach Land bzw. Einkommensgruppe getrennt zeigen, mit Kontrolle je Land. Nicht an den Quellen im Einzelnen geprüft."
+  - "Schätzfehler bei logarithmischer Schätzung: Kleinste Quadrate auf Logarithmen setzt eine bestimmte Streuung voraus; verletzt man das, sind beta und Konfidenzintervall verzerrt. Kleine Städte mit Lichtsumme null (Rauschschwelle) lassen sich nicht logarithmieren und fallen heraus (verzerrte Auswahl). Leitão et al. (2016) zeigen, dass die Streuungsannahme das Ergebnis ändern kann; deshalb zwei Schätzverfahren."
+  - "Bevölkerungsraster ist modelliert, nicht gemessen: GHS-POP verteilt Volkszählungswerte mit Hilfe der Bebauung auf ein Gitter; 2025 und 2030 sind Projektionen. Fehler im Raster (und Fehler durch die Verteilungsregel) gehen in N_c ein. Ob Nachtlicht selbst ein Eingang der GHSL-Bevölkerungsverteilung ist (dann Zirkularität), wurde nicht geprüft."
+  - "Nicht für ALEPH-Anomalieerkennung geeignet: Dieser Eintrag prüft ein statisches Größenverhältnis über Jahre; er liefert keine Verknüpfung zwischen Monatsereignissen. Ereignisse wie 'Stadtwachstum' (anomaly_types.yaml) dürfen daraus nicht als bestätigt abgeleitet werden."
+
+datenbedarf:
+  - {layer: bevoelkerung, rolle: ursache, status: geplant, anmerkung: "GHSL (GHS-POP, 5-Jahres-Epochen, Projektion für 2025) bzw. WorldPop; nur in ARCHITECTURE.md Abschnitt 5 geplant, kein Steckbrief, nicht geladen. Zusätzlich nötig: Städteabgrenzung (z. B. GHS Urban Centre Database, Epoche 2015), um Zellen zu Städten zu gruppieren; ebenfalls kein Steckbrief."}
+  - {layer: nachtlicht, rolle: wirkung, status: in Arbeit, anmerkung: "VNP46A3, nur Suomi-NPP, 2013-2025, 0,25 Grad, monatlich; großer Lauf läuft, ein Testmonat vorhanden. Für die Lichtsumme (Teil A) reicht der Würfel bedingt; Summe muss aus Mittelwert und Zahl gültiger Pixel gebildet werden. Für die beleuchtete Fläche (Teil B) wären die 500-m-Rohkacheln nötig (nicht im Würfel). Datenlage-Angaben siehe docs/sources/vnp46a3.md."}
+  - {layer: bip_pro_kopf_land, rolle: kontrolle, status: vorhanden, anmerkung: "STAND 2026-09-23: reales BIP pro Kopf geladen (laender/weltbank.parquet). Frühere Angabe: Weltbank-Indikatoren (Steckbrief vorhanden, noch nichts geladen); nur Länderebene, jährlich; grobe Kontrolle je Land für Teil C, kein Stadt-BIP."}
+  - {layer: stadt_bip_oder_einkommen, rolle: kontrolle, status: fehlt, anmerkung: "Wirtschaftsleistung je Stadt (die Kennzahl, um die es in der Originalarbeit geht) ist nirgends geplant; ohne sie wird nicht Wirtschaft-Skalieren, sondern nur Licht-Skalieren geprüft."}
+  - {layer: bebaute_flaeche_oder_landnutzung, rolle: kontrolle, status: fehlt, anmerkung: "Unabhängige Karte der bebauten Fläche (z. B. GHSL-Built-up) ist nicht im Plan; ohne sie kann die aus Licht abgeleitete Fläche nicht gegen eine zweite Quelle geprüft werden."}
+
+status: ungeprüft
+prüfergebnisse: []

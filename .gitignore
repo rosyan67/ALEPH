@@ -1,6 +1,9 @@
 # Daten
 data/
 
+# Absturz-Auffangprotokoll des Hintergrund-Laufs (Details stehen auf der SSD)
+logs/
+
 # Zugangsdaten
 .env
 

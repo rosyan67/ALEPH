@@ -1,0 +1,126 @@
+# Theorie-Eintrag nach ARCHITECTURE.md Abschnitt 8.
+# Formuliert vor jeder ALEPH-Prüfung auf Testdaten. Erwartungen dürfen nachträglich nicht geändert werden;
+# Ergebnisse gehören nur in "prüfergebnisse".
+# Kennzeichnung im Text: "laut Quelle" = aus der Quelle gelesen; "ALEPH-Überlegung" = eigene Schlussfolgerung, nicht aus einer Quelle.
+# Hinweis zum Status: Die Vorgabe lautet "ungeprüft". Für die eigentlich passende Datenlage (tägliches Nachtlicht) ist der Layer
+# noch nicht gebaut (Stand 2026-09-23); Daten von Netzbetreibern fehlen ganz. Siehe datenbedarf.
+
+id: nachtlicht-stromausfall-katastrophe
+titel: Große Stürme und andere Katastrophen lassen das Nachtlicht in besiedelten Gebieten sinken (Stromausfall), danach erholt es sich
+disziplin: Fernerkundung / Katastrophenforschung (Ereignisstudien mit Nachtlicht)
+
+quellen:
+  - zitat: "Román, M. O., Wang, Z., Sun, Q., Kalb, V., Miller, S. D., Molthan, A., Schultz, L., Bell, J., Stokes, E. C., Pandey, B., Seto, K. C., Hall, D., Oda, T., Wolfe, R. E., Lin, G., Golpayegani, N., Devadiga, S., Davidson, C., Sarkar, S., Praderas, C., Schmaltz, J., Boller, R., Stevens, J., Ramos González, O. M., Padilla, E., Alonso, J., Detrés, Y., Armstrong, R., Miranda, I., Conte, Y., Marrero, N., MacManus, K., Esch, T., Masuoka, E. J. (2018): NASA's Black Marble nighttime lights product suite. Remote Sensing of Environment, 210, 113-143."
+    jahr: 2018
+    doi: "10.1016/j.rse.2018.03.017"
+    rolle: daten
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Crossref (Autorenliste in Reihenfolge, Titel, Zeitschrift, Jahr, Band, Seiten, DOI) und Verzeichnisseiten (ORNL, NOAA-Repository, CIRA) per Websuche übereinstimmend gesehen. Der Volltext wurde nicht gelesen; die Quelle wird hier nur als Produktbeschreibung der Datenquelle (Black Marble, VNP46) angeführt, nicht für Zahlen zu Katastrophen. Die DOI stimmt mit der Angabe im Steckbrief docs/sources/vnp46a3.md überein."
+
+  - zitat: "Román, M. O., Stokes, E. C., Shrestha, R., Wang, Z., Schultz, L., Sepúlveda Carlo, E. A., Sun, Q., Bell, J., Molthan, A., Kalb, V., Ji, C., Seto, K. C., McClain, S. N., Enenkel, M. (2019): Satellite-based assessment of electricity restoration efforts in Puerto Rico after Hurricane Maria. PLOS ONE, 14(6), e0218883."
+    jahr: 2019
+    doi: "10.1371/journal.pone.0218883"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Crossref (alle 14 Autoren in Reihenfolge, Titel, Zeitschrift, Jahr, Band, Heft, Artikelnummer, DOI) und PLOS-ONE-Seite bzw. PubMed-Central-Volltext (PMC6599127) per Web-Abruf übereinstimmend gesehen. Die inhaltlichen Angaben (Formeln, 4-Tage-Zusammenfassung, Zahlen) wurden aus dem Volltext über ein automatisches Zusammenfassungswerkzeug gelesen und nicht im Original-PDF gegengeprüft; sie sind unten als 'laut Quelle' gekennzeichnet und sollten vor einer Veröffentlichung einmal im Volltext nachgelesen werden. Der Nutzer nannte nur 'Black-Marble-Arbeiten, Román et al.'; die Zuordnung zu den beiden Román-Arbeiten (2018, 2019) stammt aus der Recherche, nicht vom Nutzer."
+
+  - zitat: "Wang, Z., Román, M. O., Sun, Q., Molthan, A. L., Schultz, L. A., Kalb, V. L. (2018): Monitoring disaster-related power outages using NASA Black Marble nighttime light product. The International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences, XLII-3, 1853-1856."
+    jahr: 2018
+    doi: "10.5194/isprs-archives-XLII-3-1853-2018"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Crossref (Autoren, Titel, Reihe, Band, Seiten, Jahr, DOI) und ISPRS-Archives-Seite (Copernicus) übereinstimmend gesehen. Es ist ein kurzer Tagungsbeitrag (4 Seiten). Auf der Seite wurde nur die Kurzfassung gelesen; sie nennt keine einzelnen Ereignisse. Dass die Arbeit Hurrikan Sandy (2012) und Hurrikan Maria (2017) betrifft, stammt nur aus der Beschreibung in einer anderen Arbeit (Sekundärangabe, nicht am Original bestätigt) und wird deshalb hier nicht als Fakt verwendet. Der Auftrag nannte 'Wang et al. 2018 zu Hurrikan-Stromausfällen': Titel, Autoren und Jahr passen, der Hurrikan-Bezug ist nicht bestätigt."
+
+  - zitat: "Zhao, X., Yu, B., Liu, Y., Yao, S., Lian, T., Chen, L., Yang, C., Chen, Z., Wu, J. (2018): NPP-VIIRS DNB Daily Data in Natural Disaster Assessment: Evidence from Selected Case Studies. Remote Sensing, 10(10), 1526."
+    jahr: 2018
+    doi: "10.3390/rs10101526"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Crossref (alle 9 Autoren, Titel, Zeitschrift, Jahr, Band, Heft, Artikelnummer, DOI, Kurzfassung) sowie ADS/ECNU-Verzeichnis per Websuche übereinstimmend gesehen. Nur die Kurzfassung wurde gelesen, nicht der Volltext. Der Auftrag nannte 'Zhao et al. zu Nachtlicht und Katastrophen': Diese Arbeit wurde als passende Quelle gefunden; ob der Nutzer genau diese meinte, ist nicht bestätigt."
+
+  - zitat: "Zhang, D., Huang, H., Roy, N., Roozbahani, M. M., Frost, J. D. (2023): Black Marble Nighttime Light Data for Disaster Damage Assessment. Remote Sensing, 15(17), 4257."
+    jahr: 2023
+    doi: "10.3390/rs15174257"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Crossref (Autoren, Titel, Zeitschrift, Jahr, Band, Heft, Artikelnummer, DOI, Kurzfassung wörtlich) und MDPI-Verzeichnis per Websuche übereinstimmend gesehen. Die MDPI-Seite selbst war für den Web-Abruf gesperrt (HTTP 403); es wurde nur die Kurzfassung gelesen. Rolle 'gegenposition' im eingeschränkten Sinn: bestätigt die Methode für Hurrikane, aber nicht für Erdbeben und Tornados und nicht zur Quantifizierung von Schäden."
+
+  - zitat: "Skoufias, E., Strobl, E., Tveit, T. (2021): Can we rely on VIIRS nightlights to estimate the short-term impacts of natural hazards? Evidence from five South East Asian countries. Geomatics, Natural Hazards and Risk, 12(1), 381-404."
+    jahr: 2021
+    doi: "10.1080/19475705.2021.1879943"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Crossref (Autoren, Titel, Zeitschrift, Jahr, Band, Heft, Seiten, DOI) und Verlagsseite (Taylor & Francis) per Websuche übereinstimmend gesehen. Die Verlagsseite war für den Web-Abruf gesperrt (HTTP 403). Die unten wiedergegebenen Aussagen stammen aus dem Text der gleichnamigen Weltbank-Arbeitsfassung (Policy Research Working Paper 9052), nicht aus der Zeitschriftenfassung; die Zeitschriftenfassung kann in Einzelheiten abweichen."
+
+modell: >
+  Ereignisstudie mit Basislinie (ALEPH-Vereinfachung, angelehnt an Román et al. 2019 und Zhao et al. 2018; die genaue ALEPH-Form ist nicht aus einer Quelle übernommen).
+  Symbole: i = Gitterzelle (0,25°), t = Monat, L_it = monatlicher Nachtlichtwert der Zelle (VNP46A3), t0 = Ereignismonat aus dem Katalog (GDACS/EM-DAT),
+  B_i = Basislinie der Zelle = Median von L_i über dieselben Kalendermonate der Jahre vor dem Ereignis, ohne den Ereignismonat (so schreibt es auch ARCHITECTURE.md Abschnitt 6 vor).
+  (1) Relativer Rückgang: dL_it = (L_it - B_i) / B_i. Ein Wert von -0,3 heißt: 30 Prozent weniger Licht als normal. Zellen mit B_i = 0 (dunkel, unter der Rauschschwelle) werden nicht bewertet.
+  (2) Erholungsanteil laut Quelle (Román et al. 2019): %Recovery_i = NTL_i / NTL_0 (Licht zum Zeitpunkt i geteilt durch Licht vor dem Ereignis). Also gilt %Recovery = 1 + dL.
+  (3) Kennzahl 'Netto-Tage ohne Strom' laut Quelle (Román et al. 2019): NDWE = Summe über alle Zeitabschnitte i von (1 - NTL_i/NTL_0) * D_i, mit D_i = Länge des Abschnitts in Tagen. Formel aus dem Volltext über ein Zusammenfassungswerkzeug gelesen, nicht im Original-PDF gegengeprüft.
+  (4) Erholungszeit (ALEPH-Vereinfachung, nicht aus der Quelle): T_rec = Anzahl Monate von t0 bis zum ersten Monat, ab dem |dL_it| <= d bleibt. Das Band d wird vor der Prüfung im Kalibrierzeitraum (2013-2019) festgelegt und im Prüfergebnis genannt; hier wird bewusst kein Zahlenwert gesetzt.
+  (5) Vergleich ohne Basislinie-Fehler: Die Basislinie enthält Jahreszeiten, aber kein Trendwachstum; in schnell wachsenden Zellen müsste der Trend getrennt geschätzt werden (Ausbaustufe 2 in ARCHITECTURE.md Abschnitt 9a).
+  Prüfbare Aussage in ALEPH: Für Katalogereignisse mit großflächigem, länger andauerndem Ausfall (Sturm/Überschwemmung) ist dL_it in besiedelten Zellen des betroffenen Gebiets im Monat t0 oder t0+1 häufiger stark negativ als in Kontrollzellen ohne Ereignis, verglichen mit einem Permutationsmodell, das Kalendermonat und räumliche Nachbarschaft erhält (ARCHITECTURE.md Abschnitt 8, Prüfung Punkt 3).
+
+ursache: {layer: ereigniskatalog, richtung: Ereignis, zusätzlich: "Sturm / Erdbeben / Überschwemmung / Angriff auf Infrastruktur; Referenz GDACS und EM-DAT"}
+wirkung: {layer: nachtlicht, richtung: rückgang, zusätzlich: "in besiedelter Zelle; anschließend Erholung Richtung Basislinie"}
+
+# Einbruch: Tage (laut Quelle Roman 2019: Rückgang unmittelbar nach dem Ereignis). Im Monatsraster liegt er im Ereignismonat oder im Folgemonat, daher [0, 1].
+# Die Erholung dauert laut einer einzigen Fallstudie (Puerto Rico nach Maria, Beobachtungsfenster 195 Tage, etwa 6,5 Monate) Wochen bis Monate; siehe mechanismus.
+# Eine allgemeine Erholungsdauer für alle Ereignistypen ist in den geprüften Quellen nicht belegt und wird hier nicht behauptet.
+verzögerung_monate: [0, 1]
+
+geltungsbereich: >
+  Hell beleuchtete, dicht besiedelte Zellen mit stabilem Grundlicht (nicht polar, nicht dünn besiedelt, Basislinie deutlich über der Rauschschwelle von 0,5 nW).
+  Am besten gestützt für Hurrikane bzw. Zyklone (Zhang et al. 2023; Román et al. 2019). Für Erdbeben und Tornados ist die Methode in der Literatur nicht konsistent bestätigt.
+  Im Monatsraster (VNP46A3) nur für Ausfälle, die länger als etwa zwei Wochen dauern (ALEPH-Überlegung, siehe fallstricke); kurze Ausfälle brauchen tägliche Daten (VNP46A2, Fokusgebiet).
+
+mechanismus: >
+  Ein Sturm, Beben, eine Überflutung oder ein Angriff beschädigt Stromnetz oder Straßenbeleuchtung. Ohne Strom fällt die Außenbeleuchtung aus, und der Satellit misst nachts weniger Licht.
+  Laut Román et al. (2019) lag der Lichtrückgang auf Puerto Rico unmittelbar nach Hurrikan Maria (2017) insgesamt bei etwa 80 Prozent (aus dem Volltext über ein Zusammenfassungswerkzeug gelesen, nicht im Original-PDF gegengeprüft). Die Erholung wurde über 195 Tage (20.09.2017 bis 20.03.2018) verfolgt; ländliche Gemeinden hatten laut Quelle im Mittel 131 'Netto-Tage ohne Strom', städtische 115 (gleicher Vorbehalt). Wichtig: Das ist eine Fallstudie, keine allgemeine Erholungsdauer.
+  Die Studien nutzen tägliche Black-Marble-Daten (Román 2019: Zusammenfassung über 4 Tage; Zhao 2018: Vergleich des Monats vor mit den 10 Tagen nach dem Ereignis). Unser Hauptlayer ist monatlich; siehe fallstricke.
+  Forschungsstand: Die Grundidee ist etabliert und wird von NASA-nahen Gruppen verwendet, aber nicht unumstritten. Zhang et al. (2023) finden das Verfahren robust für Hurrikane, aber uneinheitlich und unzureichend für Erdbeben und Tornados, und nur schwache Übereinstimmung zwischen Lichtrückgang und dem Grad des Schadens. Skoufias et al. (2021) finden für fünf südostasiatische Länder mit monatlichen VIIRS-Daten kaum belastbare Effekte (nach Angabe der Arbeitsfassung wegen Rauschen und wenig wolkenfreier Tage in den Tropen); nur der Taifun Haiyan zeigte klare Effekte. Zhao et al. (2018) nennen Wolken als größte Einschränkung und weitere Einflüsse wie Rettungseinsätze, Verkehr und die sozioökonomische Lage.
+
+bedingungen: >
+  Stärker sichtbar bei großflächigem, langem Ausfall, hoher Ausgangshelligkeit und wenig Wolken in der Zeit nach dem Ereignis.
+  Schwächer oder unsichtbar bei kurzem Ausfall, bei Ausfall nur tagsüber oder wechselnden Abschaltungen (Zusammenfassung Román 2019: Verfahren kann Teil-Ausfälle unterschätzen), bei Ereignissen ohne Stromausfall (z. B. viele Erdbeben) und in dünn besiedelten Zellen.
+  Straßenbeleuchtung wird laut Román et al. (2019) oft später wieder eingeschaltet als die wichtige Energieinfrastruktur; das Nachtlicht erholt sich also eher später als der Strom für Krankenhäuser (Zeitverzerrung in der Quelle genannt).
+  Bei Angriffen auf Infrastruktur (Kriegsgebiete) ist der Zeitverlauf oft wiederholt (Schaden, Reparatur, neuer Schaden); die einfache Erholungszeit ist dann nicht gut definiert (ALEPH-Überlegung).
+
+gegenpositionen:
+  - "Skoufias, Strobl & Tveit (2021, Geomatics, Natural Hazards and Risk; Verweis in quellen): Mit monatlichen VIIRS-Nachtlichtdaten fanden sie für Erdbeben, Überschwemmungen und Taifune in fünf südostasiatischen Ländern kaum belastbare Effekte; nur Taifun Haiyan (Philippinen) zeigte klare Wirkung. Angegebene Gründe (nach der Weltbank-Arbeitsfassung): Rauschen in den VIIRS-Daten und in den Tropen nur wenige wolkenfreie Tage pro Monat. Das betrifft direkt die Monatsauflösung, mit der ALEPH arbeitet."
+  - "Zhang et al. (2023, Remote Sensing; Verweis in quellen): Das relative Nachtlicht-Änderungsmaß ist robust für Hurrikanschäden, aber für Erdbeben und Tornados uneinheitlich und unzureichend; die Korrelation zwischen Lichtrückgang und Schadensgrad ist niedrig. Nachtlicht ist demnach für 'Wo ist der Strom weg' brauchbar, aber nicht zum Messen von Schäden."
+  - "Zhao et al. (2018; Verweis in quellen): Wolkenbedeckung ist eine wesentliche Einschränkung; Rettungseinsätze, Verkehr und sozioökonomische Verhältnisse beeinflussen das Ergebnis."
+  - "Román et al. (2019; Verweis in quellen) selbst: Das Verfahren ergänzt Angaben der Versorger, es ersetzt sie nicht; es erfasst vor allem Außenbeleuchtung, nicht den Stromverbrauch von Haushalten."
+
+fallstricke:
+  - "ZENTRAL, Zeitauflösung: Die Ereignisstudien (Román 2019; Zhao 2018) nutzen tägliches Black Marble (VNP46A2, bei Román 2019 zu 4-Tage-Zeiträumen zusammengefasst). ALEPHs Hauptlayer ist VNP46A3 (monatlich, 0,25°). Ein Ausfall von Stunden bis wenigen Tagen verschwindet im Monatswert. Rechenbeispiel (ALEPH-Überlegung, nicht aus einer Quelle): Fällt das Licht 3 Tage lang ganz aus und geht der Monat mit 30 gleich gewichteten gültigen Nächten in den Mittelwert ein, sinkt der Monatsmittelwert nur um etwa 10 Prozent; das liegt oft im normalen Schwankungsbereich. Zusätzlich gehen nur wolkenfreie Nächte in das Monatsprodukt ein (Anbieter, docs/sources/vnp46a3.md); nach einem Sturm ist der Himmel oft bedeckt, sodass Ausfallnächte womöglich gar nicht in den Mittelwert kommen (ALEPH-Überlegung). Dazu kommt laut Anbieter die Ausreißerentfernung nach Tukey vor der Mittelung: Wenige dunkle Nächte könnten als Ausreißer entfernt werden (ALEPH-Überlegung, nicht getestet). Folge: Im Monatsraster sind nur lange Ausfälle prüfbar; die Theorie ist mit VNP46A3 allein nur eingeschränkt prüfbar."
+  - "Auffüllung: Beim Monatsprodukt gibt es aufgefüllte Pixel (Quality 2, 'gap filled based on historical data', Anbieter). Ein Pixel, das aus früheren Werten gefüllt wurde, zeigt den Ausfall nicht. Nach Messung des Auftraggebers (docs/sources/vnp46a3.md) schwankt der Anteil stark: in einer Kachel 16 aufgefüllte Pixel, in einer anderen 1 784 479 (Ergebnis von zwei einzelnen Kacheln, nicht verallgemeinerbar). Vor jeder Prüfung sind _Num (Zahl der Nächte) und Anteil aufgefüllter Pixel je Zelle mitzuführen; Zellen mit hohem Auffüllanteil im Ereignismonat dürfen nicht als 'kein Rückgang' gewertet werden."
+  - "Nachtlicht misst Beleuchtung, nicht Strom: Straßenbeleuchtung kommt laut Román et al. (2019) oft später zurück als die wichtige Energieinfrastruktur; Teilausfälle und wechselnde Abschaltungen sind schwer zu sehen. Notstromaggregate, Feuer und Hilfseinsätze können Licht erzeugen (Zhao 2018 nennt Rettungseinsätze und Verkehr als Einflussgrößen)."
+  - "Nicht unterscheidbar: Stromausfall oder Bevölkerungsflucht/Evakuierung. Beide senken das Licht. Ein Rückgang nach einem Sturm kann auch von Abwanderung, Evakuierung, geschlossenen Betrieben oder Ausgangssperren kommen. Aus dem Nachtlicht allein ist das nicht zu trennen (ALEPH-Überlegung; in den gelesenen Kurzfassungen nicht ausdrücklich behandelt). Abhilfe nur mit Zusatzdaten (Bevölkerungsraster, IDMC/UNHCR, Netzbetreiberdaten)."
+  - "Schäden nicht quantifizierbar: Zhang et al. (2023) finden niedrige Korrelation zwischen Lichtrückgang und Schadensgrad. ALEPH darf aus Nachtlicht 'vermutlicher Stromausfall' ableiten, nicht 'Schaden in Höhe von ...'. Typ-Sicherheit bleibt 'abgeleitet' (ARCHITECTURE.md Abschnitt 7)."
+  - "Störungen im Signal: Wolken, Mondlicht, Schnee, Blickwinkel, Polarlicht. Das Produkt korrigiert einen Teil davon (Anbieter, docs/sources/vnp46a3.md), aber die nächtliche Wolkenmaske ist laut User Guide schwierig; Rest-Rauschen bleibt. Werte unter 0,5 nW werden auf 0 gesetzt: in dunklen Zellen sind Rückgänge nicht messbar. Schnee im Winter (z. B. Wintersturm) ist mit Schneefrei- und Schnee-Komposit nicht direkt vergleichbar."
+  - "Nur ein Satellit: VNP46A3 liegt für 2013 bis 2025 nur von Suomi NPP vor (Auslieferung endet laut NASA am 1. November 2026). Die Überflugzeit ist eine feste Nachtzeit (etwa 01:30 Ortszeit laut einer Drittquelle, nicht geprüft); Ausfälle zu anderen Uhrzeiten werden nicht gesehen."
+  - "Auswahlfehler des Katalogs: GDACS und EM-DAT nehmen bevorzugt Ereignisse auf, die Menschen betreffen; kleine Ereignisse in dünn besiedelten Gebieten fehlen. Katalog-Ereignisse und Nachtlicht-Anomalien sind daher nicht völlig unabhängig, denn beide hängen von der Besiedlung ab (ALEPH-Überlegung). Kontrollzellen müssen ähnlich besiedelt und hell sein."
+  - "Der Fall Puerto Rico / Maria ist der Ursprungsfall der Theorie. Er darf als Beispiel und Plausibilitätstest dienen, nicht als unabhängiger Beleg (Test auf Trainingsfall). Die Prüfung nach ARCHITECTURE.md Abschnitt 8 verlangt getrennte Zeiträume und Ereignisse."
+  - "Zirkularität bei der Benennung: Die ALEPH-Regel 'Anomalie: Stromausfall' (starker, plötzlicher Nachtlicht-Rückgang in besiedeltem Gebiet, anomaly_types.yaml) verwendet dasselbe Signal wie diese Theorie. Die Theorie darf nicht an Anomalien geprüft werden, die durch genau diese Regel gefunden wurden, sonst ist der Test zirkulär. Geprüft wird an einer unabhängigen Ereignisliste (Katalog)."
+  - "Literaturlage: Die Zahlen zu Puerto Rico stammen aus einer Fallstudie. Aus den geprüften Kurzfassungen ergibt sich keine allgemeine Erholungsdauer. Nicht bestätigt (nur Sekundärangabe): dass Wang et al. (2018) die Hurrikane Sandy und Maria untersuchen."
+
+datenbedarf:
+  - {layer: nachtlicht_monatlich_vnp46a3, rolle: wirkung, status: in Arbeit, anmerkung: "Großer Lauf läuft, ein Testmonat vorhanden; nur Suomi-NPP, 2013-2025, 0,25°, monatlich. Ein großer Teil der 'gültigen' Pixel ist aufgefüllt (Qualität siehe docs/sources/vnp46a3.md), _Num und Auffüllanteil müssen je Zelle mitgeführt werden. Reicht nur für lange Ausfälle."}
+  - {layer: nachtlicht_taeglich_vnp46a2, rolle: wirkung, status: geplant, anmerkung: "Im Fokusgebiet-Konzept (ARCHITECTURE.md Abschnitt 4a) vorgesehen, noch nicht gebaut, kein Steckbrief. Für die Theorie eigentlich nötig (Ereignisstudien nutzen tägliche Daten). Suomi-NPP-Auslieferung endet laut NASA am 2026-11-01; daher zeitnah laden, falls gewünscht (Datum kann sich laut NASA ändern)."}
+  - {layer: ereigniskatalog_gdacs_emdat, rolle: ursache, status: geplant, anmerkung: "GDACS ist Referenzkatalog des Blindtests (Entscheidung E5), EM-DAT als zweiter Katalog (Abschnitt 5, Zugang noch einzurichten). Noch nichts geladen, kein Steckbrief. Liefert Ort, Datum, Ereignistyp als Ursache."}
+  - {layer: bevoelkerung_ghsl_worldpop, rolle: kontrolle, status: geplant, anmerkung: "Abschnitt 5, ohne Steckbrief. Zum Auswählen besiedelter Zellen und als Kontrolle; trennt Evakuierung/Abwanderung aber nicht vom Stromausfall."}
+  - {layer: idmc_unhcr_vertreibung, rolle: kontrolle, status: geplant, anmerkung: "Abschnitt 5, ohne Steckbrief. Kann helfen, Abwanderung als Alternativerklärung zu prüfen; zeitlich und räumlich meist grob."}
+  - {layer: ausfallzeiten_netzbetreiber, rolle: validierung, status: fehlt, anmerkung: "Ausfall- und Wiederherstellungsdaten der Netzbetreiber sind nirgends geplant. Ohne sie ist die Aussage 'Nachtlichtrückgang = Stromausfall' nicht direkt gegen die Wirklichkeit prüfbar, nur gegen Ereigniskataloge."}
+  - {layer: wolken_mondlicht_schnee_qualitaet, rolle: kontrolle, status: in Arbeit, anmerkung: "Teil von VNP46A3 (Felder _Num, _Quality, Schnee-Trennung); keine eigene Quelle nötig."}
+
+status: ungeprüft
+prüfergebnisse: []

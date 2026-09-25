@@ -1,0 +1,201 @@
+# Theorie-Eintrag nach ARCHITECTURE.md Abschnitt 8.
+# Formuliert am 2026-09-23, BEVOR Testdaten (ACLED, ERA5, IMERG) geladen oder angesehen wurden.
+# Alle Angaben in diesem Eintrag sind Aussagen der Literatur bzw. Vorschläge für den Prüfaufbau, keine ALEPH-Ergebnisse.
+# Erwartungen und Prüfaufbau dürfen nach Ansicht der Testdaten NICHT mehr geändert werden; Ergebnisse gehören nur in "prüfergebnisse".
+
+id: klima-konflikt-panel
+titel: Ungewöhnliche Temperatur- und Niederschlagsabweichungen erhöhen das Risiko politischer Gewalt (Panel mit festen Effekten)
+disziplin: Umweltökonomie / Konfliktforschung (Politikwissenschaft)
+
+quellen:
+  - zitat: "Hsiang, S. M., Burke, M., Miguel, E. (2013): Quantifying the Influence of Climate on Human Conflict. Science, Band 341, Heft 6151, Artikelnummer 1235367 (Zusammenfassung gedruckt auf S. 1212)."
+    jahr: 2013
+    doi: "10.1126/science.1235367"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: originaltext
+    verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft und DOI im Crossref-Eintrag gefunden und übereinstimmend; zusätzlich den Volltext (PDF, 14 Seiten) selbst gelesen (Gleichung 1, Tabelle 1, Abbildungen 4 und 5, Abschnitte zu Kontrollvariablen, Heterogenität, Mechanismen). Abweichung vom Auftrag: keine beim Titel; der Artikel ist ein Sammel- und Neuauswertungs-Artikel (Meta-Analyse von 60 Studien), keine einzelne Panel-Studie. Der Wert für Gewalt zwischen Gruppen (14 Prozent, Median) und für Gewalt zwischen Personen (4 Prozent, Median) steht so in der Zusammenfassung des Originals."
+
+  - zitat: "Miguel, E., Satyanath, S., Sergenti, E. (2004): Economic Shocks and Civil Conflict: An Instrumental Variables Approach. Journal of Political Economy, Band 112, Heft 4, S. 725-753."
+    jahr: 2004
+    doi: "10.1086/421174"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhaltsangabe (Zusammenfassung) über eine Suchergebnis-Seite gelesen, den Volltext nicht. Der Aufsatz ist eine Vorläufer-Studie: Er nutzt Niederschlag als externe Größe (Instrument) für Wirtschaftswachstum in 41 afrikanischen Ländern 1981-99. Er ist kein reines Klima-Konflikt-Modell wie Hsiang et al. (2013)."
+
+  - zitat: "Burke, M. B., Miguel, E., Satyanath, S., Dykema, J. A., Lobell, D. B. (2009): Warming increases the risk of civil war in Africa. Proceedings of the National Academy of Sciences, Band 106, Heft 49, S. 20670-20674."
+    jahr: 2009
+    doi: "10.1073/pnas.0907998106"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend. Der Inhalt wurde nur über die Beschreibung in Hsiang et al. (2013, Tabelle 1: Länderpanel Afrika südlich der Sahara 1981-2002, jährlich, Temperatur, Bürgerkrieg) und in der Replik von 2014 gelesen, nicht im Volltext. Wird hier genannt, weil sie der Gegenstand der Kritik von Buhaug (2010) ist."
+
+  - zitat: "Buhaug, H. (2010): Climate not to blame for African civil wars. Proceedings of the National Academy of Sciences, Band 107, Heft 38, S. 16477-16482."
+    jahr: 2010
+    doi: "10.1073/pnas.1005739107"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autor, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhaltsangabe über die PNAS-Seite (Suchergebnis) gelesen: Mit anderen Modellvarianten und anderen Maßen für Dürre, Hitze und Bürgerkrieg sei Klimaschwankung ein schlechter Vorhersagefaktor für bewaffnete Konflikte; Bürgerkriege in Afrika ließen sich eher durch allgemeine strukturelle Bedingungen erklären (ethnisch-politischer Ausschluss, schwache Wirtschaft, Ende des Kalten Krieges). Das ist die Aussage des Autors. Volltext nicht gelesen. Abweichung vom Auftrag: Der Titel lautet wirklich so und existiert; Buhaug (2010) ist eine Einzelstudie des Autors und bezieht sich auf Burke et al. (2009)."
+
+  - zitat: "Buhaug, H., Nordkvelle, J., Bernauer, T., Böhmelt, T., Brzoska, M. und 21 weitere Autorinnen und Autoren (2014): One effect to rule them all? A comment on climate and conflict. Climatic Change, Band 127, Heft 3-4, S. 391-397."
+    jahr: 2014
+    doi: "10.1007/s10584-014-1266-1"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autorenzahl (26), Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden; die volle Autorenliste wurde zusätzlich in einem Verzeichnis (RePEc, Suchergebnis) gesehen; hier werden nur die ersten fünf genannt. Inhalt: Der Kommentar prüft, warum ein Sammelartikel zu Klima und Gewalt zwischen Gruppen zu anderen Schlüssen kommt als andere Übersichten. Den Volltext konnte ich nicht lesen (Verlagsseite verlangt Anmeldung). Was dieser Kommentar im Einzelnen kritisiert, ist deshalb nur so wiedergegeben, wie es die Replik von Hsiang, Burke & Miguel (2014) beschreibt, und ist als deren Darstellung gekennzeichnet."
+
+  - zitat: "Hsiang, S. M., Burke, M., Miguel, E. (2014): Reconciling climate-conflict meta-analyses: reply to Buhaug et al. Climatic Change, Band 127, Heft 3-4, S. 399-405."
+    jahr: 2014
+    doi: "10.1007/s10584-014-1276-z"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: originaltext
+    verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; den Volltext (PDF) selbst gelesen. Es ist die Antwort der Originalautoren auf Buhaug et al. (2014); sie ist damit Partei-Darstellung. Rolle 'original' gewählt, weil sie das Original verteidigt."
+
+  - zitat: "Hsiang, S. M., Burke, M. (2014): Climate, conflict, and social stability: what does the evidence say? Climatic Change, Band 123, S. 39-55."
+    jahr: 2014
+    doi: "10.1007/s10584-013-0868-3"
+    rolle: original
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend (im Crossref-Ergebnis erschien die Jahreszahl 2013, die gedruckte Ausgabe trägt 2014; Hsiang et al. 2014 zitieren den Aufsatz mit 2014). Der Inhalt wurde nicht gelesen; der Aufsatz wird in Hsiang et al. (2013) als ausführliche Einzelbeschreibung der 60 Studien genannt (dort Ref. 26)."
+
+  - zitat: "Ciccone, A. (2011): Economic Shocks and Civil Conflict: A Comment. American Economic Journal: Applied Economics, Band 3, Heft 4, S. 215-227."
+    jahr: 2011
+    doi: "10.1257/app.3.4.215"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autor, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhaltsangabe (Zusammenfassung) über eine Suchergebnis-Seite gelesen: Der Befund von Miguel et al. (2004) beruhe auf einem (unerwarteten) Zusammenhang mit dem Niederschlagsniveau zwei Jahre zuvor; in den neuesten Daten sei Konflikt nicht mit Niederschlag verbunden. Volltext nicht gelesen. Antwort der Autoren: Miguel, E., Satyanath, S. (2011): Re-examining Economic Shocks and Civil Conflict. American Economic Journal: Applied Economics 3(4), 228-232, DOI 10.1257/app.3.4.228 (Bibliografie in Crossref bestätigt; Inhalt nicht gelesen)."
+
+  - zitat: "Mach, K. J., Kraan, C. M., Adger, W. N., Buhaug, H., Burke, M. u. a. (14 Autorinnen und Autoren) (2019): Climate as a risk factor for armed conflict. Nature, Band 571, Heft 7764, S. 193-197."
+    jahr: 2019
+    doi: "10.1038/s41586-019-1300-6"
+    rolle: gegenposition
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Titel, Zeitschrift, Band/Heft/Seiten, Jahr, DOI und die ersten fünf Autoren im Crossref-Eintrag gefunden und übereinstimmend (Autorenzahl 14; die übrigen Namen habe ich nicht gelesen und darum nicht genannt). Inhalt nur über Suchergebnis-Zusammenfassungen (PRIO, Nature-Zusammenfassung) gelesen, Volltext nicht: Befragung von Fachleuten; sie sind sich einig, dass Klima bewaffnete Konflikte innerhalb von Ländern beeinflusst hat, halten aber andere Ursachen (niedrige wirtschaftliche Entwicklung, schwache staatliche Fähigkeiten) für wesentlich wichtiger; die Wirkwege blieben eine große Unsicherheit. Das ist eine Expertenbefragung, keine Datenanalyse. Sie steht hier als Einordnung der Größenordnung, nicht als Widerlegung."
+
+  - zitat: "Auffhammer, M., Hsiang, S. M., Schlenker, W., Sobel, A. (2013): Using Weather Data and Climate Model Output in Economic Analyses of Climate Change. Review of Environmental Economics and Policy, Band 7, Heft 2, S. 181-198."
+    jahr: 2013
+    doi: "10.1093/reep/ret016"
+    rolle: methode
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Autoren, Jahr, Titel, Zeitschrift, Band/Heft/Seiten und DOI im Crossref-Eintrag gefunden und übereinstimmend; Inhalt nur über die Zusammenfassung (Suchergebnis) gelesen: Der Aufsatz stellt Wetterdatensätze vor und behandelt typische Fehler, wenn historische Wetterdaten als erklärende Größe in ökonometrischen Modellen dienen. Volltext nicht gelesen; welche Fehler er im Einzelnen nennt, kann ich deshalb hier nicht wiedergeben. Er wird von Hsiang et al. (2013, Ref. 126) für die Frage zitiert, wie Klimavariablen korreliert sind. Zwei der Autoren (Hsiang) sind auch Autoren des Originals."
+
+  - zitat: "Hersbach, H., Bell, B. u. a. (51 Autorinnen und Autoren) (2020): The ERA5 global reanalysis. Quarterly Journal of the Royal Meteorological Society, Band 146, Heft 730, S. 1999-2049."
+    jahr: 2020
+    doi: "10.1002/qj.3803"
+    rolle: daten
+    citation_verified: true
+    verifiziert_umfang: metadaten
+    verifiziert_an: "Titel, Zeitschrift, Band/Heft/Seiten, Jahr, DOI und Autorenzahl im Crossref-Eintrag gefunden und übereinstimmend; von den Autoren nenne ich nur die ersten beiden (Hersbach, Bell). Im Abfrageergebnis war ein weiterer Name anders geschrieben, als ich ihn kenne; ich habe ihn deshalb nicht übernommen. Beschreibung des ERA5-Datensatzes (Copernicus CDS) für die geplante Nutzung als Temperatur- und Niederschlagsquelle; Inhalt nicht gelesen."
+
+modell: >
+  Grundform (aus der Quelle, Hsiang, Burke & Miguel 2013, Gleichung 1):
+  Konflikt_it = beta * Klima_it + mu_i + theta_t + epsilon_it.
+  Symbole: i = Ort (Land, Provinz oder Gitterzelle), t = Beobachtungszeitraum, beta = der gesuchte Zusammenhang,
+  mu_i = fester Wert je Ort ("feste Effekte": bereinigt dauerhafte Unterschiede zwischen Orten wie Kultur, Politik, Geografie),
+  theta_t = fester Wert je Zeitraum (bereinigt Größen, die überall gleichzeitig laufen, etwa Wirtschaftswachstum oder allgemeine Trends;
+  laut Quelle kann theta_t auch durch einen gemeinsamen oder ortsspezifischen Zeittrend ersetzt sein), epsilon = Fehler.
+  Es wird nur verglichen, wie derselbe Ort auf verschiedene Wetterlagen zu verschiedenen Zeiten reagiert (kein Vergleich zwischen Orten). Studien, die nur Orte untereinander vergleichen, lässt die Quelle ausdrücklich weg.
+  Die Quelle erlaubt in Gleichung 1 keine Kontrollvariablen, die selbst vom Klima beeinflusst werden (Einkommen, Ernte, Bevölkerung, Regierungsform); sie nennt das "bad control" und schließt solche Ergebnisse aus.
+  Die Effektstärke wird in "Prozent Änderung des Konfliktmaßes je 1 Standardabweichung des Klimamaßes" angegeben; die Standardabweichung stammt nur aus den zeitlichen Schwankungen am jeweiligen Ort.
+
+  Vorschlag für ALEPH (eigene Anpassung an Monatsdaten, NICHT aus der Quelle; muss vor dem Testlauf vom Auftraggeber bestätigt werden):
+  C_i,t = a_(i,m) + g_t + b_T * T_i,(t-L) + b_P * P_i,(t-L) + e_i,t.
+  C = Zahl politischer Gewaltereignisse aus ACLED in Einheit i im Monat t (Vorschlag: Ereignistypen Battles, Explosions/Remote violence und
+  Violence against civilians; Demonstrationen und "Strategic developments" nicht). Einheit i = Gitterzelle 0,25 Grad und, getrennt, Land.
+  T = Temperaturabweichung vom Mittel desselben Kalendermonats in derselben Einheit, in Standardabweichungen (ERA5, 2 m Lufttemperatur).
+  P = Niederschlagsabweichung vom selben Kalendermonat, in Standardabweichungen (ERA5-Niederschlag; GPM IMERG nur als Vergleichsrechnung).
+  a_(i,m) = fester Wert je Einheit und Kalendermonat (übernimmt die Jahreszeit, die bei Jahresdaten nicht auftritt).
+  g_t = fester Wert je Kalendermonat der Zeitachse (Jahr-Monat); er nimmt gemeinsame Sprünge heraus, auch die weltweit wachsende ACLED-Abdeckung.
+  L = Verzögerung in Monaten (0 bis 12). Temperatur und Niederschlag werden gemeinsam geschätzt (siehe Fallstricke).
+  Keine Kontrollvariablen; insbesondere NICHT Nachtlicht, NDVI, Einkommen oder Bevölkerung als Kontrolle.
+  Da C eine Zählgröße mit vielen Nullen ist, ist ein Zählmodell (z. B. Poisson mit festen Effekten) statt der linearen Form sinnvoll; das Original rechnet linear und in Prozent vom Mittel, die Wahl ist eine offene Entscheidung des Prüfaufbaus.
+  Standardfehler: zeitlich und räumlich korrelierte Fehler berücksichtigen (die Quelle nennt, dass viele Studien das tun); Prüfung außerdem im Permutationstest nach Abschnitt 8 der Architektur.
+  Aufteilung nach Abschnitt 8 und 9a (Vorschlag): Festlegen der Spezifikation und Schätzen mit 2013-2019, Bestätigung an 2020-2025; Gültigkeit nur, wenn Vorzeichen und Größenordnung im späteren Zeitraum wiederkehren und der Permutationstest bestanden ist.
+
+ursache:
+  layer: era5
+  variablen: [temperatur_2m, niederschlag]
+  richtung: >
+    Temperatur: Abweichung nach oben (wärmer als normal). Niederschlag: Abweichung vom Normalen; die Richtung ist in der Literatur nicht einheitlich
+    (Quelle: "zu trocken" in vielen Landwirtschaftsregionen, "zu nass" in anderen; die Studien messen Niederschlag auf mehrere Arten).
+  alternative_niederschlagsquelle: "niederschlag (GPM IMERG), nur Vergleichsrechnung; ob er als Regressor vertretbar ist, ist eine offene Frage (siehe fallstricke)"
+wirkung: {layer: acled, richtung: Anstieg, zusätzlich: "Zahl politischer Gewaltereignisse je Einheit und Monat; NICHT Nachtlicht und NICHT NDVI (die dürfen in diesem Eintrag nur Wirkung in anderen Theorien sein, nie Ursache oder Kontrolle)"}
+
+verzögerung_monate: [0, 12]
+# Begründung: Die Quelle betont vor allem den Zusammenhang im selben Zeitraum (Jahr) wie die Klimaabweichung; die meisten Studien arbeiten mit Jahresdaten.
+# 0 Monate = derselbe Monat, 12 Monate = Wetter des Vorjahres. Bei Jahresdaten bedeutet "selbes Jahr" praktisch 0 bis 11 Monate Verzögerung,
+# "Vorjahr" rund 12 Monate. Die Quelle sagt nicht, welche Verzögerung in Monaten die richtige ist; die Grenzen kommen daher aus dem Streit um Wirkung im selben Jahr gegen Wirkung im Vorjahr.
+
+geltungsbereich: >
+  Vorrangig Afrika südlich der Sahara (dort liegen die meisten modernen Studien zu Gewalt zwischen Gruppen und dort ist ACLED für den ganzen
+  ALEPH-Zeitraum 2013-2025 verfügbar). Die Quelle nennt Belege auch aus anderen Regionen (u. a. Indien, Brasilien, Kenia, Ostafrika; weltweite
+  Reihen), betont aber, dass etwa Bürgerkrieg in Hocheinkommensländern kaum vom Klima abhängt. Außerhalb Afrikas ist ACLED vor 2015-2022 je nach
+  Region unvollständig (Angabe im Steckbrief, dort aus einer Drittquelle, nicht im Original geprüft); dort darf der frühe Zeitraum nicht in die Prüfung.
+  Gewalt zwischen Personen (Verbrechen, häusliche Gewalt; Quelle: Median 4 Prozent je Standardabweichung) ist kein Gegenstand dieser Prüfung, weil ACLED
+  keine gewöhnliche Kriminalität erfasst.
+
+mechanismus: >
+  Was die Quelle sagt: Klimaabweichungen (Hitze, ungewöhnlich wenig oder viel Regen) erhöhen im Mittel über 60 ausgewertete Studien das Konfliktrisiko.
+  Für die Zeit nach 1950 nennt sie als Mittelwerte, gewichtet nach Genauigkeit, +11,1 Prozent (Standardfehler 1,3) je 1 Standardabweichung für Gewalt zwischen Gruppen
+  (nur Temperatur: +13,2 Prozent, Standardfehler 2,0) und +2,3 Prozent (Standardfehler 0,12) für Gewalt zwischen Personen; die Mediane sind 13,6 bzw. 3,9 Prozent
+  (in der Zusammenfassung als 14 und 4 Prozent gerundet). Alle 27 modernen Schätzungen zu Temperatur (einschließlich El Niño und Dürre-Indizes) haben ein positives Vorzeichen.
+  Bei Niederschlag stimmen 16 von 18 Vorzeichen überein, wenn man sie so zusammenlegt, wie die Quelle es tut. Die Einzelstudien streuen stark: laut Quelle liegen
+  die mittleren 90 Prozent der Studienergebnisse für Gewalt zwischen Gruppen zwischen -5 und +32 Prozent je Standardabweichung. Die Quelle betont ausdrücklich, dass Klima nur ein Faktor unter vielen ist.
+  Warum das so sein könnte, ist offen. Die Quelle nennt mehrere Erklärungen, "keine ist überzeugend widerlegt": sinkende Einkommen, wodurch Gewalt relativ attraktiver wird;
+  schwächere staatliche Kontrolle; Verteilungskonflikte und Nahrungspreise; Wanderung und Verstädterung; veränderte Logistik von Gewalt; Wahrnehmung und Aggression. Die Quelle sagt selbst,
+  bisher habe keine Studie die Wirkwege endgültig geklärt. Ob Ernteausfälle der Hauptweg sind, ist in der Fachwelt ebenfalls umstritten (siehe gegenpositionen).
+  Forschungsstand: umstritten. Die Frage ist nicht, ob es Studien mit positivem Ergebnis gibt (die gibt es), sondern wie belastbar und wie groß der Zusammenhang ist und wie man Studien zusammenfasst.
+  Evidenzstufe in ALEPH: höchstens "statistische Assoziation" nach bestandener Prüfung; keine Modellprojektion. Die Quelle rechnet ihre Werte auch auf künftige Erwärmung hoch; ALEPH tut das nicht.
+
+bedingungen: >
+  Aus der Quelle: Der Zusammenhang ist in Ländern mit niedrigem Einkommen stärker (arme Bevölkerungen reagieren stärker); Bürgerkrieg reagiert in reichen Ländern nicht deutlich.
+  Temperatur wirkt laut Quelle stärker (pro Standardabweichung) als Niederschlag. Die Funktion ist wahrscheinlich nicht linear; die meisten Studien schätzen nur eine lokale gerade Näherung.
+  Für Niederschlag ist die Messung uneinheitlich (Betrag der Abweichung, Defizit, Index), was Vergleiche erschwert.
+  Verzögerung: Die Quelle konzentriert sich auf den Effekt im selben Zeitraum; die Replik von Hsiang, Burke & Miguel (2014) rechnet zusätzlich mit der Summe aus gleichzeitigem und verzögertem Effekt,
+  falls Konflikte zeitlich verschoben werden.
+  Vorab festgelegte Prüfgrößen (Vorschlag, vor Sicht der Testdaten): (1) Hauptprüfung: Temperaturabweichung, gleichzeitig und 12 Monate zuvor, Erwartung positives Vorzeichen;
+  (2) Nebenprüfung: Niederschlag, zweiseitig getestet (Defizit und Betrag der Abweichung getrennt); keine feste Vorzeichenerwartung, weil die Literatur keine einheitliche hat;
+  (3) Vergleichsrechnungen: Einheit Land gegen Gitterzelle, ERA5-Niederschlag gegen IMERG.
+  Ohne diese Vorfestlegung wäre die Auswahl der Verzögerung und des Niederschlagsmaßes nachträglich beliebig.
+  Wo die Datenlage nicht reicht (Zellen ohne ACLED-Abdeckung im Zeitraum, dünn besiedelte Zellen mit fast nur Nullen), wird nicht bewertet.
+
+gegenpositionen:
+  - "Buhaug (2010, PNAS, DOI 10.1073/pnas.1005739107): Mit anderen Modellvarianten und anderen Maßen sei Klimaschwankung ein schlechter Vorhersagefaktor für Bürgerkrieg in Afrika; strukturelle Bedingungen erklärten diese Kriege besser. Die Antwort von Burke et al. (2010, PNAS, 'Climate robustly linked to African civil war', DOI 10.1073/pnas.1014879107) hält den Zusammenhang für robust (Bibliografie in Crossref bestätigt, Inhalt nicht gelesen). Hsiang et al. (2013) zählen Buhaug (2010) und Theisen et al. (2011) als zwei Studien, die nur eine begrenzte Wirkung finden, deren Unsicherheitsbereiche aber so breit sind, dass sie einen großen Effekt nicht ausschließen; sie machen 4 Prozent aller berichteten Befunde aus (Angabe der Originalautoren)."
+  - "Buhaug et al. (2014, Climatic Change, DOI 10.1007/s10584-014-1266-1): Kritik an der Meta-Analyse selbst. Nach der Darstellung der Replik (Hsiang, Burke & Miguel 2014, DOI 10.1007/s10584-014-1276-z; nicht am Volltext von Buhaug et al. geprüft) lauten die Punkte: teils ähnliche Datensätze in den Studien (Ergebnisse dadurch nicht unabhängig), unterstellte gleiche Wirkung in allen Studien (Homogenität), nicht ausgewogene Studienauswahl, und Veränderungen an der Auswertung, nach denen der Effekt nicht mehr signifikant sei. Die Replik weist das zurück: Die Kritik verwechsle Wirkung im Vorjahr mit Wirkung im selben Jahr, enthalte Rechen- und Codierfehler, nutze einen Bereich der Rohdaten als Unsicherheitsmaß und schließe Studien nicht dokumentiert aus. Der Streit ist in der Fachwelt nicht entschieden; die Darstellung stammt jeweils von einer Partei."
+  - "Mach et al. (2019, Nature, DOI 10.1038/s41586-019-1300-6): Befragung von Fachleuten. Klima hat Konflikte beeinflusst, aber andere Ursachen (niedrige Entwicklung, schwache Staatsfähigkeit) gelten als wesentlich wichtiger, und die Wirkwege sind unsicher. Das ist eine Einschätzung, keine Messung, und widerspricht dem Vorzeichen bei Hsiang et al. nicht, wohl aber der Gewichtung."
+  - "Ciccone (2011, AEJ Applied, DOI 10.1257/app.3.4.215) zu Miguel et al. (2004): Der Befund hänge am Niederschlagsniveau zwei Jahre zuvor (mit unerwartetem Vorzeichen), nicht am Wachstum oder an Trockenheit im Vorjahr; in den neuesten Daten hänge Konflikt nicht mit Niederschlag zusammen. Die Antwort von Miguel & Satyanath (2011, DOI 10.1257/app.3.4.228) bleibt hier ungelesen. Die Niederschlagsseite dieser Theorie ist damit schwächer belegt als die Temperaturseite."
+
+fallstricke:
+  - "Streit in der Fachwelt (Buhaug gegen Hsiang, Burke, Miguel): Kern ist nicht die Frage 'gibt es gar keinen Zusammenhang', sondern (1) wie man Studien auswählt, gewichtet und Unsicherheit zusammenfasst, (2) ob der Effekt im selben Jahr oder im Vorjahr liegt (bzw. in ihrer Summe), (3) ob Maße für Bürgerkrieg, Hitze und Dürre robust gegen andere Definitionen sind, (4) ob die Wirkung im Mittel über viele Kontexte oder je Kontext gilt. ALEPH prüft nur einen Teil davon (Vorzeichen und Stärke bei ACLED-Ereigniszahlen in Afrika) und darf daraus keine Entscheidung des Gesamtstreits ableiten. Ein Nichtbestätigen bei ACLED wäre keine Widerlegung von Hsiang et al. (andere Konfliktmaße, andere Zeit, andere Wetterdaten)."
+  - "Umgekehrte Wirkungsrichtung (Konflikt verändert Landwirtschaft und Licht): Vegetationsmaße (NDVI) und Nachtlicht dürfen in diesem Eintrag NICHT als Regressor (Ursache) oder als Kontrollvariable dienen, sondern nur als Wirkung in anderen Theorien. Begründung 1 (aus der Quelle): Hsiang et al. (2013) schließen Modelle aus, die Größen wie Ernte, Einkommen oder Bevölkerung als Kontrolle enthalten, weil diese selbst vom Klima abhängen ('bad control'); NDVI und Nachtlicht messen genau solche Zwischenwege (Pflanzenwachstum, Wirtschaftsleistung). Begründung 2 (eigene fachliche Überlegung, in dieser Sitzung nicht an einer Studie belegt): Gewalt zerstört Felder, Infrastruktur und Stromnetze und vertreibt Menschen; dadurch sinkt NDVI oder Licht, weil Konflikt herrscht. Nähme man beide als Ursache, würde man Wirkung und Ursache verwechseln. Auch als Gegenprüfung ('Zeigt Konflikt Licht-Rückgang?') bräuchte das eine eigene Theorie (Konflikt und Vertreibung)."
+  - "Warum Wetterdaten als Ursache geeignet sind, Satellitenmaße für Vegetation und Licht aber nicht: Hsiang et al. (2013) verlangen Klimagrößen, die 'durch das Klimasystem exogen bestimmt' sind, also nicht von den Menschen vor Ort abhängen. Monatliche Temperatur und Niederschlag eines Ortes werden durch dortige Gewalt nicht messbar verändert. NDVI und Nachtlicht dagegen sind Ergebnisse menschlichen Handelns (Anbau, Weiden, Brände, Strom, Besiedlung) und damit selbst durch Konflikt beeinflussbar."
+  - "Offene Frage ERA5 gegen IMERG: ERA5 ist eine Reanalyse (Wettermodell, mit Beobachtungen abgeglichen; Hersbach et al. 2020). GPM IMERG ist eine Satelliten-Schätzung, deren Final-Run-Monatswert nach dem Steckbrief mit Regenmesser-Daten (GPCC) abgeglichen wird. Beide messen das Wetter, keines wird durch Konflikt verursacht; als Regressor ist IMERG deshalb grundsätzlich vertretbar. Ungeklärt und hier nicht belegt: (a) ob sich die Qualität der Daten in Konfliktgebieten verschlechtert, etwa weil dort weniger Messstationen berichten (nur eigene Vermutung, kein Beleg); (b) welcher der beiden Niederschlagsdatensätze in Afrika besser passt (die Wahl des Wetterdatensatzes kann Ergebnisse verändern; siehe Auffhammer et al. 2013, dessen Einzelaussagen ich nicht im Volltext geprüft habe). Vorschlag: ERA5 als Hauptquelle für Temperatur und Niederschlag, IMERG nur als offen benannte Vergleichsrechnung; weichen die Ergebnisse ab, wird das berichtet und nicht ausgewählt."
+  - "Räumliche Zusammenfassung: Die Studien in Hsiang et al. (2013, Tabelle 1) arbeiten mit Ländern, Provinzen, Gemeinden und Gitterzellen (bis 0,25 Grad) und kommen unterschiedlich weit; Ergebnisse auf Länderebene und auf Zellebene sind nicht ohne Weiteres vergleichbar (Zusammenfassen glättet Wetter und Konfliktorte). ALEPH soll beide Ebenen getrennt rechnen und nicht mitteln. Auf Zellebene entstehen sehr viele Nullen; ACLED-Ereignisse mit grober Ortsangabe (geo_precision) können in die falsche Zelle fallen."
+  - "ACLED-Abdeckung wächst mit der Zeit (Steckbrief: Afrika seit 1997, andere Regionen erst 2015-2022; Angaben aus Drittquelle, nicht im Original geprüft). Ein Anstieg der Ereignisse kann dadurch bloß Beobachtung sein. Die festen Zeiteffekte g_t fangen nur gleichzeitige, überall gleich laufende Sprünge ab, nicht regional unterschiedliche. Darum: Prüfung zuerst nur auf Afrika (volle Abdeckung im Zeitraum) oder pro Land erst ab dokumentiertem Abdeckungsbeginn. Zusätzlich hängt die Erfassung von der Presselage ab; ob sie mit dem Wetter zusammenhängt (z. B. Erreichbarkeit in der Regenzeit), ist eine offene Vermutung, nicht belegt."
+  - "Das Konfliktmaß unterscheidet sich von den Maßen der Originalstudien: HBM fassen sehr verschiedene Ergebnisse zusammen (u. a. Bürgerkriegsausbruch, Bürgerkriegs-Häufigkeit, Unruhen, Gewalt zwischen Gruppen), meist jährlich; ACLED liefert Ereigniszahlen mit Tagesdatum. Die Zahlen 14 Prozent bzw. 4 Prozent sind deshalb keine Vorhersage für ACLED-Ereigniszahlen je Zelle und Monat und dürfen nicht als Sollwert verwendet werden."
+  - "Temperatur und Niederschlag hängen zusammen (in den Tropen oft negativ korreliert; Quelle); wird nur eine Größe eingebaut, kann sie den Einfluss der anderen mit aufnehmen. Beide gemeinsam schätzen. Räumliche und zeitliche Nachbarschaft der Fehler ist zu beachten; viele Zellen, viele Verzögerungen und zwei Klimamaße erzeugen Zufallstreffer (Korrektur für mehrfaches Testen; Verzögerungen und Maße vorab festlegen, siehe bedingungen)."
+  - "Feste Zeiteffekte nehmen alle Schwankungen heraus, die überall gleichzeitig laufen. Dadurch kann ALEPH globale Klima-Indizes wie El Niño (in HBM als Studie aufgeführt) so nicht prüfen, sondern nur Unterschiede zwischen Orten im selben Monat."
+  - "Kurzer Zeitraum: 156 Monate (2013-2025) geben für die Standardabweichung je Zelle und Kalendermonat nur 13 Werte je Monat; die Standardabweichung ist damit unsicher. Ob ERA5 (Reanalyse) für die Basislinie weiter zurückreicht, ist im Steckbrief noch nicht geprüft."
+  - "Lizenz: ACLED erlaubt laut Steckbrief nicht-kommerzielle und wissenschaftliche Nutzung, aber keinen direkten Zugriff Dritter auf Rohdaten; öffentlich angezeigt werden dürfen nur zusammengefasste Werte (Zahl je Zelle oder Region und Monat), mit sichtbarer Quellenangabe. Ausdrücklich verboten ist die Nutzung zum Trainieren von KI-Systemen; ein statistischer Test wie hier gilt nach dem Steckbrief als vermutlich unproblematisch, der Grenzfall ist aber nicht mit ACLED geklärt. Die Zugriffsstufe eines kostenlosen Kontos (volle Einzelereignisse oder nur zeitversetzt/aggregiert) ist im Steckbrief ausdrücklich ungeklärt."
+
+datenbedarf:
+  - {layer: era5_temperatur, rolle: ursache, status: geplant, anmerkung: "Nur in ARCHITECTURE.md Abschnitt 5 genannt (Copernicus Climate Data Store), kein Steckbrief, nichts geladen. Auflösung, Zeitraum und Zugang sind noch nicht geprüft; Steckbrief durch den datenquellen-scout nötig."}
+  - {layer: era5_niederschlag, rolle: ursache, status: geplant, anmerkung: "Wie ERA5-Temperatur; kein Steckbrief, nichts geladen. Hauptquelle für Niederschlag in diesem Eintrag."}
+  - {layer: niederschlag, rolle: "ursache (nur Vergleichsrechnung)", status: geplant, anmerkung: "GPM IMERG: Steckbrief vorhanden (docs/sources/gpm_imerg.md), noch nichts geladen. 0,1 Grad, 2013-2025, monatlich; Umrechnung auf 0,25 Grad braucht flächengewichtete Mittelung (Faktor 2,5); Final-Run-Latenz etwa 3,5 Monate. Ob als Regressor vertretbar: offene Frage, siehe fallstricke."}
+  - {layer: acled, rolle: wirkung, status: geplant, anmerkung: "Steckbrief vorhanden (docs/sources/acled.md), noch nichts geladen, Konto nicht eingerichtet. Ereignisliste (kein Raster): muss pro Zelle und Monat gezählt werden. Zugriffsstufe des kostenlosen Kontos ungeklärt. Abdeckung außerhalb Afrikas erst 2015-2022. Öffentlich nur zusammengefasst zeigbar."}
+  - {layer: nachtlicht, rolle: "ausgeschlossen (weder Ursache noch Kontrolle)", status: "in Arbeit", anmerkung: "VNP46A3-Lauf läuft (nur Suomi-NPP, 0,25 Grad, monatlich); wird für diese Theorie nicht gebraucht und darf hier nicht als Regressor dienen. Kann nur in anderen Theorien Wirkung sein."}
+  - {layer: vegetation_ndvi, rolle: "ausgeschlossen (weder Ursache noch Kontrolle)", status: geplant, anmerkung: "MOD13C2: Steckbrief vorhanden, nichts geladen; in diesem Eintrag nicht als Regressor zulässig (umgekehrte Wirkung, Zwischenweg)."}
+  - {layer: verwaltungsgrenzen_land, rolle: "Zuordnung für die Länderebene", status: fehlt, anmerkung: "Für die Länder-Aggregation nötig (ACLED liefert einen Länderschlüssel; für Wetterdaten wird ein Grenzdatensatz gebraucht). In ARCHITECTURE.md Abschnitt 4 als 'zweite räumliche Ebene' vorgesehen, aber kein Layer und kein Steckbrief; Quelle offen."}
+  - {layer: ernte_und_nahrungspreise, rolle: "Wirkweg (nicht für diese Prüfung nötig)", status: fehlt, anmerkung: "Nirgends geplant. Wird nur gebraucht, wenn später der Wirkweg geprüft werden soll; für die Frage 'gibt es den Zusammenhang' nicht nötig."}
+
+status: ungeprüft
+prüfergebnisse: []

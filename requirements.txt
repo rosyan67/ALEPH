@@ -15,3 +15,8 @@ pyyaml==6.0.3
 # Neuere pyproj-Versionen haben kein fertiges Paket für macOS 12 (nur 13 bzw. 15).
 # 3.7.0 ist die letzte Version mit fertigem Paket. Bei einem Systemupdate aufheben.
 pyproj==3.7.0
+# Ländergrenzen (aleph/layers/natural_earth.py). Waren schon installiert, standen hier nicht (nachgetragen 2026-09-25).
+geopandas==1.1.4
+shapely==2.1.2
+pyogrio==0.13.0
+requests==2.34.2
