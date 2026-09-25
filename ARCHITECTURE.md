@@ -54,6 +54,7 @@ Karte mit Filtern, Zeitreihen, Theorie-Status und Nachrichtenkontext
 **Räumlich (Vorschlag):** globales Gitter mit 0,25° Kantenlänge (am Äquator ca. 28 km), 1440 × 720 Zellen.
 - Feiner aufgelöste Quellen (z. B. Nachtlicht 500 m) werden pro Zelle zusammengefasst: Mittelwert und Anzahl gültiger Beobachtungen.
 - Zweite räumliche Ebene: **Verwaltungseinheiten** (Länder, später Regionen). Wirtschaftsdaten wie BIP oder Handel gibt es nur auf dieser Ebene. Sie werden dort verknüpft und nie künstlich auf Gitterzellen verteilt.
+- **Ländergrenzen** (seit 2026-09-25): nur aus Natural Earth, Admin 0 – Countries, 1:10m, Version 5.1.1, Standarddatei („de facto“ nach Anbieterregel, nicht die Kontrolle vor Ort), geladen mit `aleph/layers/natural_earth.py` nach `raw/natural_earth/5.1.1/`. Verknüpfungsschlüssel zur Weltbank ist `land_iso3` (Feld ISO_A3_EH plus Korrekturen Kosovo → XKX, Jersey/Guernsey → CHI). Scheitert der Download, bricht das Modul ab; Grenzen werden nie fest in den Code geschrieben oder nachgebaut. Steckbrief: `docs/sources/natural_earth.md`. Wie Zellen Ländern zugeordnet werden (Zellmitte oder Flächenanteil), ist noch nicht entschieden: Bei Zuordnung über die Zellmitte bekommen 26 der 217 Weltbank-Länder keine Zelle.
 
 **Zeitlich (Vorschlag):** monatlich.
 - Tagesdaten werden zu Monatswerten zusammengefasst.
