@@ -326,8 +326,10 @@ def test_durchsatz_zaehlt_erst_ab_download_beginn(tmp_path):
     os.utime(p, (jetzt.timestamp() - 60, jetzt.timestamp() - 60))
     assert vnp46a3_status.durchsatz_im_ordner(tmp_path, jetzt, 30) == pytest.approx(1200 / 1800)
     assert vnp46a3_status.durchsatz_im_ordner(tmp_path, jetzt, 30, download_seit=beginn) == pytest.approx(1200 / 600)
-    # zu kurzes Fenster: kein Wert statt eines Zufallswerts
+    # zu kurzes Fenster (unter 10 Minuten): kein Wert statt eines Scheinwerts
     assert vnp46a3_status.durchsatz_im_ordner(tmp_path, jetzt, 30, download_seit=jetzt) is None
+    assert vnp46a3_status.durchsatz_im_ordner(
+        tmp_path, jetzt, 30, download_seit=datetime(2026, 9, 26, 12, 20, tzinfo=timezone.utc)) is None
 
 
 def test_protokoll_merkt_download_beginn_und_teilstufe():

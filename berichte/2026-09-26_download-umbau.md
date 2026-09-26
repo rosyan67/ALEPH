@@ -177,3 +177,4 @@ Der Download ist repariert und läuft wieder. Die Hauptursache der Zurückstellu
 ## Nachtrag Tests (nach der Status-Korrektur)
 
 - `.venv/bin/python -m pytest -q` → **605 passed**, 0 übersprungen (367,6 s). Neu dazugekommen sind 3 Tests zur Status-Anzeige (Durchsatz ab Download-Beginn, Teilstufe, kein falsches „HÄNGT“).
+- Nachbesserung Status: Der laufende Monat zählt für den Durchsatz erst ab 10 Minuten nach Download-Beginn (vorher Scheinwert 0,2 MB/s während der Prüfung vorhandener Kacheln). Tests Status/Fehlerverhalten/Stillstand: 79 passed.

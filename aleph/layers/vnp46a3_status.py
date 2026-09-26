@@ -43,6 +43,7 @@ REGION_ANTEIL_DATEN = 14.9 / 33.1
 RECHNEN_MINUTEN_JE_MONAT = 6.5
 # Zeitfenster für den aktuellen Durchsatz (Dateien im Rohordner des laufenden Monats).
 DURCHSATZ_FENSTER_MINUTEN = 30
+DURCHSATZ_MINDESTFENSTER_MINUTEN = 10
 
 _ZEIT = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) UTC\s+(.*)$")
 _MONAT_START = re.compile(r"^(\d{4})-(\d{2}): Start ")
@@ -229,7 +230,9 @@ def durchsatz_im_ordner(
     if download_seit is not None:
         grenze = max(grenze, download_seit.timestamp())
     sekunden = jetzt.timestamp() - grenze
-    if sekunden < 120:
+    if sekunden < DURCHSATZ_MINDESTFENSTER_MINUTEN * 60:
+        # Zu kurz: Am Monatsanfang prüft der Lauf erst die vorhandenen Kacheln
+        # (bei ~500 Dateien gut 5 Minuten), das ergäbe einen Scheinwert.
         return None
     summe = 0
     for p in ordner.iterdir():
