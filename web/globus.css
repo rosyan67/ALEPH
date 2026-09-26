@@ -1,0 +1,91 @@
+:root {
+  --raum: #04060b;
+  --flaeche: rgba(14, 18, 28, 0.92);
+  --rand: rgba(255, 255, 255, 0.12);
+  --text: #e8eaef;
+  --text-leise: #a3a9b6;
+  --akzent: #f2c46d;
+  --keine-a: #8a9099;
+  --keine-b: #707680;
+  --duenn-a: #b0a080;
+  --duenn-b: #786e5c;
+  --umstritten: #e69f00;
+  --besetzt: #cc79a7;
+  --sonder: #56b4e9;
+  --fehler: #c8423a;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--raum); color: var(--text); }
+#map { position: absolute; inset: 0; }
+.maplibregl-ctrl-attrib { font-size: 11px; }
+
+.panel {
+  position: absolute; top: 12px; z-index: 5;
+  background: var(--flaeche); border: 1px solid var(--rand); border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font-size: 13px; line-height: 1.4;
+  max-height: calc(100% - 24px); overflow-y: auto;
+}
+.panel--links { left: 12px; width: 330px; }
+.panel--rechts { right: 12px; width: 360px; padding: 14px 16px; max-height: calc(100% - 150px); }
+.panel-kopf { padding: 12px 14px 8px; border-bottom: 1px solid var(--rand); display: flex; gap: 10px; align-items: baseline; }
+.marke { font-weight: 600; letter-spacing: 0.18em; color: var(--akzent); }
+.untertitel { color: var(--text-leise); font-size: 12px; }
+
+.block { padding: 10px 14px; border-bottom: 1px solid var(--rand); }
+.block:last-child { border-bottom: 0; }
+.block-titel { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 6px; }
+.schalter { cursor: pointer; }
+.evidenz { font-weight: 500; font-size: 11px; padding: 2px 7px; border-radius: 99px; background: rgba(86, 180, 233, 0.16); color: #bfe3f7; white-space: nowrap; }
+.klein { font-size: 11.5px; color: var(--text-leise); }
+p.klein { margin: 6px 0 0; }
+
+.hinweis { background: rgba(242, 196, 109, 0.12); border-left: 3px solid var(--akzent); padding: 7px 9px; margin: 4px 0 8px; border-radius: 4px; }
+.hinweis--stark { background: rgba(200, 66, 58, 0.18); border-left-color: var(--fehler); }
+
+.monat-wahl { display: flex; gap: 8px; align-items: center; margin: 4px 0 8px; }
+.monat-wahl select { flex: 1; background: #1a2030; color: var(--text); border: 1px solid var(--rand); border-radius: 6px; padding: 4px 6px; font: inherit; }
+
+.legende-titel { color: var(--text-leise); font-size: 12px; margin-bottom: 4px; }
+.verlauf { height: 12px; border-radius: 3px; border: 1px solid var(--rand); }
+.verlauf-achse { position: relative; height: 16px; font-size: 10.5px; color: var(--text-leise); margin-bottom: 6px; }
+.verlauf-achse span { position: absolute; transform: translateX(-50%); top: 2px; white-space: nowrap; }
+.legende-zeile { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0; }
+.feld { flex: 0 0 22px; height: 14px; border: 1px solid var(--rand); border-radius: 2px; margin-top: 2px; }
+.feld--dunkel { background: #0b1a2e; }
+.feld--keine { background: repeating-linear-gradient(45deg, var(--keine-a) 0 4px, var(--keine-b) 4px 8px); }
+.feld--duenn { background: repeating-linear-gradient(-45deg, var(--duenn-a) 0 2px, var(--duenn-b) 2px 6px); }
+.linie { flex: 0 0 22px; height: 0; margin-top: 9px; border-top: 2px solid rgba(255, 255, 255, 0.7); }
+.linie--land { border-top-width: 1px; }
+.linie--umstritten { border-top: 3px dashed var(--umstritten); }
+.linie--besetzt { border-top: 3px dashed var(--besetzt); }
+.linie--sonder { border-top: 3px dashed var(--sonder); }
+
+details.liste summary { cursor: pointer; margin-top: 8px; color: var(--akzent); }
+details.liste input { width: 100%; box-sizing: border-box; margin: 6px 0; background: #1a2030; color: var(--text); border: 1px solid var(--rand); border-radius: 6px; padding: 4px 6px; font: inherit; }
+#sonder-liste { max-height: 240px; overflow-y: auto; }
+.listen-kopf { font-size: 11px; color: var(--text-leise); margin: 6px 0 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.listen-eintrag { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--text); padding: 3px 4px; font: inherit; cursor: pointer; border-radius: 4px; }
+.listen-eintrag:hover { background: rgba(255, 255, 255, 0.07); }
+.punkt { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+#datenstand dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; }
+#datenstand dt { color: var(--text-leise); }
+#datenstand dd { margin: 0; }
+
+.schliessen { position: absolute; top: 8px; right: 8px; background: none; border: 0; color: var(--text-leise); font-size: 16px; cursor: pointer; }
+#info-inhalt h2 { font-size: 16px; margin: 0 24px 4px 0; }
+.marken { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 10px; }
+.marke-k { font-size: 11px; padding: 2px 7px; border-radius: 99px; border: 1px solid currentColor; }
+.info-tabelle { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.info-tabelle th { text-align: left; vertical-align: top; color: var(--text-leise); font-weight: 500; padding: 4px 8px 4px 0; width: 38%; }
+.info-tabelle td { padding: 4px 0; vertical-align: top; word-break: break-word; }
+.info-abschnitt { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--rand); }
+.info-abschnitt h3 { font-size: 13px; margin: 0 0 6px; }
+.unklar { color: var(--akzent); }
+
+.zeiger { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 4; background: var(--flaeche); border: 1px solid var(--rand); border-radius: 8px; padding: 5px 10px; font-size: 12px; pointer-events: none; white-space: nowrap; }
+.fehler { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 20; background: var(--fehler); color: #fff; padding: 10px 14px; border-radius: 8px; max-width: 520px; font-size: 13px; }
+.pruef-banner { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 15; background: #b3261e; color: #fff; font-weight: 700; padding: 10px 16px; border-radius: 8px; max-width: 560px; text-align: center; letter-spacing: 0.02em; }

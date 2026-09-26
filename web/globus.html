@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ALEPH Globus – Nachtlicht und Einheiten</title>
+<meta name="description" content="Nachtlicht (NASA VIIRS Black Marble VNP46A3) aus dem ALEPH-Würfel und Länder/Sondereinheiten nach UN-Sicht. Nur vollständig geladene Monate, fehlende Daten sichtbar markiert." />
+<link rel="stylesheet" href="vendor/maplibre-gl-5.19.0/maplibre-gl.css" />
+<link rel="stylesheet" href="globus.css" />
+</head>
+<body>
+  <div id="map" aria-label="Globus"></div>
+
+  <div id="pruef-banner" class="pruef-banner" hidden>
+    PRÜFANSICHT – unvollständiger Monat (Status 2), nur zum Prüfen der Darstellung. Nicht verwenden.
+  </div>
+
+  <aside class="panel panel--links" aria-label="Datenstand und Legende">
+    <header class="panel-kopf">
+      <span class="marke">ALEPH</span>
+      <span class="untertitel">Globus · Nachtlicht und Einheiten</span>
+    </header>
+
+    <section class="block" id="block-nachtlicht">
+      <div class="block-titel">
+        <label class="schalter"><input type="checkbox" id="an-nachtlicht" checked> Nachtlicht</label>
+        <span class="evidenz" title="Direkt in Satellitendaten gemessen (ARCHITECTURE.md Abschnitt 2)">Evidenzstufe: beobachtet</span>
+      </div>
+      <div id="nachtlicht-hinweis" class="hinweis" hidden></div>
+      <div id="monat-wahl" class="monat-wahl" hidden>
+        <label for="monat">Monat</label>
+        <select id="monat"></select>
+      </div>
+      <div class="legende" id="legende">
+        <div class="legende-titel">Mittlere Strahldichte, <span id="einheit">nW·cm⁻²·sr⁻¹</span></div>
+        <div class="verlauf" id="verlauf"></div>
+        <div class="verlauf-achse" id="verlauf-achse"></div>
+        <div class="legende-zeile"><span class="feld feld--dunkel"></span><span>0 = gemessen dunkel (z. B. Meer, Wüste), angezeigt als „unter 0,1“</span></div>
+        <div class="legende-zeile"><span class="feld feld--keine"></span><span><b>keine Daten</b>: keine Kachel, Polarsommer ohne Nacht oder Fehlwert −999,9</span></div>
+        <div class="legende-zeile"><span class="feld feld--duenn"></span><span><b>Datenlage unzureichend</b>: unter <span id="min-proz">50</span> % der Pixel im Monat beobachtet (Rest aus historischen Daten aufgefüllt oder ohne gültigen Wert)</span></div>
+        <p class="klein">Grau schraffierte Flächen sind nie „dunkel“, sondern ohne Messung. Werte auf zwei gültige Ziffern gerundet; 0,25°-Zellen (am Äquator ca. 28 km).</p>
+      </div>
+    </section>
+
+    <section class="block" id="block-einheiten">
+      <div class="block-titel">
+        <label class="schalter"><input type="checkbox" id="an-grenzen" checked> Länder und Sondereinheiten</label>
+      </div>
+      <div id="einheiten-hinweis" class="hinweis" hidden></div>
+      <div id="einheiten-legende">
+        <div class="legende-zeile"><span class="linie linie--land"></span> Staat bzw. Gebiet (Grundeinheit, Umriss Natural Earth)</div>
+        <div class="legende-zeile"><span class="linie linie--umstritten"></span> umstritten</div>
+        <div class="legende-zeile"><span class="linie linie--besetzt"></span> besetzt / Konfliktzone</div>
+        <div class="legende-zeile"><span class="linie linie--sonder"></span> Sonderstatus / autonom</div>
+        <p class="klein">Sondereinheiten sind eigene Einheiten und gehen nie still im Staat auf. Anklicken zeigt UN-Eintrag, Anspruch, Verwaltung und Quelle – nur was in der Einheitentabelle belegt ist. Umrisse und Kennzeichnung: fester Stand Mai 2022, unabhängig vom gewählten Monat.</p>
+        <details class="liste">
+          <summary>Liste der Sondereinheiten (<span id="anzahl-sonder">0</span>)</summary>
+          <input id="suche" type="search" placeholder="Name suchen …" autocomplete="off" />
+          <div id="sonder-liste"></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="block klein" id="block-stand">
+      <div class="block-titel">Datenstand und Quellen</div>
+      <div id="datenstand"></div>
+    </section>
+  </aside>
+
+  <aside class="panel panel--rechts" id="info" hidden aria-label="Angaben zur angeklickten Stelle">
+    <button class="schliessen" id="info-zu" aria-label="Schließen">✕</button>
+    <div id="info-inhalt"></div>
+  </aside>
+
+  <div id="zeiger" class="zeiger" hidden></div>
+  <div id="fehler" class="fehler" hidden></div>
+
+  <!-- Daten: von aleph/export/globus.py erzeugt (nur Ausgabedateien, keine Zugangsdaten) -->
+  <script src="daten/datenstand.js"></script>
+  <script src="daten/einheiten.js"></script>
+  <script src="vendor/maplibre-gl-5.19.0/maplibre-gl.js"></script>
+  <script src="globus.js"></script>
+</body>
+</html>

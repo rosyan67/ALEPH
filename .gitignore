@@ -32,3 +32,6 @@ dist/
 
 # macOS
 .DS_Store
+
+# Vom Export erzeugte Daten für den Globus (aleph/export/globus.py)
+web/daten/
