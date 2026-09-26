@@ -78,11 +78,14 @@ stille Drosselung ohne Fehlermeldung). Deshalb:
   (weiterhin dieselbe NASA-Bibliothek, ARCHITECTURE.md Abschnitt 5 - hier
   wird nur die Nebenläufigkeit und das Zeitlimit von außen gesteuert,
   keine eigene HTTP-Logik geschrieben).
-- `DATEI_TIMEOUT_SEKUNDEN` (10 Minuten) ist das Zeitlimit je Kachel -
-  deutlich kürzer als `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden) für den
-  ganzen Monat, und großzügig über der beobachteten Normaldauer einer
-  einzelnen Kachel (rund 11 Sekunden im Schnitt bei einem vollständigen
-  Monat mit voller Parallelität).
+- `DATEI_TIMEOUT_SEKUNDEN` (10 Minuten) ist das Zeitlimit je Kachel,
+  großzügig über der beobachteten Normaldauer einer einzelnen Kachel.
+- Für den ganzen Monat gibt es seit 2026-09-26 keine feste Gesamtfrist mehr,
+  sondern eine Stillstands-Erkennung (`STILLSTAND_SEKUNDEN`, 30 Minuten ohne
+  neue geprüfte Kachel) und eine großzügige Notbremse
+  (`MONAT_NOTBREMSE_SEKUNDEN`, 12 Stunden). Die frühere Frist von 4 Stunden
+  stellte auch Monate zurück, deren Kacheln stetig ankamen, nur langsamer
+  (Diagnose berichte/2026-09-26_diagnose-download.md).
 - `GLEICHZEITIGE_DOWNLOADS_STANDARD` begrenzt, wie viele Kacheln gleichzeitig
   angefragt werden (Vorschlag 2-4, siehe LOG.md 2026-09-23). Einstellbar je
   Aufruf (`lade_monat`, `download`) und über `--gleichzeitig` beim
@@ -130,7 +133,7 @@ import threading
 import time
 import warnings
 from calendar import monthrange
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -192,14 +195,29 @@ FERTIG_VARIABLE = "monat_fertig"
 WUERFEL_DIMS = ("zeit", "breite", "laenge")
 WUERFEL_CHUNKS = (1, 180, 720)  # ein Monat je Chunk-Schicht
 
-# Zeitlimit für den Download eines ganzen Monats. Großzügig über der
-# beobachteten Normaldauer (92,8 Minuten für einen vollständigen Monat,
-# gemessen 2026-09-22), damit legitime Langsamkeit nicht abgebrochen wird -
-# aber begrenzt, weil eine hängengebliebene Netzwerkverbindung sonst
-# unbegrenzt weiterlaufen würde (ebenfalls beobachtet, 2026-09-22). Dient
-# seit 2026-09-23 als Sicherheitsnetz für den GANZEN Monat; das eigentliche
-# Zeitlimit pro Kachel ist DATEI_TIMEOUT_SEKUNDEN (siehe unten).
-DOWNLOAD_TIMEOUT_SEKUNDEN = 4 * 60 * 60  # 4 Stunden
+# Stillstands-Erkennung für den Download eines Monats (Umbau 2026-09-26; ersetzt
+# die frühere feste Gesamtfrist von 4 Stunden, die am 25./26.09. vier Monate
+# zurückstellte, obwohl bis zuletzt 88-142 Kacheln je Stunde ankamen).
+# Ein Monat gilt nur als hängend, wenn so lange KEINE neue, gegen Größe und MD5
+# geprüfte Kachel fertig wird. Warum 30 Minuten:
+# - Eine einzelne hängende Verbindung löst schon das Zeitlimit je Kachel
+#   (DATEI_TIMEOUT_SEKUNDEN, 10 Minuten) mit neuem Versuch; das soll den Monat
+#   nicht abbrechen. 30 Minuten sind drei solche Zeitlimits.
+# - Bei mehreren gleichzeitigen Downloads wird normalerweise alle 0,5-2 Minuten
+#   eine Kachel fertig (gemessen 2026-09-25/26). Eine sehr große Kachel
+#   (bis 158,5 MB, Manifest 2024-01) bekommt je Versuch ein größenabhängiges
+#   Zeitlimit (KACHEL_MINDESTRATE_BYTES_JE_S, siehe dort); die 30 Minuten gelten
+#   für den ganzen Monat, in dem parallel weitere Kacheln fertig werden.
+# - Eine kurze Serverstörung (5xx) wird je Kachel bis zu 30 Minuten wiederholt
+#   (KACHEL_RETRY_BUDGET_SEKUNDEN); dauert sie länger, ist Zurückstellen richtig.
+STILLSTAND_SEKUNDEN = 30 * 60
+
+# Notbremse: So lange darf der Download EINES Monats insgesamt dauern, auch
+# wenn noch Kacheln ankommen. Nur gegen einen praktisch endlosen Monat bei
+# extrem langsamer Leitung. Ein vollständiger Monat hat etwa 28-33 GB
+# (Manifest 2024-01: 33,1 GB); 12 Stunden greifen also erst unter etwa
+# 0,75 MB/s. Greift sie, wird der Monat mit eigener Meldung zurückgestellt.
+MONAT_NOTBREMSE_SEKUNDEN = 12 * 60 * 60
 
 # Zeitlimit je einzelner Kachel. earthaccess.download() setzt selbst kein
 # Zeitlimit für die HTTP-Anfrage (session.get ohne timeout=), eine
@@ -208,6 +226,24 @@ DOWNLOAD_TIMEOUT_SEKUNDEN = 4 * 60 * 60  # 4 Stunden
 # Schnitt bei vollem Durchsatz), aber kurz genug, um einen echten Hänger
 # rasch zu erkennen und neu zu versuchen.
 DATEI_TIMEOUT_SEKUNDEN = 10 * 60  # 10 Minuten
+
+# Das Zeitlimit je Versuch misst die GESAMTzeit eines Downloads, nicht Stillstand
+# (earthaccess meldet keinen Fortschritt nach außen). Damit eine große Kachel auch
+# bei langsamer Leitung in EINEM Versuch fertig werden kann, wächst das Limit mit
+# der Dateigröße: max(DATEI_TIMEOUT_SEKUNDEN, Größe / diese Mindestrate).
+# 0,1 MB/s je Verbindung: gemessen wurden am 26.09. 0,6-1,6 MB/s je Verbindung;
+# die größte Kachel (158,5 MB) bekommt so 26 Minuten. (Auflage statistik-pruefer
+# 2026-09-26: vorher konnte eine 158-MB-Kachel unter 0,26 MB/s nie fertig werden,
+# und jeder Neuversuch startete einen zusätzlichen Datenstrom.) Unter 0,1 MB/s je
+# Verbindung bleibt das möglich - dann greift ohnehin bald die Notbremse.
+KACHEL_MINDESTRATE_BYTES_JE_S = 100_000
+
+
+def kachel_zeitlimit(groesse_bytes: int | None) -> float:
+    """Zeitlimit für EINEN Ladeversuch einer Kachel dieser Größe (Sekunden)."""
+    if not groesse_bytes:
+        return DATEI_TIMEOUT_SEKUNDEN
+    return max(DATEI_TIMEOUT_SEKUNDEN, groesse_bytes / KACHEL_MINDESTRATE_BYTES_JE_S)
 
 # Zeit, die eine Kachel bei vorübergehenden Fehlern (5xx, Zeitüberschreitung)
 # insgesamt bekommt, Versuche und Pausen zusammengezählt. Danach wird der
@@ -286,6 +322,14 @@ MONAT_LEER = 0
 MONAT_FERTIG = 1
 MONAT_UNVOLLSTAENDIG = 2
 MONAT_WIRD_GESCHRIEBEN = 3
+# 4 = vollständig NUR für die Region Afrika-Europa-Asien (Vorrang beim Laden,
+# seit 2026-09-26; Kachelliste aleph/layers/vnp46a3_kacheln_afrika_europa_asien.txt).
+# Zellen außerhalb der Region-Kacheln sind in einem solchen Monat NICHT GELADEN
+# (Wert NaN, Zähler 0 - im Würfel gleich kodiert wie „keine Daten“; nur der
+# Zustand 4 zusammen mit der Kachelliste trennt beides). Zählt NICHT als
+# vorhanden (`vorhandene_monate`, aleph/detect/wuerfel.py liefern nur 1); lesen
+# nur ausdrücklich über aleph/detect/wuerfel.py `lies_monate_mit_region`.
+MONAT_REGION_VOLLSTAENDIG = 4
 
 _KACHEL_HV = re.compile(r"\.h(\d{2})v(\d{2})\.")
 _KACHEL_DATUM = re.compile(r"\.A(\d{4})(\d{3})\.")
@@ -320,7 +364,85 @@ class ReferenzlisteVeraltet(MonatUnvollstaendig):
 
 
 class DownloadHaengt(RuntimeError):
-    """Der Download hat länger als sein Zeitlimit nicht mehr reagiert."""
+    """Der Download ist stehen geblieben: je Kachel über dem Zeitlimit, oder im
+    Monat seit `STILLSTAND_SEKUNDEN` keine neue geprüfte Kachel."""
+
+
+class DownloadZuLangsam(DownloadHaengt):
+    """Notbremse: Der Download eines Monats dauert länger als
+    `MONAT_NOTBREMSE_SEKUNDEN`, obwohl noch Kacheln ankommen. Wird wie ein
+    Hänger behandelt (Monat zurückgestellt), aber mit eigener Meldung."""
+
+
+def _abdruck(pfad: Path) -> tuple[int, int, int] | None:
+    """Fingerabdruck einer Datei (Inode, Größe, Änderungszeit in ns); None, wenn sie fehlt.
+
+    Ändert sich der Abdruck nach der MD5-Prüfung, wurde die Datei ersetzt (z. B.
+    von einem aufgegebenen Download-Faden, der später doch noch fertig wurde).
+    """
+    try:
+        st = pfad.stat()
+    except FileNotFoundError:
+        return None
+    return (st.st_ino, st.st_size, st.st_mtime_ns)
+
+
+class LadeStatistik:
+    """Zählt je Monat, was beim Laden passiert (für das Protokoll; thread-sicher).
+
+    - `neu_anzahl`, `neu_bytes`: in diesem Versuch neu geladene und geprüfte Kacheln
+    - `verworfen`: Kacheln, deren Größe oder MD5 nicht zum Katalog passte und die
+      deshalb gelöscht und neu geladen wurden
+    - `wiederholungen`: erneute Versuche nach Netzfehler oder Zeitüberschreitung
+    """
+
+    def __init__(self):
+        self._sperre = threading.Lock()
+        self.neu_anzahl = 0
+        self.neu_bytes = 0
+        self.verworfen = 0
+        self.verworfen_endgueltig = 0
+        self.wiederholungen = 0
+        self.abdruecke: dict[Path, tuple] = {}
+
+    def merke(self, pfad: Path) -> None:
+        """Fingerabdruck einer eben gegen Größe und MD5 geprüften Datei festhalten."""
+        with self._sperre:
+            self.abdruecke[pfad] = _abdruck(pfad)
+
+    def neu(self, groesse: int) -> None:
+        with self._sperre:
+            self.neu_anzahl += 1
+            self.neu_bytes += groesse
+
+    def verwerfe(self) -> None:
+        with self._sperre:
+            self.verworfen += 1
+
+    def wiederhole(self) -> None:
+        with self._sperre:
+            self.wiederholungen += 1
+
+    def verwerfe_endgueltig(self) -> None:
+        with self._sperre:
+            self.verworfen_endgueltig += 1
+
+    def text(self, dauer_sekunden: float, zustand: str) -> str:
+        """Protokollzeile. `zustand`: „vollständig geladen" oder „abgebrochen".
+
+        MB/s = geprüfte Nutzdaten (neu geladene Kacheln, die Größe und MD5 bestanden)
+        geteilt durch die ganze Dauer einschließlich Wartezeiten; verworfene und
+        doppelt übertragene Bytes zählen nicht. Wiederholungen: nur die eigenen
+        erneuten Versuche, ohne die bis zu 3 internen Versuche von earthaccess.
+        """
+        mbs = self.neu_bytes / 1e6 / dauer_sekunden if dauer_sekunden > 0 else 0.0
+        return (
+            f"Download-Statistik ({zustand}): {self.neu_anzahl} Kacheln neu geladen ({self.neu_bytes / 1e9:.1f} GB) "
+            f"in {dauer_sekunden / 60:.1f} Minuten, {mbs:.2f} MB/s geprüfte Nutzdaten einschließlich Wartezeit; "
+            f"{self.verworfen} nach Größen-/MD5-Prüfung verworfen (davon {self.verworfen_endgueltig} nicht mehr neu "
+            f"geladen); {self.wiederholungen} Wiederholungen nach Netzfehler oder Zeitüberschreitung "
+            "(ohne interne Versuche von earthaccess)."
+        )
 
 
 class AnmeldungFehlgeschlagen(RuntimeError):
@@ -397,10 +519,38 @@ class KachelEintrag:
 
 @dataclass
 class MonatsLadung:
-    """Ergebnis von `lade_monat`: die geladenen Dateien und der Zustand jeder Position."""
+    """Ergebnis von `lade_monat`: die geladenen Dateien und der Zustand jeder Position.
+
+    Seit 2026-09-26 zusätzlich: `katalog_positionen` (alle Positionen, die der
+    Katalog für den GANZEN Monat meldete, auch außerhalb einer Stufe) und
+    `abdruecke` (Fingerabdruck jeder geprüften Datei, für `pruefe_ladung_unveraendert`).
+    """
 
     dateien: list[Path]
     zustaende: dict[str, KachelEintrag]
+    katalog_positionen: set[str] = field(default_factory=set)
+    abdruecke: dict = field(default_factory=dict)
+
+
+def pruefe_ladung_unveraendert(ladung: MonatsLadung) -> None:
+    """Direkt vor dem Verkleinern: sind alle geprüften Dateien noch dieselben? Sonst Abbruch.
+
+    Schließt die Lücke zwischen der Prüfung in `lade_monat` und dem Lesen
+    (Rest-Befund zu Auflage A1, statistik-pruefer 2026-09-26). Ohne Fingerabdrücke
+    (ältere Aufrufer, Test-Attrappen) wird nichts geprüft.
+    """
+    if not ladung.abdruecke:
+        return
+    geladen = {p: e for p, e in ladung.zustaende.items() if e.zustand == ZUSTAND_GELADEN}
+    pfade = {_position(d.name): d for d in ladung.dateien}
+    schlecht = pruefe_unveraendert(
+        {p: pfade[p] for p in geladen if p in pfade}, {p: e.soll for p, e in geladen.items()}, ladung.abdruecke
+    )
+    if schlecht:
+        raise MonatUnvollstaendig(
+            f"{len(schlecht)} Kachel(n) wurden nach der Prüfung verändert und passen nicht mehr "
+            f"(z. B. {next(iter(schlecht.values()))[:200]}). Nichts geschrieben; Monat wird erneut versucht."
+        )
 
 
 class _ZugangsWaechter:
@@ -742,6 +892,7 @@ def _lade_kachel(
     wartezeit_basis_sekunden: float = KACHEL_WARTEZEIT_BASIS_SEKUNDEN,
     wartezeit_max_sekunden: float = KACHEL_WARTEZEIT_MAX_SEKUNDEN,
     stopp: threading.Event | None = None,
+    statistik: LadeStatistik | None = None,
 ) -> Path:
     """Lädt eine einzelne Kachel über `earthaccess.download`, mit eigenem
     Zeitlimit und hartnäckiger Wiederholung bei vorübergehenden Fehlern.
@@ -814,6 +965,8 @@ def _lade_kachel(
                 status=status,
             ) from fehler
         verbraucht += wartezeit
+        if statistik is not None:
+            statistik.wiederhole()
 
 
 def _lade_und_pruefe_kachel(
@@ -822,6 +975,7 @@ def _lade_und_pruefe_kachel(
     ziel_ordner: Path,
     stopp: threading.Event | None = None,
     versuche: int = PRUEFSUMMEN_VERSUCHE,
+    statistik: LadeStatistik | None = None,
 ) -> Path:
     """Lädt eine Kachel (`_lade_kachel`) und prüft Name, Größe und MD5 gegen den Katalog.
 
@@ -835,11 +989,23 @@ def _lade_und_pruefe_kachel(
     versuch = 0
     while versuch < versuche:
         versuch += 1
-        pfad = _lade_kachel(granule, ziel_ordner, stopp=stopp)
+        zeitlimit = kachel_zeitlimit(getattr(soll, "groesse", None))
+        pfad = _lade_kachel(
+            granule, ziel_ordner, stopp=stopp, statistik=statistik,
+            datei_timeout_sekunden=zeitlimit,
+            retry_budget_sekunden=max(KACHEL_RETRY_BUDGET_SEKUNDEN, 3 * zeitlimit),
+        )
         grund = _pruefe_gegen_katalog(pfad, soll)
         if grund is None:
+            if statistik is not None:
+                statistik.merke(pfad)
+                statistik.neu(pfad.stat().st_size)
             return pfad
         pfad.unlink(missing_ok=True)
+        if statistik is not None:
+            statistik.verwerfe()
+            if versuch >= versuche:
+                statistik.verwerfe_endgueltig()
         if stopp is not None and stopp.is_set():
             break
     raise KachelNichtGeladen(
@@ -887,12 +1053,112 @@ def _sichte_rohordner(ziel_ordner: Path) -> dict[str, Path]:
     return brauchbar
 
 
+def pruefe_unveraendert(
+    geladen: dict[str, Path], soll_je_position: dict, abdruecke: dict[Path, tuple]
+) -> dict[str, str]:
+    """Positionen, deren Datei sich seit der Prüfung verändert hat UND nicht mehr zum Katalog passt.
+
+    Unveränderter Abdruck: in Ordnung. Veränderter Abdruck: Größe und MD5 erneut
+    prüfen (Datei wurde ersetzt, vielleicht mit gleichem Inhalt). Rückgabe:
+    Position -> Grund, nur für Dateien, die jetzt nicht mehr passen oder fehlen.
+    """
+    schlecht: dict[str, str] = {}
+    for position, pfad in geladen.items():
+        vorher = abdruecke.get(pfad)
+        jetzt = _abdruck(pfad)
+        if vorher is not None and jetzt == vorher:
+            continue
+        if jetzt is None:
+            schlecht[position] = f"{pfad.name}: nach der Prüfung verschwunden"
+            continue
+        grund = _pruefe_gegen_katalog(pfad, soll_je_position[position])
+        if grund is not None:
+            schlecht[position] = f"nach der Prüfung verändert und passt nicht mehr: {grund}"
+        else:
+            abdruecke[pfad] = jetzt
+    return schlecht
+
+
+def _sammle_kacheln(
+    future_zu_position: dict,
+    geladen: dict[str, Path],
+    fehlgeschlagen: list,
+    name: str,
+    gesamt: int,
+    statistik: LadeStatistik | None = None,
+    stillstand_sekunden: float | None = None,
+    notbremse_sekunden: float | None = None,
+) -> bool:
+    """Wartet auf die Kachel-Downloads eines Monats, mit Stillstands-Erkennung.
+
+    Trägt jede fertige, geprüfte Kachel in `geladen` ein und jede gescheiterte in
+    `fehlgeschlagen`. Fortschritt heißt: eine neue Kachel ist fertig und hat die
+    Prüfung gegen Größe und MD5 bestanden; eine gescheiterte Kachel ist KEIN
+    Fortschritt.
+
+    - Kommt `stillstand_sekunden` lang (Standard `STILLSTAND_SEKUNDEN`) keine
+      neue geprüfte Kachel dazu: `DownloadHaengt`.
+    - Dauert das Ganze länger als `notbremse_sekunden` (Standard
+      `MONAT_NOTBREMSE_SEKUNDEN`), obwohl Kacheln kommen: `DownloadZuLangsam`.
+    - Echte Blocker (SSD, Speicher, Anmeldung) werden sofort weitergereicht.
+
+    Rückgabe: True, wenn nach `MAX_GESCHEITERTE_KACHELN_JE_MONAT` gescheiterten
+    Kacheln abgebrochen wurde (Server scheint gestört), sonst False.
+    Gemessen mit der monotonen Uhr (eine Uhrumstellung verfälscht nichts).
+    """
+    stillstand = STILLSTAND_SEKUNDEN if stillstand_sekunden is None else stillstand_sekunden
+    notbremse = MONAT_NOTBREMSE_SEKUNDEN if notbremse_sekunden is None else notbremse_sekunden
+    beginn = time.monotonic()
+    letzter_fortschritt = beginn
+    ausstehend = set(future_zu_position)
+
+    def rate_text() -> str:
+        if statistik is None:
+            return ""
+        dauer = time.monotonic() - beginn
+        return f", {statistik.neu_bytes / 1e6 / dauer:.2f} MB/s im Schnitt seit Beginn dieses Versuchs" if dauer > 0 else ""
+
+    while ausstehend:
+        jetzt = time.monotonic()
+        if jetzt - beginn >= notbremse:
+            raise DownloadZuLangsam(
+                f"{name}: Notbremse - der Download dieses Monats läuft seit über "
+                f"{notbremse / 3600:.0f} Stunden, obwohl noch Kacheln ankommen "
+                f"({len(geladen)} von {gesamt} Kacheln fertig{rate_text()}). Die Leitung ist "
+                "vermutlich sehr langsam. Die geladenen Kacheln bleiben im Rohordner; der Monat "
+                "wird später erneut versucht."
+            )
+        if jetzt - letzter_fortschritt >= stillstand:
+            raise DownloadHaengt(
+                f"{name}: Stillstand - seit {stillstand / 60:.0f} Minuten ist keine neue, geprüfte "
+                f"Kachel mehr fertig geworden ({len(geladen)} von {gesamt} Kacheln fertig{rate_text()}). "
+                "Die geladenen Kacheln bleiben im Rohordner; der Monat wird später erneut versucht."
+            )
+        warte = min(stillstand - (jetzt - letzter_fortschritt), notbremse - (jetzt - beginn))
+        fertig, ausstehend = concurrent.futures.wait(
+            ausstehend, timeout=max(warte, 0), return_when=concurrent.futures.FIRST_COMPLETED
+        )
+        for future in fertig:  # erst die ganze Runde eintragen (Auflage A3), dann entscheiden
+            position = future_zu_position[future]
+            try:
+                geladen[position] = future.result()
+                letzter_fortschritt = time.monotonic()
+            except (io.SSDNichtGefunden, io.SpeicherZuKnapp, AnmeldungFehlgeschlagen):
+                raise  # echter Blocker: der Lauf endet
+            except Exception as fehler:
+                fehlgeschlagen.append((position, fehler))
+        if len(fehlgeschlagen) >= MAX_GESCHEITERTE_KACHELN_JE_MONAT:
+            return True  # Server scheint gestört: Rest des Monats nicht mehr versuchen
+    return False
+
+
 def lade_monat(
     jahr: int,
     monat: int,
     ziel_ordner: Path,
     gleichzeitige_downloads: int = GLEICHZEITIGE_DOWNLOADS_STANDARD,
     melde=None,
+    positionen: set[str] | None = None,
 ) -> MonatsLadung:
     """Lädt alle VNP46A3-Kacheln eines Monats global nach `ziel_ordner`.
 
@@ -925,6 +1191,14 @@ def lade_monat(
     `melde` (optional) bekommt Textbausteine fürs Protokoll des
     Hintergrund-Laufs.
 
+    `positionen` (optional, seit 2026-09-26): nur diese Kachelpositionen laden
+    und prüfen (Vorrang einer Region). Die Katalogabfrage bleibt vollständig
+    (alle Seiten, Trefferzahl, unbekannte Positionen sind weiterhin ein Fehler);
+    danach werden Katalog UND Referenzliste auf `positionen` beschnitten, und
+    die Vollständigkeit wird für diese Teilmenge genauso streng geprüft wie
+    sonst für den ganzen Monat. `positionen` muss Teilmenge der Referenzliste
+    sein.
+
     Fehler:
     - `AnmeldungFehlgeschlagen`, `io.SpeicherZuKnapp`, `io.SSDNichtGefunden`:
       echte Blocker, sofort weitergereicht. Dazu zählt gehäuftes HTTP 403
@@ -937,9 +1211,15 @@ def lade_monat(
       abgebrochen). Der Zustand je Position hängt an der Ausnahme
       (`zustaende`); das Manifest schreibt der Aufrufer (vnp46a3_lauf.py).
       Kein Blocker; die geladenen Kacheln bleiben im Rohordner.
-    - `DownloadHaengt`: der GANZE Monat brauchte länger als
-      `DOWNLOAD_TIMEOUT_SEKUNDEN` (4 Stunden), ein Sicherheitsnetz über der
-      Kachel-Wiederholung. Ebenfalls kein Blocker.
+    - `DownloadHaengt`: seit `STILLSTAND_SEKUNDEN` (30 Minuten) ist keine
+      neue, geprüfte Kachel mehr fertig geworden (Stillstand).
+      `DownloadZuLangsam` (Unterfall): der Monat lädt länger als
+      `MONAT_NOTBREMSE_SEKUNDEN` (12 Stunden), obwohl Kacheln ankommen.
+      Beides kein Blocker; der Monat wird zurückgestellt.
+
+    Am Ende des Downloads (auch bei Abbruch) meldet `melde` eine Zeile
+    „Download-Statistik“: neu geladene Kacheln, GB, MB/s, nach Größen-/MD5-
+    Prüfung verworfene Kacheln und Wiederholungen.
     """
     if not earthdata_login():
         raise AnmeldungFehlgeschlagen("NASA-Earthdata-Login fehlgeschlagen. Zugangsdaten in .env prüfen.")
@@ -988,6 +1268,25 @@ def lade_monat(
             f"{REFERENZ_KACHELN_DATEI.name} stehen: {', '.join(unbekannt)}. Referenzliste prüfen und "
             "ergänzen (Annahme über den Anbieter); nichts geladen."
         )
+    teil_text = ""
+    katalog_positionen = set(granule_je_position)
+    if positionen is not None:
+        # Auflage B2 (statistik-pruefer 2026-09-26): Die Grenze für „beim Anbieter
+        # nicht vorhanden“ gilt für den GANZEN Monat, auch wenn nur eine Stufe
+        # geladen wird. Sonst könnten zwei Stufen zusammen doppelt so viele
+        # fehlende Positionen durchlassen wie ein ganzer Monat.
+        pruefe_fehlende_beim_anbieter(jahr, monat, referenz - katalog_positionen)
+        fremd = sorted(set(positionen) - referenz)
+        if fremd or not positionen:
+            raise ReferenzlisteVeraltet(
+                f"{jahr:04d}-{monat:02d}: Die verlangten Positionen sind leer oder stehen nicht in "
+                f"{REFERENZ_KACHELN_DATEI.name}: {', '.join(fremd[:5])}. Nichts geladen."
+            )
+        katalog_gesamt = len(treffer)
+        granule_je_position = {p: g for p, g in granule_je_position.items() if p in positionen}
+        treffer = list(granule_je_position.values())
+        referenz = referenz & set(positionen)
+        teil_text = f" für {len(referenz)} ausgewählte Positionen (Katalog gesamt {katalog_gesamt})"
 
     fehlgruende: dict[str, str] = {}
     for position, granule in granule_je_position.items():
@@ -1003,10 +1302,11 @@ def lade_monat(
     ziel_ordner.mkdir(parents=True, exist_ok=True)
     if melde is not None:
         melde(
-            f"{len(treffer)} Kacheln bei NASA gemeldet (Katalog: {gemeldet} Treffer, alle geholt; "
+            f"{len(treffer)} Kacheln bei NASA gemeldet{teil_text} (Katalog: {gemeldet} Treffer, alle geholt; "
             f"Referenzliste {len(referenz)} Positionen), Download beginnt."
         )
 
+    statistik = LadeStatistik()
     vorhanden = _sichte_rohordner(ziel_ordner)
     geladen: dict[str, Path] = {}
     offen: list[str] = []
@@ -1016,6 +1316,7 @@ def lade_monat(
         if pfad is not None:
             if _pruefe_gegen_katalog(pfad, soll) is None:
                 geladen[position] = pfad
+                statistik.merke(pfad)
                 continue
             pfad.unlink()  # passt nicht zum Katalog: wertlos, neu laden
             verworfen += 1
@@ -1027,43 +1328,33 @@ def lade_monat(
             f"passten, {len(offen)} werden noch geladen."
         )
 
-    start_zeit = time.time()
-    frist = start_zeit + DOWNLOAD_TIMEOUT_SEKUNDEN
+    beginn = time.monotonic()
     stopp = threading.Event()
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=max(1, gleichzeitige_downloads))
     future_zu_position = {
         pool.submit(
-            _lade_und_pruefe_kachel, granule_je_position[p], soll_je_position[p], ziel_ordner, stopp=stopp
+            _lade_und_pruefe_kachel, granule_je_position[p], soll_je_position[p], ziel_ordner,
+            stopp=stopp, statistik=statistik,
         ): p
         for p in offen
     }
 
     fehlgeschlagen: list[tuple[str, Exception]] = []
-    abgebrochen = False
+    sammeln_ok = False
     try:
-        for future in concurrent.futures.as_completed(future_zu_position, timeout=max(frist - time.time(), 0)):
-            position = future_zu_position[future]
-            try:
-                geladen[position] = future.result()
-            except (io.SSDNichtGefunden, io.SpeicherZuKnapp, AnmeldungFehlgeschlagen):
-                raise  # echter Blocker: der Lauf endet
-            except Exception as fehler:
-                fehlgeschlagen.append((position, fehler))
-                if len(fehlgeschlagen) >= MAX_GESCHEITERTE_KACHELN_JE_MONAT:
-                    abgebrochen = True
-                    break  # Server scheint gestört: Rest des Monats nicht mehr versuchen
-    except concurrent.futures.TimeoutError:
-        raise DownloadHaengt(
-            f"{jahr:04d}-{monat:02d}: Download reagiert seit über "
-            f"{DOWNLOAD_TIMEOUT_SEKUNDEN // 60} Minuten nicht mehr "
-            f"({len(geladen)} von {len(treffer)} Kacheln fertig). Die geladenen "
-            "Kacheln bleiben im Rohordner; der Monat wird später erneut versucht."
-        ) from None
+        abgebrochen = _sammle_kacheln(
+            future_zu_position, geladen, fehlgeschlagen, f"{jahr:04d}-{monat:02d}", len(treffer), statistik
+        )
+        sammeln_ok = True
     finally:
-        # Läuft auch bei einem Blocker: wartende Kacheln nicht mehr starten,
-        # laufende Wiederholungen beenden.
+        # Läuft auch bei Stillstand oder Blocker: wartende Kacheln nicht mehr
+        # starten, laufende Wiederholungen beenden (die gerade übertragenen
+        # Kacheln laden im Hintergrund noch zu Ende und bleiben im Rohordner).
         stopp.set()
         pool.shutdown(wait=False, cancel_futures=True)
+        dauer = time.monotonic() - beginn
+        if not sammeln_ok and melde is not None and offen:
+            melde(statistik.text(dauer, "abgebrochen"))
 
     if (
         fehlgeschlagen
@@ -1076,6 +1367,18 @@ def lade_monat(
 
     for position, fehler in fehlgeschlagen:
         fehlgruende[position] = str(fehler)[:300]
+
+    # Auflage statistik-pruefer 2026-09-26 (A1): Eine geprüfte Datei kann danach
+    # noch ersetzt worden sein (aufgegebener Download-Faden wird doch fertig und
+    # benennt seine Datei um). Dann Größe und MD5 erneut prüfen; passt es nicht,
+    # gilt die Kachel als nicht geladen.
+    veraendert = pruefe_unveraendert(geladen, soll_je_position, statistik.abdruecke)
+    for position, grund in veraendert.items():
+        del geladen[position]
+        fehlgruende[position] = grund
+    if melde is not None and offen:
+        vollstaendig = not abgebrochen and not fehlgeschlagen and not veraendert
+        melde(statistik.text(dauer, "vollständig geladen" if vollstaendig else "abgebrochen"))
     for position in granule_je_position:
         if position not in geladen and position not in fehlgruende:
             fehlgruende[position] = "nicht mehr versucht (Monat nach zu vielen Fehlschlägen abgebrochen)"
@@ -1103,7 +1406,10 @@ def lade_monat(
         )
 
     zustaende = pruefe_vollstaendigkeit(jahr, monat, len(treffer), soll_je_position, geladen, referenz)
-    return MonatsLadung(dateien=sorted(geladen.values()), zustaende=zustaende)
+    return MonatsLadung(
+        dateien=sorted(geladen.values()), zustaende=zustaende,
+        katalog_positionen=katalog_positionen, abdruecke=dict(statistik.abdruecke),
+    )
 
 
 def _passt_zum_monat(link: str, jahr: int, monat: int) -> bool:
@@ -1231,12 +1537,13 @@ def pruefe_fehlende_beim_anbieter(jahr: int, monat: int, fehlend: set[str]) -> N
         )
 
 
-def manifest_pfad(jahr: int, monat: int) -> Path:
-    return io.aleph_data_dir() / "protokoll" / "manifeste" / "vnp46a3" / f"{jahr:04d}-{monat:02d}.tsv"
+def manifest_pfad(jahr: int, monat: int, zusatz: str = "") -> Path:
+    """`zusatz` (z. B. „_afrika_europa_asien“, „_rest“) trennt die Manifeste der Stufen."""
+    return io.aleph_data_dir() / "protokoll" / "manifeste" / "vnp46a3" / f"{jahr:04d}-{monat:02d}{zusatz}.tsv"
 
 
 def schreibe_manifest(
-    jahr: int, monat: int, zustaende: dict[str, KachelEintrag], hinweis: str = ""
+    jahr: int, monat: int, zustaende: dict[str, KachelEintrag], hinweis: str = "", zusatz: str = ""
 ) -> Path:
     """Schreibt Zustand, Dateiname, Größe und MD5 je Kachelposition (Tabulator-getrennt).
 
@@ -1250,7 +1557,7 @@ def schreibe_manifest(
     Dateinamen und bleiben unverändert liegen. `hinweis` kommt als zweite
     Kopfzeile dazu (z. B. welchen Stand der Würfel beim Schreiben hatte).
     """
-    ziel = manifest_pfad(jahr, monat)
+    ziel = manifest_pfad(jahr, monat, zusatz)
     ziel.parent.mkdir(parents=True, exist_ok=True)
     zaehler = {z: sum(1 for e in zustaende.values() if e.zustand == z) for z in (
         ZUSTAND_GELADEN, ZUSTAND_NICHT_BEIM_ANBIETER, ZUSTAND_NICHT_GELADEN
@@ -1460,7 +1767,7 @@ def vorhandene_monate() -> set[tuple[int, int]]:
     return monate
 
 
-def schreibe_in_wuerfel(monatsdaten: xr.Dataset) -> None:
+def schreibe_in_wuerfel(monatsdaten: xr.Dataset, zielzustand: int = MONAT_FERTIG) -> None:
     """Schreibt einen Monat an seine Position auf der Zeitachse des Würfels.
 
     Legt den Würfel beim ersten Mal an. Die Reihenfolge der Aufrufe spielt
@@ -1476,8 +1783,13 @@ def schreibe_in_wuerfel(monatsdaten: xr.Dataset) -> None:
        noch im Rohordner (gelöscht wird erst nach Schritt 5), ein Neustart
        schreibt den Monat erneut.
     4. Zurücklesen und mit den geschriebenen Werten vergleichen.
-    5. Erst danach `monat_fertig` für diesen Monat auf 1 setzen.
+    5. Erst danach `monat_fertig` für diesen Monat auf `zielzustand` setzen:
+       1 (fertig) oder 4 (nur die Region vollständig, seit 2026-09-26). Ein
+       Monat mit Zustand 4 darf nur mit Zielzustand 1 überschrieben werden
+       (Stufe 2, nach `vereine_mit_region`), nie erneut mit 4.
     """
+    if zielzustand not in (MONAT_FERTIG, MONAT_REGION_VOLLSTAENDIG):
+        raise ValueError(f"Zielzustand {zielzustand} ist nicht erlaubt (nur 1 oder 4).")
     if monatsdaten.sizes.get("zeit") != 1:
         raise ValueError("Es muss genau ein Monat (ein Zeitschritt) übergeben werden.")
     datum = np.datetime64(monatsdaten["zeit"].values[0], "M").astype(object)
@@ -1496,10 +1808,15 @@ def schreibe_in_wuerfel(monatsdaten: xr.Dataset) -> None:
         raise WuerfelFormat("Die Gitterkoordinaten des Monats passen nicht zum Würfel. Nichts geschrieben.")
 
     with xr.open_zarr(pfad, chunks=None) as ds:
-        if int(ds[FERTIG_VARIABLE].values[index]) == MONAT_FERTIG:
-            raise MonatSchonVorhanden(
-                f"{datum.year:04d}-{datum.month:02d} ist im Würfel schon fertig und wird nicht überschrieben."
-            )
+        bisher = int(ds[FERTIG_VARIABLE].values[index])
+    if bisher == MONAT_FERTIG:
+        raise MonatSchonVorhanden(
+            f"{datum.year:04d}-{datum.month:02d} ist im Würfel schon fertig und wird nicht überschrieben."
+        )
+    if bisher == MONAT_REGION_VOLLSTAENDIG and zielzustand == MONAT_REGION_VOLLSTAENDIG:
+        raise MonatSchonVorhanden(
+            f"{datum.year:04d}-{datum.month:02d} ist für die Region schon vollständig; nur Stufe 2 darf ihn ergänzen."
+        )
 
     variablen = list(_wuerfel_variablen())
     region = {"zeit": slice(index, index + 1)}
@@ -1516,7 +1833,48 @@ def schreibe_in_wuerfel(monatsdaten: xr.Dataset) -> None:
                     "nicht identisch mit den geschriebenen Werten. Monat nicht als fertig markiert."
                 )
 
-    _setze_monatsstatus(pfad, index, MONAT_FERTIG)
+    _setze_monatsstatus(pfad, index, zielzustand)
+
+
+def vereine_mit_region(rest: xr.Dataset, region_positionen: set[str]) -> xr.Dataset:
+    """Stufe 2: ergänzt die neu geladenen übrigen Kacheln um den Region-Teil aus dem Würfel.
+
+    Voraussetzungen (sonst Abbruch, nichts geschrieben):
+    - der Monat hat im Würfel Zustand 4 (Region vollständig),
+    - `rest` enthält in den Zellen der Region-Kacheln keine Werte (NaN bzw. 0),
+      d. h. es wurde wirklich nur der Rest geladen.
+    Ergebnis: je Variable die Werte aus dem Würfel in den Region-Zellen, sonst
+    die aus `rest`. Geschrieben wird es danach mit `schreibe_in_wuerfel` (Zielzustand 1).
+    """
+    from aleph.layers.vnp46a3_regionen import zellmaske
+
+    datum = np.datetime64(rest["zeit"].values[0], "M").astype(object)
+    index = _monat_index(datum.year, datum.month)
+    name = f"{datum.year:04d}-{datum.month:02d}"
+    maske = zellmaske(region_positionen, GITTER_BREITE, GITTER_LAENGE)
+    pfad = _wuerfel_pfad()
+    _pruefe_wuerfel_format(pfad)
+    ergebnis = rest.copy(deep=True)
+    with xr.open_zarr(pfad, chunks=None) as ds:
+        if int(ds[FERTIG_VARIABLE].values[index]) != MONAT_REGION_VOLLSTAENDIG:
+            raise MonatUnvollstaendig(
+                f"{name}: Stufe 2 verlangt Zustand 4 (Region vollständig) im Würfel; nichts geschrieben."
+            )
+        for var in _wuerfel_variablen():
+            neu = ergebnis[var].values[0]
+            if np.issubdtype(neu.dtype, np.floating):
+                belegt = np.isfinite(neu) & maske
+            else:
+                belegt = (neu != 0) & maske
+            if belegt.any():
+                raise MonatStimmtNicht(
+                    f"{name}: Die nachgeladenen Kacheln haben Werte in {int(belegt.sum())} Zellen der Region "
+                    f"({var}); Region und Rest überschneiden sich. Nichts geschrieben."
+                )
+            alt = ds[var].isel(zeit=index).values
+            neu[maske] = alt[maske]
+            ergebnis[var].values[0] = neu
+    return ergebnis
 
 
 def _setze_monatsstatus(pfad: Path, index: int, wert: int) -> None:
@@ -1541,7 +1899,81 @@ MONATSSTATUS_TEXT = {
     MONAT_FERTIG: "fertig",
     MONAT_UNVOLLSTAENDIG: "unvollständig (ältere Daten, werden ersetzt)",
     MONAT_WIRD_GESCHRIEBEN: "wurde zuletzt beim Schreiben unterbrochen",
+    MONAT_REGION_VOLLSTAENDIG: "vollständig nur für Afrika-Europa-Asien (übrige Zellen nicht geladen)",
 }
+
+
+REGION_PRUEFSUMME_TEXT = "Region-Kacheln-Prüfsumme"
+
+
+def pruefe_stufe1_nachweis(jahr: int, monat: int, region: str) -> tuple[bool, str, set[str]]:
+    """Passt das Stufe-1-Manifest eines Monats zur aktuellen Kachelliste der Region? (Auflage B1)
+
+    Verlangt: Manifest `<Monat>_<region>.tsv` vorhanden, Kopf mit
+    `REGION_PRUEFSUMME_TEXT` gleich der Prüfsumme der aktuellen Liste, und jede
+    Region-Position darin „geladen“ oder „beim Anbieter nicht vorhanden“.
+    Rückgabe: (in Ordnung?, Grund, Positionen „beim Anbieter nicht vorhanden“).
+    """
+    from aleph.layers import vnp46a3_regionen
+
+    positionen = vnp46a3_regionen.lies_region(region)
+    pfad = manifest_pfad(jahr, monat, f"_{region}")
+    if not pfad.exists():
+        return False, f"Stufe-1-Manifest {pfad.name} fehlt", set()
+    zeilen = pfad.read_text(encoding="utf-8").splitlines()
+    erwartet = f"{REGION_PRUEFSUMME_TEXT}: {vnp46a3_regionen.pruefsumme(positionen)}"
+    if not any(erwartet in z for z in zeilen if z.startswith("#")):
+        return False, f"{pfad.name}: Kachelliste der Region hat sich seit Stufe 1 geändert (Prüfsumme)", set()
+    zustand_je_pos = {}
+    for z in zeilen:
+        if z.startswith("#") or z.startswith("position\t") or not z.strip():
+            continue
+        teile = z.split("\t")
+        zustand_je_pos[teile[0]] = teile[1]
+    erlaubt = (ZUSTAND_GELADEN, ZUSTAND_NICHT_BEIM_ANBIETER)
+    schlecht = sorted(p for p in positionen if zustand_je_pos.get(p) not in erlaubt)
+    if schlecht:
+        return False, f"{pfad.name}: Region-Positionen nicht geladen: {', '.join(schlecht[:5])}", set()
+    nba = {p for p in positionen if zustand_je_pos.get(p) == ZUSTAND_NICHT_BEIM_ANBIETER}
+    return True, "", nba
+
+
+def lies_monate_mit_region(monate: list[tuple[int, int]], variablen: list[str], region: str):
+    """Liest fertige Monate und Monate mit Zustand 4 dieser Region (siehe aleph/detect/wuerfel.py).
+
+    Die Maske wird hier aus der Kachelliste gebildet, und für jeden Monat mit
+    Zustand 4 muss sein Stufe-1-Nachweis zu genau dieser Liste passen (Auflage B1);
+    sonst `MonatUnvollstaendig`. So kann keine zu große Maske nicht geladene
+    Zellen als „geladen, 0 Pixel“ ausgeben.
+    """
+    from aleph.detect import wuerfel
+    from aleph.layers import vnp46a3_regionen
+
+    for jahr, monat in monate:
+        if monatsstatus(jahr, monat) == MONAT_REGION_VOLLSTAENDIG:
+            ok, grund, _ = pruefe_stufe1_nachweis(jahr, monat, region)
+            if not ok:
+                raise MonatUnvollstaendig(f"{jahr:04d}-{monat:02d}: {grund}; nichts geliefert.")
+    maske = vnp46a3_regionen.zellmaske(vnp46a3_regionen.lies_region(region), GITTER_BREITE, GITTER_LAENGE)
+    return wuerfel.lies_monate_mit_region(
+        _wuerfel_pfad(), monate, variablen, maske, region_zustand=MONAT_REGION_VOLLSTAENDIG
+    )
+
+
+def monate_je_zustand() -> dict[int, set[tuple[int, int]]]:
+    """Alle Monate der Zeitachse, gruppiert nach `monat_fertig` (für Lauf und Status)."""
+    pfad = _wuerfel_pfad()
+    if not pfad.exists():
+        return {}
+    _pruefe_wuerfel_format(pfad)
+    with xr.open_zarr(pfad, chunks=None) as ds:
+        zeiten = ds["zeit"].values
+        werte = ds[FERTIG_VARIABLE].values
+    ergebnis: dict[int, set[tuple[int, int]]] = {}
+    for z, w in zip(zeiten, werte):
+        datum = np.datetime64(z, "M").astype(object)
+        ergebnis.setdefault(int(w), set()).add((datum.year, datum.month))
+    return ergebnis
 
 
 def markiere_unvollstaendig(monate: list[tuple[int, int]]) -> list[tuple[int, int]]:

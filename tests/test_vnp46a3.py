@@ -558,12 +558,17 @@ def test_lade_monat_meldet_kachelzahl(monkeypatch, tmp_path):
     monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
     meldungen = []
     vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2, melde=meldungen.append)
-    assert meldungen == [
+    assert meldungen[0] == (
         "3 Kacheln bei NASA gemeldet (Katalog: 3 Treffer, alle geholt; Referenzliste 3 Positionen), "
         "Download beginnt."
-    ]
+    )
     # Das Statusmodul liest die Zahl am Zeilenanfang; das Format muss dazu passen.
     assert vnp46a3_status._MONAT_GEMELDET.match("2024-01: " + meldungen[0]).group(3) == "3"
+    # Seit 2026-09-26: je Monat eine Zeile „Download-Statistik“, die das Statusmodul liest.
+    assert len(meldungen) == 2
+    assert meldungen[1].startswith("Download-Statistik (vollständig geladen): 3 Kacheln neu geladen")
+    st = vnp46a3_status.lies_protokoll(["2026-09-26 12:00:00 UTC  2024-01: " + meldungen[1]])["statistik"]
+    assert st[0]["kacheln"] == 3 and st[0]["zustand"] == "vollständig geladen" and st[0]["verworfen"] == 0
 
 
 # --- Lauf: Reihenfolge und Protokoll ----------------------------------------

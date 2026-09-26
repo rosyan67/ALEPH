@@ -14,7 +14,7 @@ OK / ACHTUNG / HÄNGT / GESTOPPT / FERTIG / FERTIG MIT LÜCKEN.
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from aleph.core import io
@@ -30,12 +30,36 @@ WARNUNG_RECHNEN_MINUTEN = 45
 # Mittlere Kachelzahl je Monat laut NASA-Katalog: 84 135 Kacheln / 156 Monate.
 MITTLERE_KACHELN_JE_MONAT = 84135 / 156
 
+# Datenmenge eines vollständigen Monats, als Spanne (für die Hochrechnung nach
+# Datenmenge, seit 2026-09-26). Untere Grenze: Rohordner 2018-01 mit 502 von
+# 540 Kacheln = 26,3 GB, auf 540 hochgerechnet etwa 28 GB. Obere Grenze:
+# Manifest 2024-01, alle 540 Kacheln laut Katalog = 33,1 GB. Gemessen nur an
+# diesen zwei Monaten; andere Monate können abweichen (Nicht geprüft).
+GB_JE_MONAT_SPANNE = (28.0, 33.1)
+# Anteil der Region Afrika-Europa-Asien (188 Kacheln) an der Datenmenge eines
+# Monats: Manifest 2024-01, 14,9 von 33,1 GB (gemessen 2026-09-26, nur dieser Monat).
+REGION_ANTEIL_DATEN = 14.9 / 33.1
+# Verkleinern und Schreiben je Monat (gemessen 2026-09-23/24: 6,0-7,4 Minuten).
+RECHNEN_MINUTEN_JE_MONAT = 6.5
+# Zeitfenster für den aktuellen Durchsatz (Dateien im Rohordner des laufenden Monats).
+DURCHSATZ_FENSTER_MINUTEN = 30
+
 _ZEIT = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) UTC\s+(.*)$")
 _MONAT_START = re.compile(r"^(\d{4})-(\d{2}): Start ")
 _MONAT_GEMELDET = re.compile(r"^(\d{4})-(\d{2}): (\d+) Kacheln bei NASA gemeldet")
 _MONAT_DOWNLOAD_FERTIG = re.compile(r"^(\d{4})-(\d{2}): Download fertig")
 _MONAT_WIEDERAUFGENOMMEN = re.compile(r"^(\d{4})-(\d{2}): \d+ Kacheln aus einem früheren Versuch schon vorhanden")
 _MONAT_ZURUECKGESTELLT = re.compile(r"^(\d{4})-(\d{2}): ZURÜCKGESTELLT")
+_MONAT_STATISTIK = re.compile(
+    r"^(\d{4})-(\d{2}): Download-Statistik \(([^)]+)\): (\d+) Kacheln neu geladen \(([\d.]+) GB\) in ([\d.]+) Minuten, "
+    r"([\d.]+) MB/s geprüfte Nutzdaten.*?; (\d+) nach Größen-/MD5-Prüfung verworfen \(davon (\d+) nicht mehr neu "
+    r"geladen\); (\d+) Wiederholungen"
+)
+# So viele der letzten vollständig geladenen Monate bilden die Durchsatz-Spanne.
+DURCHSATZ_MONATE = 5
+# Abschlusszeilen der Stufen (seit 2026-09-26): nehmen den Monat aus „nachzuholen“,
+# zählen aber NICHT als ganzer Monat für die alte Kachelzeit-Schätzung.
+_MONAT_STUFE_FERTIG = re.compile(r"^(\d{4})-(\d{2}): fertig (für |\(Stufe 2)")
 _MONAT_FERTIG = re.compile(
     r"^(\d{4})-(\d{2}): fertig, (\d+) Kacheln, .*Dauer gesamt ([\d.]+) Minuten "
     r"\(Download ([\d.]+), Verkleinern und Schreiben ([\d.]+)\)"
@@ -69,6 +93,10 @@ def lies_protokoll(zeilen: list[str]) -> dict:
       übernommen wurden (nur der Rest wurde geladen). Ihre Dauer ist keine
       Messung eines ganzen Monats und bleibt aus der Restzeit-Schätzung heraus
     - `nachhol`: letzte Protokollzeile „Nachhol-Durchgang ..." (oder None)
+    - `statistik`: Liste der Zeilen „Download-Statistik" (seit 2026-09-26), je
+      dict(monat, zustand, kacheln, gb, minuten, mb_s, verworfen, verworfen_endgueltig, wiederholungen);
+      `zustand` ist „vollständig geladen" oder „abgebrochen" (Stillstand, Notbremse,
+      gescheiterte Kacheln)
     """
     ergebnis = {
         "abgeschlossen": [],
@@ -81,6 +109,7 @@ def lies_protokoll(zeilen: list[str]) -> dict:
         "lauf_beendet_offen": False,
         "wiederaufgenommen": set(),
         "nachhol": None,
+        "statistik": [],
     }
     for zeile in zeilen:
         treffer = _ZEIT.match(zeile)
@@ -117,6 +146,18 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             ergebnis["aktuell"]["gemeldet"] = int(m.group(3))
         elif _MONAT_DOWNLOAD_FERTIG.match(text) and ergebnis["aktuell"]:
             ergebnis["aktuell"]["download_fertig"] = True
+        elif m := _MONAT_STATISTIK.match(text):
+            ergebnis["statistik"].append({
+                "monat": (int(m.group(1)), int(m.group(2))),
+                "zustand": m.group(3),
+                "kacheln": int(m.group(4)),
+                "gb": float(m.group(5)),
+                "minuten": float(m.group(6)),
+                "mb_s": float(m.group(7)),
+                "verworfen": int(m.group(8)),
+                "verworfen_endgueltig": int(m.group(9)),
+                "wiederholungen": int(m.group(10)),
+            })
         elif m := _MONAT_WIEDERAUFGENOMMEN.match(text):
             ergebnis["wiederaufgenommen"].add((int(m.group(1)), int(m.group(2))))
         elif m := _MONAT_ZURUECKGESTELLT.match(text):
@@ -124,6 +165,9 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             # Grund: der Teil nach dem Standardsatz, gekürzt (die volle Meldung steht im Protokoll)
             grund = text.split("Rohdaten bleiben erhalten.", 1)[-1].strip()
             ergebnis["zurueckgestellt"][monat] = grund[:220]
+            ergebnis["aktuell"] = None
+        elif m := _MONAT_STUFE_FERTIG.match(text):
+            ergebnis["zurueckgestellt"].pop((int(m.group(1)), int(m.group(2))), None)
             ergebnis["aktuell"] = None
         elif m := _MONAT_FERTIG.match(text):
             ergebnis["abgeschlossen"].append(
@@ -160,6 +204,60 @@ def _rohordner_zustand(monat: tuple[int, int]) -> tuple[int, datetime | None]:
     return len(dateien), datetime.fromtimestamp(neueste, tz=timezone.utc)
 
 
+def durchsatz_im_ordner(ordner: Path, jetzt: datetime, fenster_minuten: float = DURCHSATZ_FENSTER_MINUTEN) -> float | None:
+    """MB/s aus den fertigen Kacheln (.h5, ohne `partial_`) im Ordner, die im Zeitfenster fertig wurden.
+
+    None, wenn im Fenster keine Kachel fertig wurde oder der Ordner fehlt.
+    Unterschätzt leicht (die gerade übertragenen Kacheln zählen noch nicht).
+    """
+    if not ordner.exists():
+        return None
+    grenze = jetzt.timestamp() - fenster_minuten * 60
+    summe = 0
+    for p in ordner.iterdir():
+        if p.suffix == ".h5" and not p.name.startswith("partial"):
+            st = p.stat()
+            if st.st_mtime >= grenze:
+                summe += st.st_size
+    return summe / 1e6 / (fenster_minuten * 60) if summe else None
+
+
+def rohdaten_bytes(basis: Path) -> int:
+    """Summe der fertigen Kacheln in allen Rohordnern (werden beim Weiterladen wiederverwendet)."""
+    if not basis.exists():
+        return 0
+    return sum(
+        p.stat().st_size for d in basis.iterdir() if d.is_dir()
+        for p in d.iterdir() if p.suffix == ".h5" and not p.name.startswith("partial")
+    )
+
+
+def hochrechnung(
+    offene_monate: int, roh_bytes: int, mb_s_min: float, mb_s_max: float | None = None, anteil: float = 1.0,
+    monate_nur_rest: int = 0,
+) -> dict:
+    """Restmenge und Restdauer als Spanne (reine Funktion, testbar).
+
+    Restmenge = offene Monate × GB_JE_MONAT_SPANNE minus die schon geladenen
+    Rohdaten; Dauer = Restmenge / Durchsatz + RECHNEN_MINUTEN_JE_MONAT je Monat.
+    Kürzeste Dauer: kleine Datenmenge bei höchstem Durchsatz; längste: große
+    Datenmenge bei kleinstem Durchsatz. ANNAHME: der Durchsatz bleibt in der
+    gemessenen Spanne; Zurückstellungen, Wiederholungen und doppelte Datenströme
+    sind nicht eingerechnet. `anteil`: Anteil der Datenmenge je Monat, der noch
+    zu laden ist (z. B. REGION_ANTEIL_DATEN für Stufe 1). `monate_nur_rest`: davon
+    so viele Monate mit Zustand 4, bei denen nur noch (1 - REGION_ANTEIL_DATEN) fehlt.
+    """
+    mb_s_max = mb_s_min if mb_s_max is None else mb_s_max
+    monate_gewichtet = (offene_monate - monate_nur_rest) * anteil + monate_nur_rest * (1 - REGION_ANTEIL_DATEN)
+    tb = [max(monate_gewichtet * gb * 1e9 - roh_bytes, 0) / 1e12 for gb in GB_JE_MONAT_SPANNE]
+    rechnen_tage = offene_monate * RECHNEN_MINUTEN_JE_MONAT / 1440
+    tage = [
+        tb[0] * 1e12 / (mb_s_max * 1e6) / 86400 + rechnen_tage,
+        tb[1] * 1e12 / (mb_s_min * 1e6) / 86400 + rechnen_tage,
+    ]
+    return {"tb": tb, "tage": tage}
+
+
 def _minuten(von: datetime, bis: datetime) -> float:
     return (bis - von).total_seconds() / 60
 
@@ -194,6 +292,12 @@ def main() -> int:
     je_jahr = "  ".join(f"{j}:{sum(1 for m in fertig if m[0] == j):>2}" for j in jahre)
     print(f"  je Jahr (von 12): {je_jahr}")
     print(f"Offene Monate: {len(alle) - len(fertig)} von {len(alle)}")
+    je_zustand = vnp46a3.monate_je_zustand()
+    region_voll = (je_zustand.get(vnp46a3.MONAT_REGION_VOLLSTAENDIG, set()) | fertig) & set(alle)
+    print(
+        f"Vollständig für Afrika-Europa-Asien (Zustand 4 oder fertig): {len(region_voll)} von {len(alle)}; "
+        f"davon nur Region, übrige Zellen noch nicht geladen: {len(region_voll - fertig)}"
+    )
     # Ein Monat gilt nur dann als nachzuholen, wenn er im Würfel wirklich noch
     # nicht fertig ist (das Protokoll allein könnte veraltet sein).
     nachzuholen = {m: g for m, g in p["zurueckgestellt"].items() if m not in fertig}
@@ -266,7 +370,7 @@ def main() -> int:
         tage_je_rate = lambda r: offen * MITTLERE_KACHELN_JE_MONAT * r / 86400
         untere, obere = tage_je_rate(min(raten)), tage_je_rate(max(raten))
         print(
-            f"  Restzeit grob: {offen} offene Monate (von {len(alle)}), etwa {round(untere)} bis {max(round(obere), round(untere))} Tage "
+            f"  Restzeit grob (alte Schätzung aus Kachelzeiten, überholt seit den Monaten mit 540 Kacheln): {offen} offene Monate (von {len(alle)}), etwa {round(untere)} bis {max(round(obere), round(untere))} Tage "
             f"(schnellster bis langsamster gemessener Monat, Grundlage: {n} Monat(e); "
             f"Kachelzahl je Monat mit Ø {MITTLERE_KACHELN_JE_MONAT:.0f} angenommen, gemessen 534 bis 540 je Monat)."
         )
@@ -275,6 +379,60 @@ def main() -> int:
             "Noch kein vollständig geladener Monat im neuen Protokollformat abgeschlossen, keine Zeitmessung "
             "und keine Restzeit-Schätzung möglich."
         )
+
+    # Durchsatz und Hochrechnung nach Datenmenge (seit 2026-09-26)
+    raten: list[float] = []
+    quellen: list[str] = []
+    if aktuell and prozesse and not aktuell["download_fertig"]:
+        r = durchsatz_im_ordner(io.rohdaten_pfad("vnp46a3", f"{aktuell['monat'][0]:04d}-{aktuell['monat'][1]:02d}"), jetzt)
+        if r:
+            raten.append(r)
+            quellen.append(f"laufender Monat, letzte {DURCHSATZ_FENSTER_MINUTEN} Minuten")
+    if p["statistik"]:
+        st = p["statistik"][-1]
+        print(
+            f"Letzte Download-Statistik ({st['monat'][0]:04d}-{st['monat'][1]:02d}, {st['zustand']}): "
+            f"{st['kacheln']} Kacheln, {st['gb']:.1f} GB in {st['minuten']:.0f} Minuten = {st['mb_s']:.2f} MB/s "
+            f"geprüfte Nutzdaten; {st['verworfen']} nach Größen-/MD5-Prüfung verworfen, "
+            f"{st['wiederholungen']} Wiederholungen."
+        )
+        # Für den Durchsatz nur vollständig geladene Monate: eine abgebrochene
+        # Zeile enthält Stillstand und würde die Rate verfälschen.
+        voll = [x["mb_s"] for x in p["statistik"] if x["zustand"] == "vollständig geladen" and x["mb_s"] > 0]
+        if voll:
+            raten += voll[-DURCHSATZ_MONATE:]
+            quellen.append(f"{len(voll[-DURCHSATZ_MONATE:])} zuletzt vollständig geladene Monate")
+    offen = len(alle) - len(fertig)
+    if raten:
+        lo, hi = min(raten), max(raten)
+        roh = rohdaten_bytes(io.rohdaten_pfad("vnp46a3"))
+        offen_region = len(alle) - len(region_voll)
+        if offen_region:
+            # Stufe 1 (nur Region): Rohdaten nicht abgezogen (nicht nach Region getrennt gezählt) - vorsichtig.
+            h1 = hochrechnung(offen_region, 0, lo, hi, anteil=REGION_ANTEIL_DATEN)
+            e1 = [jetzt + timedelta(days=t) for t in h1["tage"]]
+            print(
+                f"Hochrechnung Stufe 1 (nur Afrika-Europa-Asien, {offen_region} Monate × "
+                f"{REGION_ANTEIL_DATEN:.0%} der Monatsmenge): noch etwa {h1['tb'][0]:.1f} bis {h1['tb'][1]:.1f} TB, "
+                f"{h1['tage'][0]:.0f} bis {h1['tage'][1]:.0f} Tage, also etwa {e1[0]:%d.%m.%Y} bis {e1[1]:%d.%m.%Y}. "
+                "Anteil gemessen an einem Monat (2024-01); vorhandene Rohdaten nicht abgezogen, daher eher zu hoch."
+            )
+        nur_rest = len(region_voll - fertig)
+        h = hochrechnung(offen, roh, lo, hi, monate_nur_rest=nur_rest)
+        ende = [jetzt + timedelta(days=t) for t in h["tage"]]
+        spanne = f"{lo:.1f} MB/s" if round(lo, 1) == round(hi, 1) else f"{lo:.1f} bis {hi:.1f} MB/s"
+        print(f"Durchsatz: {spanne} ({'; '.join(quellen)}).")
+        print(
+            f"Hochrechnung bis ganz fertig (alle Stufen): noch etwa {h['tb'][0]:.1f} bis {h['tb'][1]:.1f} TB "
+            f"({offen} offene Monate × {GB_JE_MONAT_SPANNE[0]:.0f}-{GB_JE_MONAT_SPANNE[1]:.0f} GB, davon {nur_rest} "
+            f"mit Zustand 4 nur mit dem Rest-Anteil {1 - REGION_ANTEIL_DATEN:.0%}, "
+            f"abzüglich {roh / 1e9:.0f} GB schon im Rohordner); bei {spanne} etwa "
+            f"{h['tage'][0]:.0f} bis {h['tage'][1]:.0f} Tage, also etwa {ende[0]:%d.%m.%Y} bis {ende[1]:%d.%m.%Y}. "
+            f"Annahme: der Durchsatz bleibt in dieser Spanne; je Monat {RECHNEN_MINUTEN_JE_MONAT:.1f} Minuten "
+            "Rechenzeit eingerechnet, Zurückstellungen und Wiederholungen nicht."
+        )
+    elif offen:
+        print("Durchsatz: noch kein Messwert (keine fertige Kachel im Zeitfenster, keine Download-Statistik).")
 
     if p["fehler"]:
         print(f"Fehler seit Lauf-Start:\n  {p['fehler'][-1]}")

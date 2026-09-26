@@ -41,10 +41,15 @@ Eigenschaften:
   protokoll/manifeste/vnp46a3/<Monat>.tsv),
 - prüft nach dem Schreiben, dass der Monat tatsächlich im Würfel steht,
   bevor die Rohdaten gelöscht werden,
-- bricht den GANZEN Monat nach vnp46a3.DOWNLOAD_TIMEOUT_SEKUNDEN ohne
-  vollständige Antwort ab (Sicherheitsnetz über der Kachel-Wiederholung)
-  und beendet sich danach mit `os._exit`, damit hängende Hintergrund-Threads
-  den Prozess nicht am wirklichen Beenden hindern.
+- stellt einen Monat zurück, wenn seit vnp46a3.STILLSTAND_SEKUNDEN (30 Minuten)
+  keine neue, geprüfte Kachel mehr fertig geworden ist (Stillstand), oder -
+  als Notbremse - wenn sein Download länger als
+  vnp46a3.MONAT_NOTBREMSE_SEKUNDEN (12 Stunden) dauert (seit 2026-09-26; vorher
+  eine feste Gesamtfrist von 4 Stunden, die auch langsame, aber stetige Monate
+  zurückstellte), schreibt je Monat eine Zeile „Download-Statistik“ (MB/s,
+  verworfene Kacheln, Wiederholungen) und beendet sich am Ende mit `os._exit`,
+  damit hängende Hintergrund-Threads den Prozess nicht am wirklichen Beenden
+  hindern.
 
 Fehlerverhalten (Auftrag 2026-09-24, nach dem Abbruch bei 2019-02 wegen zweier
 Kacheln mit HTTP 502):
@@ -87,7 +92,7 @@ import traceback
 from datetime import datetime, timezone
 
 from aleph.core import io
-from aleph.layers import vnp46a3
+from aleph.layers import vnp46a3, vnp46a3_regionen
 
 # Echte Blocker: nur sie beenden den Lauf.
 BLOCKER = (io.SSDNichtGefunden, io.SpeicherZuKnapp, vnp46a3.AnmeldungFehlgeschlagen)
@@ -106,6 +111,13 @@ NACHHOL_PAUSE_SEKUNDEN = 30 * 60
 FERTIG = "fertig"
 ZURUECKGESTELLT = "zurückgestellt"
 VERARBEITUNGSFEHLER = "verarbeitungsfehler"
+
+# Stufen eines Monats (seit 2026-09-26, Vorrang nach Region, Option --region-zuerst):
+# voll   = alle Kacheln, Ergebnis Zustand 1 (wie bisher)
+# region = nur die Kacheln der Region, Ergebnis Zustand 4 (vnp46a3.MONAT_REGION_VOLLSTAENDIG)
+# rest   = die übrigen Kacheln eines Monats mit Zustand 4, vereinigt mit dem
+#          Region-Teil aus dem Würfel, Ergebnis Zustand 1
+STUFE_VOLL, STUFE_REGION, STUFE_REST = "voll", "region", "rest"
 
 
 def _monatsliste(start: str, ende: str) -> list[tuple[int, int]]:
@@ -180,8 +192,35 @@ def _stempel(zeitpunkt: datetime) -> str:
     return zeitpunkt.strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
-def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_downloads: int) -> None:
+def verarbeite_monat(
+    jahr: int,
+    monat: int,
+    protokoll: Protokoll,
+    gleichzeitige_downloads: int,
+    stufe: str = STUFE_VOLL,
+    region: str | None = None,
+) -> None:
+    """Lädt, prüft, verkleinert und schreibt einen Monat (Stufe siehe STUFE_*)."""
     name = f"{jahr:04d}-{monat:02d}"
+    zusatz_kw: dict = {}
+    zusatz = ""
+    region_pos: set[str] = set()
+    if stufe != STUFE_VOLL:
+        region_pos = vnp46a3_regionen.lies_region(region)
+        if stufe == STUFE_REGION:
+            zusatz_kw["positionen"] = region_pos
+            zusatz = f"_{region}"
+        else:
+            zusatz_kw["positionen"] = vnp46a3.lies_referenz_positionen() - region_pos
+            zusatz = "_rest"
+    region_text = vnp46a3_regionen.REGION_TEXT.get(region, region or "")
+    if stufe == STUFE_REST:
+        # Auflage B1: Der Region-Teil im Würfel muss mit genau dieser Kachelliste
+        # entstanden und vollständig sein; sonst den ganzen Monat neu laden.
+        ok, grund, nicht_beim_anbieter_stufe1 = vnp46a3.pruefe_stufe1_nachweis(jahr, monat, region)
+        if not ok:
+            protokoll.schreibe(f"{name}: Stufe-1-Nachweis passt nicht ({grund}); der ganze Monat wird neu geladen.")
+            return verarbeite_monat(jahr, monat, protokoll, gleichzeitige_downloads)
     # Ein Rohordner aus einem früheren Versuch wird NICHT gelöscht: lade_monat
     # verwendet die gültigen Kacheln darin wieder und lädt nur die fehlenden.
     raw_ordner = io.rohdaten_pfad("vnp46a3", name)
@@ -190,7 +229,9 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
     # monotonen Uhr gemessen, damit eine Uhrumstellung sie nicht verfälscht.
     start_wand = datetime.now(timezone.utc)
     t0 = time.monotonic()
-    protokoll.schreibe(f"{name}: Start {_stempel(start_wand)}.")
+    stufen_text = {STUFE_VOLL: "", STUFE_REGION: f" (Stufe 1: nur {region_text})",
+                   STUFE_REST: f" (Stufe 2: übrige Kacheln, {region_text} schon im Würfel)"}[stufe]
+    protokoll.schreibe(f"{name}: Start {_stempel(start_wand)}{stufen_text}.")
 
     # lade_monat prüft selbst die Vollständigkeit (gegen Katalog und
     # Referenzliste) und bricht mit KachelnFehlen bzw. MonatUnvollstaendig
@@ -202,7 +243,20 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
         raw_ordner,
         gleichzeitige_downloads=gleichzeitige_downloads,
         melde=lambda text: protokoll.schreibe(f"{name}: {text}"),
+        **zusatz_kw,
     )
+    if stufe == STUFE_REST:
+        # Auflage B2: Meldet der Katalog jetzt eine Region-Position, die in Stufe 1
+        # „beim Anbieter nicht vorhanden“ war, fehlt sie im Region-Teil: ganz neu laden.
+        neu_gemeldet = nicht_beim_anbieter_stufe1 & set(ladung.katalog_positionen)
+        if neu_gemeldet:
+            protokoll.schreibe(
+                f"{name}: Der Katalog meldet jetzt Region-Kacheln, die in Stufe 1 beim Anbieter fehlten "
+                f"({', '.join(sorted(neu_gemeldet))}); der ganze Monat wird neu geladen."
+            )
+            return verarbeite_monat(jahr, monat, protokoll, gleichzeitige_downloads)
+    # Rest-Befund A1: direkt vor dem Lesen prüfen, ob die geprüften Dateien noch dieselben sind.
+    vnp46a3.pruefe_ladung_unveraendert(ladung)
     dateien = ladung.dateien
     t_download = time.monotonic()
     protokoll.schreibe(f"{name}: Download fertig nach {(t_download - t0) / 60:.1f} Minuten.")
@@ -211,39 +265,81 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
     # trotzdem einen Nachweis dieses Ladestands (Auflage statistik-pruefer
     # 2026-09-25). Die Kopfzeile nennt, was der Würfel bis dahin enthielt.
     stand = vnp46a3.MONATSSTATUS_TEXT.get(vnp46a3.monatsstatus(jahr, monat), "unbekannt")
+    teil_hinweis = {STUFE_VOLL: "", STUFE_REGION: (
+                        f" Nur Kacheln der Region {region_text} (Stufe 1). {vnp46a3.REGION_PRUEFSUMME_TEXT}: "
+                        f"{vnp46a3_regionen.pruefsumme(region_pos)}."),
+                    STUFE_REST: f" Nur die übrigen Kacheln (Stufe 2); Region-Teil siehe Manifest {name}_{region}.tsv."}[stufe]
     manifest_pfad = vnp46a3.schreibe_manifest(
         jahr, monat, ladung.zustaende,
-        hinweis=f"Würfel-Stand dieses Monats vor dem Schreiben: {stand}; Manifest beschreibt den neuen Ladestand.",
+        hinweis=f"Würfel-Stand dieses Monats vor dem Schreiben: {stand}; Manifest beschreibt den neuen Ladestand.{teil_hinweis}",
+        **({"zusatz": zusatz} if zusatz else {}),
     )
 
     monatsdaten = vnp46a3.verkleinere_monat(dateien, erwarteter_monat=(jahr, monat))
+    if stufe == STUFE_REST:
+        # Region-Teil aus dem Würfel übernehmen; bricht ab, wenn der Monat nicht
+        # Zustand 4 hat oder sich Region und Rest überschneiden.
+        monatsdaten = vnp46a3.vereine_mit_region(monatsdaten, region_pos)
     # schreibe_in_wuerfel legt den Monat an seine Position auf der festen
     # Zeitachse, liest ihn zurück, vergleicht und setzt erst dann die
-    # Fertig-Markierung.
-    vnp46a3.schreibe_in_wuerfel(monatsdaten)
+    # Fertig-Markierung (Zustand 1, in Stufe 1 Zustand 4).
+    if stufe == STUFE_REGION:
+        vnp46a3.schreibe_in_wuerfel(monatsdaten, zielzustand=vnp46a3.MONAT_REGION_VOLLSTAENDIG)
+    else:
+        vnp46a3.schreibe_in_wuerfel(monatsdaten)
 
     # Zusätzliche Kontrolle vor dem Löschen der Rohdaten: der Monat muss
-    # als fertig markiert lesbar sein.
-    if (jahr, monat) not in vnp46a3.vorhandene_monate():
+    # mit dem erwarteten Zustand lesbar sein.
+    if stufe == STUFE_REGION:
+        if vnp46a3.monatsstatus(jahr, monat) != vnp46a3.MONAT_REGION_VOLLSTAENDIG:
+            raise RuntimeError(
+                f"{name}: nach dem Schreiben nicht als „vollständig für {region_text}“ im Würfel "
+                "gefunden. Rohdaten bleiben erhalten, nichts wurde gelöscht."
+            )
+    elif (jahr, monat) not in vnp46a3.vorhandene_monate():
         raise RuntimeError(
             f"{name}: nach dem Schreiben nicht als fertig im Würfel "
             "gefunden. Rohdaten bleiben erhalten, nichts wurde gelöscht."
         )
     t_wuerfel = time.monotonic()
 
+    if stufe == STUFE_REST:
+        # Ein älteres Manifest ohne Stufen-Zusatz (z. B. „Ladeversuch GESCHEITERT“
+        # aus einem Lauf ohne Region) widerspräche jetzt dem Würfel: umbenennen, nicht löschen.
+        alt_manifest = vnp46a3.manifest_pfad(jahr, monat)
+        if alt_manifest.exists():
+            alt_manifest.rename(alt_manifest.with_name(alt_manifest.stem + "_ueberholt.tsv"))
+    if stufe == STUFE_REGION:
+        # Nur die geprüften und geschriebenen Region-Kacheln löschen; schon
+        # geladene übrige Kacheln bleiben für Stufe 2 liegen.
+        for pfad in dateien:
+            pfad.unlink(missing_ok=True)
+        ende_wand = datetime.now(timezone.utc)
+        protokoll.schreibe(
+            f"{name}: fertig für {region_text}, {len(dateien)} Kacheln, Start {_stempel(start_wand)}, "
+            f"Ende {_stempel(ende_wand)}, Dauer gesamt {(time.monotonic() - t0) / 60:.1f} Minuten "
+            f"(Download {(t_download - t0) / 60:.1f}, Verkleinern und Schreiben "
+            f"{(t_wuerfel - t_download) / 60:.1f}), Manifest {manifest_pfad.name}. Zustand 4: übrige Zellen nicht geladen."
+        )
+        return
+
     shutil.rmtree(raw_ordner)
 
     ende_wand = datetime.now(timezone.utc)
     gesamt = (time.monotonic() - t0) / 60
+    fertig_text = "fertig (Stufe 2, übrige Kacheln)" if stufe == STUFE_REST else "fertig"
     protokoll.schreibe(
-        f"{name}: fertig, {len(dateien)} Kacheln, Start {_stempel(start_wand)}, "
+        f"{name}: {fertig_text}, {len(dateien)} Kacheln, Start {_stempel(start_wand)}, "
         f"Ende {_stempel(ende_wand)}, Dauer gesamt {gesamt:.1f} Minuten "
         f"(Download {(t_download - t0) / 60:.1f}, Verkleinern und Schreiben "
         f"{(t_wuerfel - t_download) / 60:.1f}), Manifest {manifest_pfad.name}."
     )
 
 
-def _bearbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_downloads: int) -> tuple[str, str]:
+def _bearbeite_monat(
+    jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_downloads: int,
+    stufe: str = STUFE_VOLL, region: str | None = None,
+) -> tuple[str, str]:
     """Ein Monat, mit Fehlerbehandlung nach dem Auftrag vom 2026-09-24.
 
     Rückgabe: (FERTIG | ZURUECKGESTELLT | VERARBEITUNGSFEHLER, Grund).
@@ -253,7 +349,10 @@ def _bearbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
     """
     name = f"{jahr:04d}-{monat:02d}"
     try:
-        verarbeite_monat(jahr, monat, protokoll, gleichzeitige_downloads)
+        if stufe == STUFE_VOLL:
+            verarbeite_monat(jahr, monat, protokoll, gleichzeitige_downloads)
+        else:
+            verarbeite_monat(jahr, monat, protokoll, gleichzeitige_downloads, stufe=stufe, region=region)
         return FERTIG, ""
     except BLOCKER:
         raise
@@ -264,9 +363,14 @@ def _bearbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
         zustaende = getattr(fehler, "zustaende", None)
         if zustaende:
             stand = vnp46a3.MONATSSTATUS_TEXT.get(vnp46a3.monatsstatus(jahr, monat), "unbekannt")
+            # Befund 3: gescheiterte Stufen schreiben in das Manifest ihrer Stufe
+            # (ein späterer Erfolg derselben Stufe überschreibt es).
+            zusatz = {STUFE_VOLL: "", STUFE_REGION: f"_{region}", STUFE_REST: "_rest"}[stufe]
+            stufe_text = {STUFE_VOLL: "", STUFE_REGION: " (Stufe 1, nur Region)", STUFE_REST: " (Stufe 2, übrige Kacheln)"}[stufe]
             pfad = vnp46a3.schreibe_manifest(
                 jahr, monat, zustaende,
-                hinweis=f"Ladeversuch GESCHEITERT; der Würfel enthält für diesen Monat: {stand}.",
+                hinweis=f"Ladeversuch GESCHEITERT{stufe_text}; der Würfel enthält für diesen Monat: {stand}.",
+                **({"zusatz": zusatz} if zusatz else {}),
             )
             grund += f" Manifest {pfad.name}."
         protokoll.schreibe(
@@ -278,9 +382,26 @@ def _bearbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
         # Ein Schreib- oder Verbindungsfehler kann ein Blocker sein (Platte voll, SSD weg).
         vnp46a3.pruefe_blocker(fehler, None)
         grund = f"{type(fehler).__name__}: {fehler}"
+        # Nur „nicht als fertig markiert" schreiben, wenn der Würfel das bestätigt
+        # (Auflage statistik-pruefer 2026-09-26: ein Fehler NACH dem Schreiben, z. B.
+        # beim Löschen der Rohdaten, ließe sonst eine falsche Aussage im Protokoll).
+        try:
+            if stufe == STUFE_REGION:
+                im_wuerfel_fertig = vnp46a3.monatsstatus(jahr, monat) == vnp46a3.MONAT_REGION_VOLLSTAENDIG
+            else:
+                im_wuerfel_fertig = (jahr, monat) in vnp46a3.vorhandene_monate()
+        except Exception:  # noqa: BLE001 - nur für den Wortlaut der Meldung
+            im_wuerfel_fertig = None
+        if im_wuerfel_fertig:
+            protokoll.schreibe(
+                f"{name}: FEHLER NACH DEM SCHREIBEN - der Monat steht als fertig im Würfel, danach trat "
+                f"ein Fehler auf (z. B. beim Löschen der Rohdaten). {grund}\n{traceback.format_exc()}"
+            )
+            return FERTIG, grund
+        stand = "nicht als fertig markiert" if im_wuerfel_fertig is False else "Würfel-Stand nicht lesbar"
         protokoll.schreibe(
-            f"{name}: ZURÜCKGESTELLT (später erneut versuchen), Verarbeitungsfehler, nicht als "
-            f"fertig markiert, Rohdaten bleiben erhalten. {grund}\n{traceback.format_exc()}"
+            f"{name}: ZURÜCKGESTELLT (später erneut versuchen), Verarbeitungsfehler, {stand}, "
+            f"Rohdaten bleiben erhalten. {grund}\n{traceback.format_exc()}"
         )
         return VERARBEITUNGSFEHLER, grund
 
@@ -317,6 +438,15 @@ def main() -> int:
             "Zahl gleichzeitiger Kachel-Downloads (Vorschlag 2-4, Standard "
             f"{vnp46a3.GLEICHZEITIGE_DOWNLOADS_STANDARD}). Bei erneuten "
             "Hängern hier eine kleinere Zahl eintragen statt zu raten."
+        ),
+    )
+    parser.add_argument(
+        "--region-zuerst",
+        default=None,
+        choices=sorted(vnp46a3_regionen.REGIONEN),
+        help=(
+            "Zweistufig laden (seit 2026-09-26): erst nur die Kacheln dieser Region für alle offenen "
+            "Monate (Zustand 4), danach die übrigen Kacheln (Zustand 1). Keine Region wird weggelassen."
         ),
     )
     args = parser.parse_args()
@@ -369,73 +499,115 @@ def main() -> int:
             f"{', '.join(alte_rohordner)} (gültige Kacheln werden wiederverwendet, nicht neu geladen)."
         )
 
-    zurueckgestellt: dict[tuple[int, int], str] = {}  # Monat -> Grund, in der Reihenfolge des Zurückstellens
-    verarbeitungsfehler_in_folge = 0
+    zustand = {"verarbeitungsfehler_in_folge": 0}
 
-    def durchgang(monate: list[tuple[int, int]]) -> int | None:
-        """Bearbeitet die Monate; gibt einen Rückgabewert zurück, wenn der Lauf enden muss, sonst None."""
-        nonlocal verarbeitungsfehler_in_folge
-        for jahr, monat in monate:
-            name = f"{jahr:04d}-{monat:02d}"
-            try:
-                io.pruefe_speicher()
-                ergebnis, grund = _bearbeite_monat(jahr, monat, protokoll, args.gleichzeitig)
-            except BLOCKER as fehler:
-                protokoll.schreibe(f"ABBRUCH bei {name}: {fehler}")
-                return 1
-            if ergebnis == FERTIG:
-                zurueckgestellt.pop((jahr, monat), None)
-                verarbeitungsfehler_in_folge = 0
-                continue
-            zurueckgestellt[(jahr, monat)] = grund
-            verarbeitungsfehler_in_folge = verarbeitungsfehler_in_folge + 1 if ergebnis == VERARBEITUNGSFEHLER else 0
-            if verarbeitungsfehler_in_folge >= MAX_VERARBEITUNGSFEHLER_HINTEREINANDER:
-                protokoll.schreibe(
-                    f"ABBRUCH bei {name}: {verarbeitungsfehler_in_folge} Monate hintereinander mit "
-                    "Verarbeitungsfehler (nicht Download). Das sieht nach einem Programm- oder "
-                    "Datenträgerfehler aus, nicht nach einem Einzelfall; weitere Monate würden nur "
-                    "Download-Zeit kosten. Letzter Grund siehe oben."
+    def stufe_mit_nachholen(monate: list[tuple[int, int]], stufe_fuer, titel: str) -> tuple[int | None, dict]:
+        """Bearbeitet `monate` (Stufe je Monat aus `stufe_fuer(monat)`), dann bis zu
+        NACHHOL_MAX_DURCHGAENGE Nachhol-Durchgänge. Rückgabe: (Lauf-Ende oder None, zurückgestellt)."""
+        zurueckgestellt: dict[tuple[int, int], str] = {}  # Monat -> Grund, in der Reihenfolge des Zurückstellens
+
+        def durchgang(liste: list[tuple[int, int]]) -> int | None:
+            for jahr, monat in liste:
+                name = f"{jahr:04d}-{monat:02d}"
+                try:
+                    io.pruefe_speicher()
+                    stufe = stufe_fuer((jahr, monat))
+                    if stufe == STUFE_VOLL:
+                        ergebnis, grund = _bearbeite_monat(jahr, monat, protokoll, args.gleichzeitig)
+                    else:
+                        ergebnis, grund = _bearbeite_monat(
+                            jahr, monat, protokoll, args.gleichzeitig, stufe=stufe, region=args.region_zuerst
+                        )
+                except BLOCKER as fehler:
+                    protokoll.schreibe(f"ABBRUCH bei {name}: {fehler}")
+                    return 1
+                if ergebnis == FERTIG:
+                    zurueckgestellt.pop((jahr, monat), None)
+                    zustand["verarbeitungsfehler_in_folge"] = 0
+                    continue
+                zurueckgestellt[(jahr, monat)] = grund
+                zustand["verarbeitungsfehler_in_folge"] = (
+                    zustand["verarbeitungsfehler_in_folge"] + 1 if ergebnis == VERARBEITUNGSFEHLER else 0
                 )
-                return 1
-        return None
+                if zustand["verarbeitungsfehler_in_folge"] >= MAX_VERARBEITUNGSFEHLER_HINTEREINANDER:
+                    protokoll.schreibe(
+                        f"ABBRUCH bei {name}: {zustand['verarbeitungsfehler_in_folge']} Monate hintereinander mit "
+                        "Verarbeitungsfehler (nicht Download). Das sieht nach einem Programm- oder "
+                        "Datenträgerfehler aus, nicht nach einem Einzelfall; weitere Monate würden nur "
+                        "Download-Zeit kosten. Letzter Grund siehe oben."
+                    )
+                    return 1
+            return None
 
-    ende = durchgang(offene_monate)
-    if ende is not None:
-        return ende
+        ende_ = durchgang(monate)
+        if ende_ is not None:
+            return ende_, zurueckgestellt
+        for durchgang_nr in range(1, NACHHOL_MAX_DURCHGAENGE + 1):
+            if not zurueckgestellt:
+                break
+            nachholen = list(zurueckgestellt)
+            protokoll.schreibe(
+                f"Nachhol-Durchgang {durchgang_nr} von höchstens {NACHHOL_MAX_DURCHGAENGE}{titel}: "
+                f"{len(nachholen)} zurückgestellte Monate werden noch einmal versucht: "
+                f"{', '.join(f'{j:04d}-{m:02d}' for j, m in nachholen)}."
+            )
+            ende_ = durchgang(nachholen)
+            if ende_ is not None:
+                return ende_, zurueckgestellt
+            nachgeholt = len(nachholen) - len(zurueckgestellt)
+            if not zurueckgestellt:
+                break
+            if nachgeholt == 0:
+                protokoll.schreibe(
+                    f"Nachhol-Durchgang {durchgang_nr}{titel}: kein Monat dazugekommen, {len(zurueckgestellt)} weiterhin "
+                    "offen. Kein weiterer Durchgang (die Ursache ist vermutlich nicht vorübergehend)."
+                )
+                break
+            if durchgang_nr == NACHHOL_MAX_DURCHGAENGE:
+                protokoll.schreibe(
+                    f"Nachhol-Durchgang {durchgang_nr}{titel}: {nachgeholt} Monat(e) dazugekommen, "
+                    f"{len(zurueckgestellt)} weiterhin offen. Höchstzahl an Durchgängen erreicht."
+                )
+                break
+            protokoll.schreibe(
+                f"Nachhol-Durchgang {durchgang_nr}{titel}: {nachgeholt} Monat(e) dazugekommen, "
+                f"{len(zurueckgestellt)} weiterhin offen. Pause {NACHHOL_PAUSE_SEKUNDEN // 60} Minuten, "
+                f"dann Durchgang {durchgang_nr + 1}."
+            )
+            time.sleep(NACHHOL_PAUSE_SEKUNDEN)
+        return None, zurueckgestellt
 
-    for durchgang_nr in range(1, NACHHOL_MAX_DURCHGAENGE + 1):
-        if not zurueckgestellt:
-            break
-        nachholen = list(zurueckgestellt)
+    def stufe_nach_zustand(monat: tuple[int, int]) -> str:
+        # Ein Monat mit Zustand 4 braucht nur noch den Rest; alle anderen den ganzen Monat.
+        if args.region_zuerst and vnp46a3.monatsstatus(*monat) == vnp46a3.MONAT_REGION_VOLLSTAENDIG:
+            return STUFE_REST
+        return STUFE_VOLL
+
+    region_offen: dict = {}
+    if args.region_zuerst:
+        region_text = vnp46a3_regionen.REGION_TEXT[args.region_zuerst]
+        je_zustand = vnp46a3.monate_je_zustand()
+        schon = je_zustand.get(vnp46a3.MONAT_FERTIG, set()) | je_zustand.get(vnp46a3.MONAT_REGION_VOLLSTAENDIG, set())
+        stufe1 = [m for m in offene_monate if m not in schon]
         protokoll.schreibe(
-            f"Nachhol-Durchgang {durchgang_nr} von höchstens {NACHHOL_MAX_DURCHGAENGE}: "
-            f"{len(nachholen)} zurückgestellte Monate werden noch einmal versucht: "
-            f"{', '.join(f'{j:04d}-{m:02d}' for j, m in nachholen)}."
+            f"Stufe 1 ({region_text}, {len(vnp46a3_regionen.lies_region(args.region_zuerst))} Kacheln): "
+            f"{len(stufe1)} Monate offen"
+            + (f", erster Monat {stufe1[0][0]:04d}-{stufe1[0][1]:02d}." if stufe1 else ".")
         )
-        ende = durchgang(nachholen)
+        ende, region_offen = stufe_mit_nachholen(stufe1, lambda m: STUFE_REGION, f" (Stufe 1, {region_text})")
         if ende is not None:
             return ende
-        nachgeholt = len(nachholen) - len(zurueckgestellt)
-        if not zurueckgestellt:
-            break
-        if nachgeholt == 0:
-            protokoll.schreibe(
-                f"Nachhol-Durchgang {durchgang_nr}: kein Monat dazugekommen, {len(zurueckgestellt)} weiterhin "
-                "offen. Kein weiterer Durchgang (die Ursache ist vermutlich nicht vorübergehend)."
-            )
-            break
-        if durchgang_nr == NACHHOL_MAX_DURCHGAENGE:
-            protokoll.schreibe(
-                f"Nachhol-Durchgang {durchgang_nr}: {nachgeholt} Monat(e) dazugekommen, "
-                f"{len(zurueckgestellt)} weiterhin offen. Höchstzahl an Durchgängen erreicht."
-            )
-            break
+        fertig_jetzt = vnp46a3.vorhandene_monate()
+        offene_monate = [m for m in offene_monate if m not in fertig_jetzt]
         protokoll.schreibe(
-            f"Nachhol-Durchgang {durchgang_nr}: {nachgeholt} Monat(e) dazugekommen, "
-            f"{len(zurueckgestellt)} weiterhin offen. Pause {NACHHOL_PAUSE_SEKUNDEN // 60} Minuten, "
-            f"dann Durchgang {durchgang_nr + 1}."
+            f"Stufe 1 ({region_text}) beendet: {len(region_offen)} Monate offen geblieben. "
+            f"Stufe 2 (übrige Kacheln): {len(offene_monate)} Monate offen."
         )
-        time.sleep(NACHHOL_PAUSE_SEKUNDEN)
+    ende, zurueckgestellt = stufe_mit_nachholen(
+        offene_monate, stufe_nach_zustand, " (Stufe 2, übrige Kacheln)" if args.region_zuerst else ""
+    )
+    if ende is not None:
+        return ende
 
     if zurueckgestellt:
         protokoll.schreibe(
