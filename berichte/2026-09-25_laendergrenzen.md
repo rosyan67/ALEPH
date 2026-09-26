@@ -73,3 +73,11 @@ Alle Zahlen stammen aus Messungen an den am 2026-09-25 geladenen Dateien und an 
 - Die offizielle Bedeutung der Felder ISO_A3, WB_A3, SOV_A3 und GU_A3: Der Anbieter hat keine Feldbeschreibung.
 - Die früheren Weltbank-Codes (ROM, ZAR usw.) sind nur aus Wissen des Prüfers als „alt“ beurteilt, nicht an einer Weltbank-Quelle belegt.
 - Welche Fläche die 17 Sudan-Zellen sind, die in der deutschen Sicht keinem Land gehören.
+
+## Nachtrag 2026-09-26 (datierte Korrektur, das Frühere bleibt stehen)
+
+- **Entscheidung des Nutzers:** Oberste Zuordnungsebene ist die UN-Sicht (M49), nicht die Standardansicht von Natural Earth. Umstrittene Gebiete, besetzte Gebiete/Konfliktzonen und Gebiete mit Sonderstatus sind eigene, markierte Einheiten. Natural Earth liefert nur noch die Umrisse.
+- **Krim:** eigene Einheit, übergeordneter UN-Eintrag Ukraine (804), Beleg UN-Generalversammlung Resolution 68/262. Die Sätze oben „Die Krim liegt bei Russland“ beschreiben nur den Umriss der Natural-Earth-Standarddatei, nicht mehr die Zuordnung in ALEPH.
+- **Offene Frage „Zellmitte oder Flächenanteil“ ist entschieden:** Flächenanteil. Alle 217 Weltbank-Volkswirtschaften haben damit Zellfläche.
+- **Welche Gebiete die Weltbank-Zahlen umfassen:** geprüft in `berichte/2026-09-26_weltbank-gebiete.md` (Empfehlung 2 dieses Berichts).
+- Umsetzung und Prüfung: `berichte/2026-09-26_zell-laender-zuordnung.md`.

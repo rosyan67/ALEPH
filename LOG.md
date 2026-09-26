@@ -394,3 +394,56 @@
 - **Übergabe** `claude/uebergabe-2026-09-25.md` nicht vorhanden.
 - **Offen:** Welche Gebiete die Weltbank-Reihen umfassen (Krim u. a.); Zuordnungsregel Zelle → Land.
 - **Bericht:** `berichte/2026-09-25_laendergrenzen.md`. **Nicht committet.**
+
+## 2026-09-26 (Globus mit Nachtlicht und Einheiten, worktree ~/ALEPH-ui, Branch ui-geruest)
+
+- **Gewartet** auf `berichte/.phase3_fertig` (da um 01:18 MESZ), vorher nichts getan.
+- **Arbeitsort:** Den bestehenden, sauberen worktree von `ui-geruest` von `~/ALEPH/.claude/worktrees/ui-geruest` nach `~/ALEPH-ui` verschoben (`git worktree move`). main (0070c88) dort hineingemergt; LOG-Konflikt durch Erhalt beider Seiten gelöst. In ~/ALEPH nichts geändert außer diesem Eintrag, kein Branchwechsel, kein Commit. `~/ALEPH-ui/.env` ist ein Verweis auf die .env hier (nicht gelesen, ignoriert).
+- **Neu (nur im worktree, 3 Commits, nicht gepusht):** `aleph/export/globus.py` (liest Würfel und `laender/zell_einheiten/`, schreibt `web/daten/`), `web/globus.html/.js/.css`, MapLibre 5.19.0 lokal, `Globus öffnen.command`, `Globus aktualisieren.command`, 23 Tests.
+- **Regeln:** nur `monat_fertig == 1`, nie ab 2023-01; Lücken (0 gültige Pixel) und < 50 % beobachtet je eigenes graues Muster, nie dunkel; Einheiten nur bei passenden Prüfsummen/Anzahl, sonst keine Grenzen.
+- **Befund:** Kein Monat im Würfel fertig (134 leer, 22 unvollständig) → der Globus zeigt noch kein Nachtlicht, nur Einheiten. Die Darstellung wurde in einer rot markierten Prüfansicht an 2018-03/2018-06 (Status 2, nur im Zwischenordner) geprüft: Berlin 14, Paris 62, Sahara/Atlantik unter 0,1, fehlende Kacheln grau. Krim per Klick: eigene Einheit, UN-Eintrag Ukraine (804).
+- **Tests im worktree:** 497 bestanden, 11 fehlgeschlagen – alle in `test_vnp46a3.py`, Ursache `komposit` statt `komposit_masked` im Commit 0070c88 (in ~/ALEPH nur uncommittet behoben; nicht kopiert).
+- **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“; Farbverwechslung (Tönung der Sondereinheiten) und Legendentexte behoben. Offen: Einheiten nicht zeitabhängig (Krim vor 2014).
+- **Download (nur gelesen):** bis 08:07 MESZ kein Monat fertig; 2018-03 und 2018-04 ebenfalls nach > 240 min ohne Fortschritt zurückgestellt (jetzt 2018-01 bis 04), Lauf bei 2018-05, Ampel OK.
+- **Nicht gemacht:** „Nachtlicht gegen BIP“ (Bericht existiert nicht).
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-26_globus.md` (mit Fotos).
+
+## 2026-09-26 (Aufräumen/Commits, Weltbank-Gebiete, Zell-Länder-Zuordnung mit UN-Sicht; Warten auf 2018 abgebrochen)
+
+- **Download 41131:** nie angehalten oder neu gestartet. Ampel OK am Anfang (25.09. 22:09 UTC) und Ende (26.09. 07:07 UTC). 0 von 156 Monaten fertig; 2018-01 bis 2018-04 zurückgestellt (jeweils „über 240 Minuten“, 499/491/404/430 von 540 Kacheln), Tempo zuletzt etwa 1,5–2,3 Kacheln je Minute. Gesperrte Dateien (`vnp46a3.py`, `vnp46a3_lauf.py`, Kachelliste, `vnp46a3_dunkle_naechte.py`, `scripts/`) nicht geändert (Änderungszeiten alle vor Sitzungsbeginn); Würfel nur gelesen (Koordinaten).
+- **Phase 1:** CLAUDE.md Regel „Zeiträume“ (wörtlich); Nachtrag im Bericht „dunkle Nächte“ (Juli-2023-Kacheln = technische Prüfung). Tests 519/519. Commits `ac796a1` (dunkle Nächte), `99be855` (Natural Earth; aus ARCHITECTURE.md nur der Absatz Ländergrenzen), `0070c88` (CLAUDE.md, LOG.md); nicht gepusht. GitHub-Repo ohne Anmeldung 404 → privat; der alte Schlüssel steckt in `4d08637` (auf GitHub). Hinweis zur Globus-Sitzung oben: Die 11 Fehler in `test_vnp46a3.py` im Worktree kommen aus dem committeten Stand von `4d08637`; meine drei Commits enthalten `vnp46a3.py` und seine Tests nicht (`git show --stat`).
+- **Phase 2 (Weltbank-Gebiete):** WDI-Gesamtpaket (Stand 15.07.2026) gelesen, Zitate wörtlich. Belegt abweichend: Georgien (ohne Abchasien/Südossetien), Moldau (ohne Transnistrien), Zypern (nur Regierungsgebiet), Marokko (mit Westsahara), Tansania (BIP nur Festland). Passend: Serbien/Kosovo, China ohne Hongkong/Macau/Taiwan, Sudan ohne Südsudan. Russland/Ukraine: Mechanismus erklärt (ab 2014 amtliche Statistiken beider Länder; Pro-Kopf-Nenner ±2,27–2,48 Mio. gegenüber der Bevölkerungsreihe), Gebiet (Krim?) nicht belegt. Bericht `berichte/2026-09-26_weltbank-gebiete.md`.
+- **Phase 3 (neue Anweisung Punkt 7 umgesetzt):** UN-Sicht (M49, `aleph/layers/un_m49.py`) als oberste Ebene; 87 Sondereinheiten mit Quellen (`aleph/layers/sondereinheiten.yaml`, 18 UN-Resolutionen im Original gelesen und mit Prüfsummen auf der SSD); Krim eigene Einheit, UN-Eintrag Ukraine (68/262). Zuordnung nach Flächenanteil (`aleph/layers/zell_einheiten.py`, EPSG:6933, Gitter aus dem Nachtlicht-Code, gegen den Würfel geprüft), 324 Einheiten, Ergebnis mit Manifest unter `laender/zell_einheiten/`. Natural Earth um Umstritten- und Provinzdatei erweitert (gleiche Ladelogik). Alle 217 Weltbank-Länder haben Zellfläche; 104 Einheiten „zu klein für 0,25°“ ausgewiesen; Reinheitsmaß und Weltbank-Sicht als Funktionen. CShapes 2.0 (Scout): nur bis 2019, als Zeitquelle ungeeignet. statistik-pruefer „bestanden mit Auflagen“, Plausibilitäts-Prüfer „plausibel mit Vorbehalt“; Auflagen für Phase 3 umgesetzt. Tests 567/567, keiner übersprungen. Datierte Korrekturen in `docs/sources/natural_earth.md` und im Bericht Ländergrenzen; ARCHITECTURE.md Absatz Länderzuordnung. Bericht `berichte/2026-09-26_zell-laender-zuordnung.md`. Signal `berichte/.phase3_fertig` 23:16 UTC.
+- **Phase 4:** Warteschleife 25.09. 23:16 bis 26.09. 07:07 UTC, 2018 blieb 0 von 12; auf Anweisung beendet. Lücke 02:17–06:58 UTC (Sitzung unterbrochen).
+- **Phase 5:** entfällt auf Anweisung, nicht begonnen.
+- **Nicht committet:** alles aus Phase 2–4 (Anweisung). **Offen / nicht entschieden (Nutzer):** Download-Grenze je Monat und Nachholen (gesperrter Code); Festlegungen vor Phase 5 (Lichtverteilung in Küstenzellen, Reinheitsschwelle, Weltbank-Sicht, Tansania); Zeitabhängige Grenzen (Quelle fehlt für 2020–2025); North Borneo/Belize als Einheiten; Schlüssel-Entfernung committen, Historie bereinigen.
+- **Bericht:** `berichte/2026-09-26_sitzung-uebersicht.md`.
+
+## 2026-09-26 (Diagnose: warum seit 25.09. kein VNP46A3-Monat fertig wird; nur gelesen)
+
+- **Befund:** Kein Hänger. 2018-01 bis 2018-04 liefen je genau 4 h und wurden dann zurückgestellt. Die „240 Minuten“ sind eine feste Gesamtfrist je Monat (`vnp46a3.py` Z. 1031/1044), keine Stillstandserkennung; die Meldung „reagiert seit über 240 Minuten nicht mehr“ ist irreführend. Die Kacheln kamen stetig (88–142/h, größte Pause 2,9 min).
+- **Ursache:** Die Datenrate ist von etwa 6,8 MB/s (23./24.09.) auf etwa 1,7–2 MB/s gesunken, und ein Monat hat jetzt 540 statt 460 Kacheln (33,1 statt 28,7 GB, 2024-01). Ein Monat braucht damit 4,6–5,4 h. Wo der Engpass liegt, ist offen.
+- **Risiko:** Zurückgestellte Monate behalten ihre Rohdaten (etwa 24 GB je Monat) bis zum Nachhol-Durchgang am Ende. Hochrechnung: Speicherwächter-Abbruch nach etwa 32 Monaten, also um den 1.10. SSD jetzt 835 GB frei.
+- **1.11.2026:** NASA Earthdata bestätigt das Ende der Lieferung *neuer* Suomi-NPP-Daten (13:00 UTC). Ob das Archiv danach abrufbar bleibt: unbestätigt.
+- **Code:** Die Reparatur vom 25.09. ist ganz uncommittet (`vnp46a3_kachelpositionen.txt` kennt Git nicht). Der Fix `komposit` → `komposit_masked` (Fehler seit 4d08637) liegt nur in der Arbeitskopie; der laufende Prozess nutzt sie (Dateien 15:03, Start 15:28).
+- **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“, Berichtigungen eingearbeitet.
+- **Nichts geändert:** Prozess 41131, Würfel, Code, Git. Zwei Geschwindigkeitstests von je 15 s gegen öffentliche Server.
+- **Bericht:** `berichte/2026-09-26_diagnose-download.md` (nicht committet). Entscheidungen offen (Frist, Speicherfalle, Netz, Commit).
+
+## 2026-09-26 (Download repariert: gesichert, Stillstands-Erkennung, Messung, Vorrang Afrika-Europa-Asien, Neustart)
+
+- **Gesichert:** `82802f2` (Reparatur 25.09. inkl. `komposit_masked`), `f3b69bc` (Ergebnisse 26.09.), `0ff8001` (Schlüssel entfernt, Historie unverändert); vorher 567/567 Tests.
+- **Angehalten:** 07:43 UTC per SIGTERM (kein eingebauter Stopp-Weg); es lief 2018-05, nichts im Schreiben.
+- **Messung:** networkQuality nicht verwertbar (Apple-Server Zeitüberschreitung). NASA mit echten 2018-05-Kacheln, je 5 min: 1 = 1,69, 3 = 2,06, 5 = 2,31 MB/s. Die Leitung bremst. Erster Messversuch ungültig, weil der Mac eingeschlafen war (Ruhezustand nach 1 min; der Download selbst nutzt `caffeinate`).
+- **Umbau (`8541064`):**
+  - Stillstand 30 min ohne neue geprüfte Kachel statt 4-h-Gesamtfrist; Notbremse 12 h.
+  - Statistik je Monat im Protokoll; Zeitlimit je Kachel nach Größe; Fingerabdruck-Prüfung.
+  - Status mit Durchsatz und Hochrechnung; 5 gleichzeitig.
+  - Vorrang Afrika-Europa-Asien: 188 Kacheln (`vnp46a3_kacheln_afrika_europa_asien.txt`), Zustand 4, Stufe 2 vereinigt mit Prüfsummen-Nachweis. Lesen nur über `lies_monate_mit_region` (außerhalb NaN + `nicht_geladen`).
+  - Gebaut, weil die Hochrechnung bis 26./27.10. reichte.
+- **statistik-pruefer:** zweimal „bestanden mit Auflagen“; A1–A5 und B1/B2 umgesetzt, mit Tests.
+- **Neustart:** 12:13 UTC, Prozess 63920, Ampel nach 15 min OK. 2018-01 nach 19 min „fertig für Afrika-Europa-Asien“ (1,98 MB/s, 0 verworfen, 0 Wiederholungen).
+- **Status-Skript danach berichtigt:** Durchsatz-Fenster ab Download-Beginn; falsches „HÄNGT“ durch alte Dateien im Rohordner.
+- **Tests:** 605/605.
+- **Hochrechnung:** Afrika-Europa-Asien etwa 08.–10.10., alles etwa 21.–26.10.2026 (bei 2,0 MB/s).
+- **Bericht:** `berichte/2026-09-26_download-umbau.md`. Nicht gepusht.

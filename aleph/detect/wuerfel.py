@@ -146,3 +146,60 @@ def lies_fertige_monate(
             if schliessen:
                 ds.close()
     return lies_monate(wuerfel, monate, variablen)
+
+
+def lies_monate_mit_region(
+    wuerfel,
+    monate: list[tuple[int, int]],
+    variablen: list[str],
+    region_maske: np.ndarray,
+    region_zustand: int = 4,
+) -> xr.Dataset:
+    """Liest Monate, die fertig (1) ODER nur für eine Region vollständig sind (`region_zustand`).
+
+    Seit 2026-09-26 (Vorrang Afrika-Europa-Asien beim Laden). In einem Monat mit
+    `region_zustand` sind die Zellen außerhalb von `region_maske` NICHT GELADEN. Im
+    Würfel sehen sie aus wie „keine Daten“ (NaN, Zähler 0). Diese Funktion
+    - gibt alle verlangten Variablen als Gleitkommazahlen zurück und setzt in
+      diesen Zellen JEDE Variable auf NaN, auch die Zähler (eine 0 könnte sonst als
+      „dunkel“ oder „kein gültiger Pixel“ gelesen werden),
+    - liefert zusätzlich `nicht_geladen` (bool, zeit × breite × laenge): True genau
+      in diesen Zellen; in fertigen Monaten überall False.
+    Andere Zustände (0, 2, 3) ergeben wie bei `lies_monate` `MonatNichtFertig`.
+    `region_maske`: bool (breite × laenge) im Gitter des Würfels, True = Zelle der Region.
+    """
+    ds, schliessen = _oeffne(wuerfel)
+    try:
+        _pruefe_format(ds)
+        fehlend_variablen = [v for v in variablen if v not in ds]
+        if fehlend_variablen:
+            raise WuerfelFormatFehler(f"Variablen fehlen im Würfel: {', '.join(fehlend_variablen)}.")
+        form = (ds.sizes["breite"], ds.sizes["laenge"])
+        if region_maske.shape != form or region_maske.dtype != bool:
+            raise WuerfelFormatFehler(f"Region-Maske hat Form {region_maske.shape}, erwartet {form} (bool).")
+        achse = [_als_monat(z) for z in ds["zeit"].values]
+        fertig = ds[FERTIG_VARIABLE].values
+        position = {m: i for i, m in enumerate(achse)}
+        erlaubt = (1, region_zustand)
+        nicht_fertig = [m for m in monate if m not in position or int(fertig[position[m]]) not in erlaubt]
+        if nicht_fertig:
+            raise MonatNichtFertig(
+                "Diese Monate sind weder fertig noch für die Region vollständig und werden nicht geliefert: "
+                + ", ".join(f"{j:04d}-{mo:02d}" for j, mo in nicht_fertig) + ". "
+                "Ein nicht geladener Monat ist nicht dasselbe wie „keine Daten“."
+            )
+        indizes = [position[m] for m in monate]
+        auswahl = ds[variablen].isel(zeit=indizes).load()
+        zustaende = np.array([int(fertig[i]) for i in indizes])
+    finally:
+        if schliessen:
+            ds.close()
+    nicht_geladen = np.zeros((len(monate), *form), dtype=bool)
+    nicht_geladen[zustaende == region_zustand] = ~region_maske
+    ergebnis = xr.Dataset(coords=auswahl.coords)
+    for v in variablen:
+        werte = auswahl[v].values.astype("float64")
+        werte[nicht_geladen] = np.nan
+        ergebnis[v] = (auswahl[v].dims, werte)
+    ergebnis["nicht_geladen"] = (("zeit", "breite", "laenge"), nicht_geladen)
+    return ergebnis

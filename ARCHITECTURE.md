@@ -55,6 +55,7 @@ Karte mit Filtern, Zeitreihen, Theorie-Status und Nachrichtenkontext
 - Feiner aufgelöste Quellen (z. B. Nachtlicht 500 m) werden pro Zelle zusammengefasst: Mittelwert und Anzahl gültiger Beobachtungen.
 - Zweite räumliche Ebene: **Verwaltungseinheiten** (Länder, später Regionen). Wirtschaftsdaten wie BIP oder Handel gibt es nur auf dieser Ebene. Sie werden dort verknüpft und nie künstlich auf Gitterzellen verteilt.
 - **Ländergrenzen** (seit 2026-09-25): nur aus Natural Earth, Admin 0 – Countries, 1:10m, Version 5.1.1, Standarddatei („de facto“ nach Anbieterregel, nicht die Kontrolle vor Ort), geladen mit `aleph/layers/natural_earth.py` nach `raw/natural_earth/5.1.1/`. Verknüpfungsschlüssel zur Weltbank ist `land_iso3` (Feld ISO_A3_EH plus Korrekturen Kosovo → XKX, Jersey/Guernsey → CHI). Scheitert der Download, bricht das Modul ab; Grenzen werden nie fest in den Code geschrieben oder nachgebaut. Steckbrief: `docs/sources/natural_earth.md`. Wie Zellen Ländern zugeordnet werden (Zellmitte oder Flächenanteil), ist noch nicht entschieden: Bei Zuordnung über die Zellmitte bekommen 26 der 217 Weltbank-Länder keine Zelle.
+- **Länderzuordnung, entschieden 2026-09-26** (ersetzt den letzten Satz des Absatzes davor): ALEPH trifft keine eigenen Souveränitätsentscheidungen. Oberste Ebene ist die UN-Sicht (Liste M49, `aleph/layers/un_m49.py`). Umstrittene Gebiete, besetzte Gebiete/Konfliktzonen und Gebiete mit Sonderstatus sind eigene, markierte Einheiten mit übergeordnetem M49-Eintrag (oder „unklar“) und Quellen (`aleph/layers/sondereinheiten.yaml`); sie gehen nie still im übergeordneten Staat auf (z. B. Krim: eigene Einheit, UN-Eintrag Ukraine). Natural Earth liefert nur die Umrisse (Länder-, Umstritten- und Provinzdatei, Version 5.1.1). Zellen werden **nach Flächenanteil** auf die Einheiten verteilt (`aleph/layers/zell_einheiten.py`, Ergebnis `laender/zell_einheiten/` auf der SSD), gerechnet flächentreu auf dem Ellipsoid, auf exakt dem Gitter des Nachtlicht-Würfels. Einheiten kleiner als eine Zelle werden als „zu klein für 0,25°“ ausgewiesen. Für den Abgleich mit der Weltbank gibt es eine ausdrücklich benannte zweite Sicht „so wie die Weltbank zählt“ (Spalten `weltbank_code`, `weltbank_art`); jedes Ergebnis nennt die benutzte Sicht. Zeitabhängige Grenzen sind noch nicht gebaut (fester Stand Mai 2022).
 
 **Zeitlich (Vorschlag):** monatlich.
 - Tagesdaten werden zu Monatswerten zusammengefasst.
@@ -115,7 +116,10 @@ Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Down
 - Serverfehler (HTTP 5xx), Zeitüberschreitungen und Verbindungsfehler werden je Datei hartnäckig wiederholt (wachsende Wartezeit, höchstens 30 Minuten je Datei). Bei HTTP 4xx (z. B. „nicht gefunden") wird sofort aufgegeben. Ausnahme HTTP 403: einzeln ein Dateifehler, aber mehr als 5 hintereinander oder 403 bei allen Dateien eines Monats gelten als Zugangsproblem und beenden den Lauf („Anmeldung prüfen“).
 - Ein Monat, bei dem danach Dateien fehlen, wird nicht als fertig markiert und seine Rohdaten bleiben liegen. Er kommt auf die Liste „später erneut versuchen"; der Lauf geht zum nächsten Monat weiter und versucht die Liste am Ende erneut, in bis zu drei Durchgängen mit 30 Minuten Pause dazwischen, solange im vorigen Durchgang mindestens ein Monat dazukam.
 - Der Lauf endet nur bei echten Blockern: kein Speicherplatz, SSD nicht erreichbar, Anmeldung fehlgeschlagen.
-- Die Statusanzeige nennt fertige Monate, offene Monate und die Monate, die nachgeholt werden müssen.
+- **Stillstand statt Gesamtfrist** (seit 2026-09-26, ersetzt die feste Frist von 4 Stunden je Monat): Ein Zeitschritt gilt nur als hängend, wenn 30 Minuten lang keine neue, geprüfte Datei fertig wird; langsamer, aber stetiger Fortschritt bricht nichts ab. Zusätzlich eine Notbremse (12 Stunden je Zeitschritt) mit eigener Meldung. Je Zeitschritt kommen ins Protokoll: Durchsatz (MB/s), nach Prüfung verworfene und neu geladene Dateien, Wiederholungen.
+- Die Statusanzeige nennt fertige Monate, offene Monate und die Monate, die nachgeholt werden müssen, dazu den aktuellen Durchsatz und eine Hochrechnung bis zum Ende als Spanne.
+- **Vollständigkeit** (Regel seit 2026-09-25, nach dem Befund „Kachelabfrage abgeschnitten“): Die Dateiliste eines Zeitschritts wird über alle Katalogseiten geholt und mit der vom Katalog gemeldeten Trefferzahl verglichen; eine Abweichung bricht den Zeitschritt ab. Vollständig heißt: gegen diese Trefferzahl **und** gegen eine feste Referenzliste der erwarteten Positionen geprüft (als Datei im Projekt, mit Herkunft und Datum; eine unbekannte Position ist ein Fehler, kein stilles Übergehen). Jede Position steht im Manifest mit genau einem Zustand (`geladen` / `beim Anbieter nicht vorhanden` / `nicht geladen`), dazu Dateiname, Größe und Prüfsumme aus dem Katalog. Jede Datei wird nach dem Laden gegen Größe und Prüfsumme geprüft. `monat_fertig`: 0 leer, 1 fertig, 2 unvollständig (Daten vorhanden, werden neu geladen), 3 wird geschrieben; nur 1 zählt als vorhanden.
+- **Vorrang nach Region** (seit 2026-09-26, weil die Hochrechnung den 1.11.2026 nicht sicher einhielt): Der Nachtlicht-Download lädt zweistufig. Stufe 1: für alle offenen Monate nur die 188 Kacheln mit Land in Afrika, Europa oder Asien (feste Liste `aleph/layers/vnp46a3_kacheln_afrika_europa_asien.txt`, abgeleitet aus der Zell-Länder-Zuordnung und den M49-Regionen, mit Herkunft im Dateikopf); Stufe 2: die übrigen Kacheln. Es wird keine Region weggelassen. Die Vollständigkeit gilt je Stufe gegen Katalog **und** Referenzliste, beschnitten auf die Kacheln der Stufe. `monat_fertig` = 4 heißt „vollständig nur für Afrika-Europa-Asien“; die übrigen Zellen sind dann **nicht geladen** (im Würfel gleich kodiert wie „keine Daten“). 4 zählt nicht als vorhanden; gelesen wird so ein Monat nur ausdrücklich über `aleph/detect/wuerfel.py` `lies_monate_mit_region`, die die übrigen Zellen in allen Variablen auf NaN setzt und als `nicht_geladen` markiert.
 
 **Kandidaten für die ersten Layer** (NASA-Daten zuerst, weil Space Apps sie verlangt):
 
@@ -126,6 +130,8 @@ Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Down
 | Brände | FIRMS Active Fire (MODIS + VIIRS) | Brände, Brandrodung |
 | Luftqualität | OMI NO₂ (OMNO2d) | Industrie, Verkehr, Lockdowns |
 | Niederschlag | GPM IMERG (monatlich) | Dürre, Überschwemmung |
+
+**Stand der Layer (2026-09-25):** Der Nachtlicht-Layer ist geladen und im Umbau (neue Variablen `*_mittel_beobachtet`, `*_beobachtete_pixel`; AllAngle als Standardfeld). Der Niederschlag-Layer (`aleph/layers/gpm_imerg.py`) ist gebaut und in Arbeit. Die übrigen Layer (Vegetation, Brände, Luftqualität) sind noch nicht geladen.
 
 Nicht als Erkennungs-Layer, sondern als **Kontext**:
 - Nachrichten: GDELT (Ereignisse und Artikel-Links pro Region und Zeitraum)
@@ -148,6 +154,17 @@ Beide werden wie jeder andere Layer auf das gemeinsame Raster gebracht (z. B. Sc
 | Quelle | Inhalt | Rolle in ALEPH |
 |---|---|---|
 | NASA Earthdata | alle NASA-Satellitendaten oben | Grundlage |
+| Copernicus Data Space | Sentinel-5P (NO₂ in höherer Auflösung), Sentinel-1 (Radar) | Ergänzung zu OMI, ab 2018 |
+| Copernicus Climate Data Store | ERA5 Klimadaten (Temperatur, Bodenfeuchte u. a.) | Klima-Layer |
+
+**GPM IMERG Layer Details:**
+- **Ladereihenfolge:** Der Layer nutzt dieselbe Ladelogik wie alle anderen (via `earthaccess`), aber mit **maximal 2 gleichzeitigen Downloads** (wie im layer-bauer-Agent angegeben), um den Nachtlicht-Download nicht zu beeinträchtigen.
+- **Aggregation:** Da das native 0,1°-Raster nicht ganzzahlig in das ALEPH-Zielraster 0,25° passt (Verhältnis 2,5), wird eine zweistufige Aggregation verwendet:
+  1. 0,1° → 0,5° (glatte 5:1 Mittelung)
+  2. 0,5° → 0,25° (bilineare Interpolation)
+  Dies ist eine Annäherung an die flächengewichtete Mittelung und ist für Analysen ausreichend genau.
+- **Validierung:** Nach dem Download werden Werte für die Sahara (nahe null) und Amazonas (hoch) kontrolliert.
+- **Hinweis:** Die frühen TRMM-Monate (2013 bis Anfang 2014) sind möglicherweise weniger verlässlich außerhalb 35° N–S, aber für ALEPHs Zeitraum 2013–2025 vollständig nach Juni 2000 ohne Bedeutung.
 | Copernicus Data Space | Sentinel-5P (NO₂ in höherer Auflösung), Sentinel-1 (Radar) | Ergänzung zu OMI, ab 2018 |
 | Copernicus Climate Data Store | ERA5 Klimadaten (Temperatur, Bodenfeuchte u. a.) | Klima-Layer |
 | ACLED | georeferenzierte Konflikt- und Gewaltereignisse, inkl. Explosionen | Kontext und Referenz, verlässlicher als GDELT |

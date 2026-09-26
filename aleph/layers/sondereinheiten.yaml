@@ -1,0 +1,541 @@
+# Sondereinheiten der Länderzuordnung (Anweisung vom 2026-09-26, Punkt 7)
+#
+# Grundsatz: ALEPH trifft keine eigenen Souveränitätsentscheidungen. Oberste Ebene ist die UN-Sicht
+# (Liste M49, aleph/layers/un_m49.py). Umstrittene Gebiete, besetzte Gebiete/Konfliktzonen und Gebiete
+# mit Sonderstatus sind eigene, markierte Einheiten und gehen nie still im übergeordneten Staat auf.
+#
+# Jede Angabe nennt ihre Quelle (Schlüssel unter `quellen`). Zitate sind wörtlich (Englisch im Original),
+# aus den am 2026-09-25 geladenen Originaldokumenten (PDF-Text mit pypdf extrahiert, bzw. HTML/CSV).
+# Was nicht belegt ist, steht als „unklar“. Keine wertenden Wörter.
+#
+# un_art: ausdrücklich = die UN-Quelle nennt Gebiet und Staat; abgeleitet = aus einer UN-Quelle
+#         geschlossen, die das Gebiet nicht einzeln nennt (Schluss steht dabei); unklar = kein UN-Beleg.
+# weltbank_art: belegt | abgeleitet | unklar | keine (Weltbank führt keine Zahl für dieses Gebiet).
+#         weltbank_code ist bei „unklar“ nur der Kandidat (verwaltender Staat laut Natural Earth), damit
+#         eine Vergleichsrechnung möglich ist; er ist dann ausdrücklich nicht belegt.
+# geometrie: aus welcher Natural-Earth-Datei (5.1.1) und welchem Eintrag der Umriss stammt.
+#         laender = Admin 0 Countries (Feld ADM0_A3), umstritten = Admin 0 Disputed Areas (Feld BRK_A3),
+#         provinzen = Admin 1 States/Provinces (Feld adm1_code). Nichts ist selbst gezeichnet.
+# gueltig: Zeitraum. Die Umrisse sind ein fester Stand (Natural Earth 5.1.1, Dateien vom Mai 2022);
+#         einen Stichtag nennt der Anbieter nicht. Zeitabhängige Umrisse sind noch nicht gebaut.
+
+stand: "2026-09-26"
+
+quellen:
+  M49: "UNSD, Standard country or area codes for statistical use (M49), Übersicht, https://unstats.un.org/unsd/methodology/m49/overview/, abgerufen 2026-09-25 22:44 UTC (raw/un_m49/20260925T224431Z)"
+  M49_QA: "UNSD, M49-Hauptseite, Abschnitt Questions & Answers, https://unstats.un.org/unsd/methodology/m49/, abgerufen 2026-09-25 22:44 UTC (raw/un_m49/20260925T224431Z/hauptseite.html)"
+  M49_FN: "UNSD, M49-Hauptseite, Fußnoten der Tabelle „Recent changes“, gleiche Adresse und Abruf wie M49_QA"
+  A_RES_68_262: "UN-Generalversammlung, Resolution 68/262 „Territorial integrity of Ukraine“, 27.03.2014, https://docs.un.org/en/A/RES/68/262, abgerufen 2026-09-25"
+  A_RES_71_205: "UN-Generalversammlung, Resolution 71/205 „Situation of human rights in the Autonomous Republic of Crimea and the city of Sevastopol (Ukraine)“, 19.12.2016, https://docs.un.org/en/A/RES/71/205, abgerufen 2026-09-25"
+  A_RES_ES_11_4: "UN-Generalversammlung, Resolution ES-11/4 „Territorial integrity of Ukraine: defending the principles of the Charter of the United Nations“, 12.10.2022, https://docs.un.org/en/A/RES/ES-11/4, abgerufen 2026-09-25"
+  S_RES_541: "UN-Sicherheitsrat, Resolution 541 (1983), 18.11.1983, https://docs.un.org/en/S/RES/541(1983), abgerufen 2026-09-25"
+  S_RES_497: "UN-Sicherheitsrat, Resolution 497 (1981), 17.12.1981, https://docs.un.org/en/S/RES/497(1981), abgerufen 2026-09-25"
+  S_RES_2334: "UN-Sicherheitsrat, Resolution 2334 (2016), 23.12.2016, https://docs.un.org/en/S/RES/2334(2016), abgerufen 2026-09-25"
+  S_RES_1860: "UN-Sicherheitsrat, Resolution 1860 (2009), 08.01.2009, https://docs.un.org/en/S/RES/1860(2009), abgerufen 2026-09-25"
+  A_RES_62_243: "UN-Generalversammlung, Resolution 62/243 „The situation in the occupied territories of Azerbaijan“, 14.03.2008, https://docs.un.org/en/A/RES/62/243, abgerufen 2026-09-25"
+  A_RES_72_282: "UN-Generalversammlung, Resolution 72/282 „Complete and unconditional withdrawal of foreign military forces from the territory of the Republic of Moldova“, 22.06.2018, https://docs.un.org/en/A/RES/72/282, abgerufen 2026-09-25"
+  A_RES_77_293: "UN-Generalversammlung, Resolution 77/293 „Status of internally displaced persons and refugees from Abkhazia, Georgia, and the Tskhinvali region/South Ossetia, Georgia“, 07.06.2023, https://docs.un.org/en/A/RES/77/293, abgerufen 2026-09-25"
+  S_RES_47: "UN-Sicherheitsrat, Resolution 47 (1948), 21.04.1948, https://docs.un.org/en/S/RES/47(1948), abgerufen 2026-09-25"
+  S_RES_1990: "UN-Sicherheitsrat, Resolution 1990 (2011), 27.06.2011, https://docs.un.org/en/S/RES/1990(2011), abgerufen 2026-09-25"
+  S_RES_2767: "UN-Sicherheitsrat, Resolution 2767 (2024), 27.12.2024, https://docs.un.org/en/S/RES/2767(2024), abgerufen 2026-09-25"
+  NE_UMSTR: "Natural Earth 5.1.1, Admin 0 – Breakaway, Disputed Areas, 1:10m, Feld NOTE_BRK (Angabe des Anbieters, Stand Mai 2022), raw/natural_earth/5.1.1_umstritten"
+  NE_LAENDER: "Natural Earth 5.1.1, Admin 0 – Countries, 1:10m, Felder TYPE und SOV_A3, raw/natural_earth/5.1.1"
+  NE_PROV: "Natural Earth 5.1.1, Admin 1 – States, Provinces, 1:10m, Felder name, type_en, raw/natural_earth/5.1.1_provinzen"
+  ICJ_177: "Internationaler Gerichtshof, Fallseite „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“, https://www.icj-cij.org/case/177, abgerufen 2026-09-26 13:27 UTC (HTML-Text gelesen; die PDFs dort sind durch einen Cloudflare-Schutz gesperrt und wurden nicht gelesen)"
+  ICJ_102: "Internationaler Gerichtshof, Fallseite „Sovereignty over Pulau Ligitan and Pulau Sipadan (Indonesia/Malaysia)“, Zusammenfassung des Falls, https://www.icj-cij.org/case/102, abgerufen 2026-09-26 13:30 UTC (HTML-Text gelesen)"
+  RA_5446: "Philippinen, Republic Act No. 5446 vom 18.09.1968, Abschnitt 2, Text bei The Lawphil Project (Arellano Law Foundation), https://lawphil.net/statutes/repacts/ra1968/ra_5446_1968.html, abgerufen 2026-09-26 13:30 UTC (private Rechtsbibliothek; das amtliche Gesetzblatt officialgazette.gov.ph war durch Cloudflare gesperrt)"
+  WDI: "Weltbank, WDI-Gesamtpaket WDI_CSV.zip (Stand 15.07.2026), abgerufen 2026-09-25; Einzelheiten und Zitate: berichte/2026-09-26_weltbank-gebiete.md"
+
+# Hinweise zur Weltbank-Sicht für ganze Weltbank-Länder (Phase 2). gebiet: passt | unklar | abweichend
+weltbank_laender:
+  RUS: {gebiet: unklar, beleg: "WDI, Fußnote BIP 2014/2015: „Based on data from official statistics of Ukraine and Russian Federation; …“; welche Gebiete, nicht genannt"}
+  UKR: {gebiet: unklar, beleg: "wie RUS"}
+  CYP: {gebiet: abweichend, beleg: "WDI Pro Kopf: „Data are for areas under the effective control of the Government of the Republic of Cyprus.“ Nordzypern ist eigene Einheit ohne Weltbank-Zahl."}
+  MAR: {gebiet: abweichend, beleg: "WDI Pro Kopf: „Data cover Western Sahara.“ Umfang (ganze Westsahara oder nur der verwaltete Teil) unklar."}
+  GEO: {gebiet: abweichend, beleg: "WDI Special Notes: „Includes self-governed areas only, which mostly exclude Abkhazia and South Ossetia …“ Abchasien und Südossetien sind eigene Einheiten ohne Weltbank-Zahl."}
+  MDA: {gebiet: abweichend, beleg: "WDI Special Notes: „Excluding Transnistria.“ Transnistrien ist eigene Einheit ohne Weltbank-Zahl."}
+  TZA: {gebiet: abweichend, beleg: "WDI Pro Kopf: „Data cover mainland Tanzania only.“ Sansibar ist in dieser Sitzung nicht abgezogen."}
+  ISR: {gebiet: unklar, beleg: "keine Gebietsangabe der Weltbank"}
+  PSE: {gebiet: unklar, beleg: "Weltbank-Name „West Bank and Gaza“; Bevölkerung „excluding E. Jerusalem“; BIP ohne Gebietsangabe"}
+  SYR: {gebiet: unklar, beleg: "keine Gebietsangabe; Golan ist eigene Einheit"}
+  SOM: {gebiet: unklar, beleg: "keine Gebietsangabe; Somaliland ist eigene Einheit"}
+  AZE: {gebiet: unklar, beleg: "keine Gebietsangabe zu BIP und Gesamtbevölkerung"}
+  ARM: {gebiet: unklar, beleg: "Bergkarabach-Frage wie AZE; keine Gebietsangabe"}
+  IND: {gebiet: unklar, beleg: "keine Gebietsangabe (Kaschmir, Arunachal Pradesh)"}
+  PAK: {gebiet: unklar, beleg: "keine Gebietsangabe (Kaschmir)"}
+  SDN: {gebiet: unklar, beleg: "WDI: „Excludes South Sudan after July 9, 2011.“ Abyei ohne Angabe"}
+  SRB: {gebiet: passt, beleg: "WDI Special Notes: „data from 1999 onward for Serbia for most indicators exclude data for Kosovo …“"}
+  CHN: {gebiet: passt, beleg: "WDI Special Notes: „Unless otherwise noted, data for China do not include data for Hong Kong SAR, China; Macao SAR, China; or Taiwan, China.“ Aksai Chin, Shaksgam ohne Angabe."}
+
+einheiten:
+  - id: krim
+    name: "Krim (Autonome Republik Krim und Stadt Sewastopol)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B89}
+    kategorien: [umstritten, besetzt/Konfliktzone]
+    un_m49: "804"
+    un_art: ausdrücklich
+    un_beleg: "A_RES_68_262 Ziff. 1: „Affirms its commitment to the sovereignty, political independence, unity and territorial integrity of Ukraine within its internationally recognized borders“; Ziff. 5: das Referendum vom 16.03.2014 „having no validity, cannot form the basis for any alteration of the status of the Autonomous Republic of Crimea or of the city of Sevastopol“"
+    un_status: "A_RES_71_205 (Titel: „… Crimea and the city of Sevastopol (Ukraine)“), Text: „the temporarily occupied Autonomous Republic of Crimea and the city of Sevastopol“"
+    beansprucht_von: "Ukraine (NE_UMSTR: „Admin. by Russia; Claimed by Ukraine“)"
+    verwaltet_von: "Russland (NE_UMSTR, Stand Mai 2022)"
+    anerkennung: "A_RES_68_262 Ziff. 6: „Calls upon all States, international organizations and specialized agencies not to recognize any alteration of the status of the Autonomous Republic of Crimea and the city of Sevastopol …“. Welche Staaten die Eingliederung in Russland anerkennen: unklar."
+    gueltig: "Status ab März 2014 (Referendum 16.03.2014 laut A_RES_68_262), bis heute offen; Umriss NE 5.1.1"
+    weltbank_code: null
+    weltbank_art: unklar
+    weltbank_beleg: "Kein Kandidat eingetragen, damit die Krim nicht still Russland oder der Ukraine zugezählt wird. WDI, Fußnote BIP 2014/2015 zu RUS und UKR; ob die Krim in RUS oder UKR enthalten ist, sagt die Weltbank nicht (berichte/2026-09-26_weltbank-gebiete.md)"
+
+  - id: donezk_2014
+    name: "Donezk (von „Volksrepublik Donezk“ kontrolliertes Gebiet laut Natural Earth)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: C02}
+    kategorien: [umstritten, besetzt/Konfliktzone]
+    un_m49: "804"
+    un_art: ausdrücklich
+    un_beleg: "A_RES_ES_11_4 Ziff. 3–4: „… the Donetsk, Kherson, Luhansk and Zaporizhzhia regions of Ukraine …“ und Präambel: „areas that, in part, are or have been under the temporary military control of the Russian Federation“"
+    un_status: "A_RES_ES_11_4 Präambel: „temporary military control of the Russian Federation“"
+    beansprucht_von: "Ukraine (NE_UMSTR: „Self admin.; Claimed by Ukraine“)"
+    verwaltet_von: "laut NE_UMSTR „Self admin.“ (Stand Mai 2022); spätere Lage nicht abgebildet"
+    anerkennung: "A_RES_ES_11_4 Ziff. 4: Aufruf, „any alteration by the Russian Federation of the status“ nicht anzuerkennen. Weitere Anerkennung: unklar."
+    gueltig: "Umriss NE 5.1.1; welcher Stichtag der Linie, nennt der Anbieter nicht. Die Gebiete, die seit 2022 zusätzlich unter Kontrolle Russlands stehen, fehlen (keine Quelle mit Umrissen je Zeitpunkt geprüft)."
+    weltbank_code: UKR
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: luhansk_2014
+    name: "Luhansk (von „Volksrepublik Luhansk“ kontrolliertes Gebiet laut Natural Earth)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: C03}
+    kategorien: [umstritten, besetzt/Konfliktzone]
+    un_m49: "804"
+    un_art: ausdrücklich
+    un_beleg: "wie donezk_2014 (A_RES_ES_11_4 nennt „Donetsk, Kherson, Luhansk and Zaporizhzhia regions of Ukraine“)"
+    un_status: "wie donezk_2014"
+    beansprucht_von: "Ukraine (NE_UMSTR: „Self admin.; Claimed by Ukraine“)"
+    verwaltet_von: "laut NE_UMSTR „Self admin.“ (Stand Mai 2022)"
+    anerkennung: "wie donezk_2014"
+    gueltig: "wie donezk_2014"
+    weltbank_code: UKR
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: taiwan
+    name: "Taiwan"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: TWN}
+    kategorien: [umstritten]
+    un_m49: "156"
+    un_art: ausdrücklich
+    un_beleg: "M49_QA: „within the M49, Taiwan Province of China is considered part of China (numerical code 156). However, for strictly statistical purposes, the numerical code 158 can be used to represent this area.“ (mit Verweis auf Resolution 2758 vom 25.10.1971)"
+    un_status: "M49 führt Taiwan nicht als eigenen Eintrag (M49_QA)"
+    beansprucht_von: "China (NE_UMSTR, Eintrag B77: „Self admin.; Claimed by China“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "unklar (Zahl der Staaten mit diplomatischer Anerkennung nicht an einer Quelle geprüft)"
+    gueltig: "ganzer Zeitraum 2013–2025 unverändert (Umriss NE 5.1.1)"
+    weltbank_code: null
+    weltbank_art: keine
+    weltbank_beleg: "Taiwan steht nicht in der Weltbank-Länderliste; WDI Special Notes China: Daten Chinas ohne „Taiwan, China“"
+
+  - id: kosovo
+    name: "Kosovo"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: KOS}
+    kategorien: [umstritten]
+    un_m49: "688"
+    un_art: ausdrücklich
+    un_beleg: "M49_QA: „The status of Kosovo should be understood to be in the context of United Nations Security Council resolution 1244 (1999). As a result, within the … (M49), Kosovo is currently considered part of Serbia (numerical code 688). However, for strictly statistical purposes, the numerical code 412 can be used to represent this area.“"
+    un_status: "M49 führt Kosovo nicht als eigenen Eintrag (M49_QA)"
+    beansprucht_von: "Serbien (nicht in NE_UMSTR vermerkt; Grundlage nur M49_QA, dort ist kein Anspruch genannt): unklar"
+    verwaltet_von: "unklar (NE_UMSTR Eintrag B57 ohne Angabe)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: XKX
+    weltbank_art: belegt
+    weltbank_beleg: "WDI Special Notes Serbien: „Kosovo became a World Bank member on June 29, 2009; available data are shown separately for Kosovo.“"
+
+  - id: nordzypern
+    name: "Nordzypern"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: CYN}
+    kategorien: [umstritten]
+    un_m49: "196"
+    un_art: ausdrücklich
+    un_beleg: "S_RES_541: „Deplores the declaration of the Turkish Cypriot authorities of the purported secession of part of the Republic of Cyprus“; „Considers the declaration referred to above as legally invalid and calls for its withdrawal“"
+    un_status: "S_RES_541: Erklärung „legally invalid“"
+    beansprucht_von: "Republik Zypern (NE_UMSTR, B20: „Self admin.; Claimed by Cyprus“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "S_RES_541: „Calls upon all States not to recognize any Cypriot State other than the Republic of Cyprus“. Weitere Anerkennung: unklar."
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: null
+    weltbank_art: keine
+    weltbank_beleg: "WDI Zypern: „Data are for areas under the effective control of the Government of the Republic of Cyprus.“"
+
+  - id: somaliland
+    name: "Somaliland"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: SOL}
+    kategorien: [umstritten]
+    un_m49: "706"
+    un_art: abgeleitet
+    un_beleg: "M49 führt Somaliland nicht; S_RES_2767: „Reaffirming its full respect for the sovereignty, territorial integrity, political independence, and unity of Somalia“. Somaliland ist darin nicht genannt; Zuordnung zu Somalia daraus geschlossen."
+    un_status: "keine UN-Aussage zu Somaliland gefunden (nicht systematisch gesucht)"
+    beansprucht_von: "Somalia (NE_UMSTR, B30: „Self admin.; Claimed by Somalia“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: SOM
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: abchasien
+    name: "Abchasien"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B35}
+    kategorien: [umstritten]
+    un_m49: "268"
+    un_art: ausdrücklich
+    un_beleg: "A_RES_77_293 Titel: „Status of internally displaced persons and refugees from Abkhazia, Georgia, and the Tskhinvali region/South Ossetia, Georgia“; Text: „their homes throughout Georgia, including in Abkhazia and the Tskhinvali region/South Ossetia“"
+    un_status: "unklar (die gelesene Resolution nennt keinen Status außer der Zugehörigkeit zu Georgien)"
+    beansprucht_von: "Georgien (NE_UMSTR: „Self admin.; Claimed by Georgia“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: null
+    weltbank_art: keine
+    weltbank_beleg: "WDI Georgien Pro Kopf: „Excludes Abkhazia and South Ossetia.“"
+
+  - id: suedossetien
+    name: "Südossetien (Region Zchinwali)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B37}
+    umriss_hinweis: "Fläche laut Natural Earth 4 465 km²; übliche Angaben (WorldAtlas/Wikipedia, laut Plausibilitätsprüfung) etwa 3 900 km². Umriss weicht ab."
+    kategorien: [umstritten]
+    un_m49: "268"
+    un_art: ausdrücklich
+    un_beleg: "wie abchasien (A_RES_77_293: „the Tskhinvali region/South Ossetia, Georgia“)"
+    un_status: "unklar"
+    beansprucht_von: "Georgien (NE_UMSTR: „Self admin.; Claimed by Georgia“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: null
+    weltbank_art: keine
+    weltbank_beleg: "wie abchasien"
+
+  - id: transnistrien
+    name: "Transnistrien"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B36}
+    umriss_hinweis: "Fläche laut Natural Earth 3 052 km²; übliche Angaben (Wikipedia/MapFight, laut Plausibilitätsprüfung) etwa 4 160 km². Umriss weicht ab."
+    kategorien: [umstritten]
+    un_m49: "498"
+    un_art: ausdrücklich
+    un_beleg: "A_RES_72_282: „the separatist entity in the eastern part of the country“ (gemeint: Republik Moldau) und „the protracted Transnistrian conflict“"
+    un_status: "A_RES_72_282: „stationing of foreign military forces on the territory of the Republic of Moldova, without its consent, violates its sovereignty and territorial integrity“"
+    beansprucht_von: "Moldau (NE_UMSTR: „Self admin.; Claimed by Moldova“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: null
+    weltbank_art: keine
+    weltbank_beleg: "WDI Moldau: „Excluding Transnistria.“"
+
+  - id: bergkarabach
+    name: "Bergkarabach (Artsach)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B38}
+    kategorien: [umstritten, besetzt/Konfliktzone]
+    un_m49: "031"
+    un_art: ausdrücklich
+    un_beleg: "A_RES_62_243: „the Nagorno-Karabakh region of the Republic of Azerbaijan“; „armed conflict in and around the Nagorno-Karabakh region of the Republic of Azerbaijan“"
+    un_status: "A_RES_62_243 (2008): „occupied territories of the Republic of Azerbaijan“ (bezogen auf die umliegenden Gebiete; ob die Region selbst so bezeichnet wird, lässt der Text offen)"
+    beansprucht_von: "Aserbaidschan (NE_UMSTR: „Self admin.; Claimed by Azer.“)"
+    verwaltet_von: "laut NE_UMSTR „Self admin.“ (Stand Mai 2022). Die Lage ab 2023 ist nicht an einer Quelle geprüft."
+    anerkennung: "unklar"
+    gueltig: "Umriss NE 5.1.1 (3 136 km²). Laut Plausibilitätsprüfung (Allgemeinwissen, nicht an einer Quelle geprüft) entspricht er eher der Lage nach Ende 2020; für 2013–2020 fehlen dann umliegende Gebiete in der Größenordnung von 10 000 km². Stichtag der Linie: unklar. Ende des Sonderstatus 2023: nicht an einer UN-Quelle geprüft."
+    weltbank_code: AZE
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe zu BIP und Gesamtbevölkerung"
+
+  - id: golan
+    name: "Golanhöhen"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B16}
+    kategorien: [besetzt/Konfliktzone, umstritten]
+    un_m49: "760"
+    un_art: ausdrücklich
+    un_beleg: "S_RES_497: „the Israeli decision to impose its laws, jurisdiction and administration in the occupied Syrian Golan Heights is null and void and without international legal effect“"
+    un_status: "S_RES_497: „occupied Syrian Golan Heights“"
+    beansprucht_von: "Syrien (NE_UMSTR: „Admin. By Israel; Claimed by Syria“)"
+    verwaltet_von: "Israel (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: ISR
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: westjordanland
+    name: "Westjordanland (ohne Ostjerusalem)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B54}
+    kategorien: [besetzt/Konfliktzone]
+    un_m49: "275"
+    un_art: abgeleitet
+    un_beleg: "M49 führt „State of Palestine“ (275), ohne Gebietsbeschreibung. S_RES_2334: „the Palestinian territory occupied since 1967, including East Jerusalem“. Zuordnung zu 275 daraus geschlossen."
+    un_status: "S_RES_2334: „Israel, the occupying Power“; „the Palestinian territory occupied since 1967“"
+    beansprucht_von: "unklar (NE_UMSTR, B54 ohne Angabe)"
+    verwaltet_von: "unklar (NE_UMSTR ohne Angabe)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: PSE
+    weltbank_art: belegt
+    weltbank_beleg: "Weltbank-Eintrag PSE heißt „West Bank and Gaza“; Bevölkerung „excluding E. Jerusalem“"
+
+  - id: gaza
+    name: "Gazastreifen"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B53}
+    kategorien: [besetzt/Konfliktzone]
+    un_m49: "275"
+    un_art: abgeleitet
+    un_beleg: "S_RES_1860: „the Gaza Strip constitutes an integral part of the territory occupied in 1967 and will be a part of the Palestinian state“. Die Resolution nennt einen künftigen Staat, nicht den M49-Eintrag 275 „State of Palestine“; Zuordnung zu 275 daraus geschlossen (Einordnung nach Plausibilitätsprüfung 2026-09-26 von „ausdrücklich“ auf „abgeleitet“ geändert)."
+    un_status: "S_RES_1860: „integral part of the territory occupied in 1967“"
+    beansprucht_von: "unklar (NE_UMSTR, B53 ohne Angabe)"
+    verwaltet_von: "unklar (NE_UMSTR ohne Angabe)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: PSE
+    weltbank_art: belegt
+    weltbank_beleg: "Weltbank-Eintrag PSE heißt „West Bank and Gaza“"
+
+  - id: ostjerusalem
+    name: "Ostjerusalem"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B98}
+    kategorien: [besetzt/Konfliktzone, umstritten]
+    un_m49: "275"
+    un_art: abgeleitet
+    un_beleg: "S_RES_2334: „the Palestinian territory occupied since 1967, including East Jerusalem“; Zuordnung zu 275 daraus geschlossen (M49 beschreibt kein Gebiet). Aufgenommen, weil der Beleg das Gebiet ausdrücklich nennt."
+    un_status: "S_RES_2334: „occupied Palestinian territory, including East Jerusalem“"
+    beansprucht_von: "Palästina (NE_UMSTR: „Admin. By Israel; Claimed by Palestine“)"
+    verwaltet_von: "Israel (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: ISR
+    weltbank_art: unklar
+    weltbank_beleg: "WDI: Bevölkerung PSE „excluding E. Jerusalem“; ob das BIP Israels Ostjerusalem enthält: keine Angabe"
+
+  - id: westsahara_marokko
+    name: "Westsahara (von Marokko verwalteter Teil)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B19}
+    kategorien: [umstritten]
+    un_m49: "732"
+    un_art: ausdrücklich
+    un_beleg: "M49 führt „Western Sahara“ als eigenen Eintrag (732, ESH)"
+    un_status: "unklar: Status als Hoheitsgebiet ohne Selbstregierung nicht geprüft (UN-Seite zum Abruf gesperrt, HTTP 202 ohne Inhalt)"
+    beansprucht_von: "Westsahara (NE_UMSTR: „Admin. by Morocco; Claimed by Western Sahara“)"
+    verwaltet_von: "Marokko (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: MAR
+    weltbank_art: abgeleitet
+    weltbank_beleg: "WDI Marokko Pro Kopf: „Data cover Western Sahara.“ Nachrechnung: BIP enthält die Westsahara; welchen Teil, ist unklar."
+
+  - id: westsahara_ost
+    name: "Westsahara (östlicher Teil, laut Natural Earth selbst verwaltet)"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: SAH}
+    kategorien: [umstritten]
+    un_m49: "732"
+    un_art: ausdrücklich
+    un_beleg: "M49 führt „Western Sahara“ als eigenen Eintrag (732, ESH)"
+    un_status: "wie westsahara_marokko"
+    beansprucht_von: "Marokko (NE_UMSTR, B28: „Self admin.; Claimed by Morocco“)"
+    verwaltet_von: "eigene Verwaltung (NE_UMSTR: „Self admin.“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: MAR
+    weltbank_art: unklar
+    weltbank_beleg: "„Data cover Western Sahara“ – ob auch dieser Teil gemeint ist, sagt die Weltbank nicht"
+
+  - id: kaschmir_jammu_kaschmir
+    name: "Kaschmir: von Indien verwalteter Teil (Jammu und Kaschmir, Ladakh)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B05}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "M49 äußert sich nicht. S_RES_47 (1948), Präambel: „Noting with satisfaction that both India and Pakistan desire that the question of the accession of Jammu and Kashmir to India or Pakistan should be decided through the democratic method of a free and impartial plebiscite“ (im PDF-Text „Jam.mu“, Lesefehler) – der Rat stellt hier den Wunsch beider Staaten fest; keine Zuordnung zu einem M49-Eintrag."
+    un_status: "S_RES_47: Frage der Zugehörigkeit offen (beide Staaten wünschen laut Präambel ein Plebiszit)"
+    beansprucht_von: "Pakistan (NE_UMSTR: „Admin. by India; Claimed by Pakistan“)"
+    verwaltet_von: "Indien (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: IND
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: kaschmir_azad
+    name: "Kaschmir: Azad Kaschmir (von Pakistan verwaltet)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B09}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "wie kaschmir_jammu_kaschmir"
+    un_status: "wie kaschmir_jammu_kaschmir"
+    beansprucht_von: "Indien (NE_UMSTR: „Admin. by Pakistan; Claimed by India“)"
+    verwaltet_von: "Pakistan (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: PAK
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: kaschmir_gilgit_baltistan
+    name: "Kaschmir: Gilgit-Baltistan (von Pakistan verwaltet)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B08}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "wie kaschmir_jammu_kaschmir"
+    un_status: "wie kaschmir_jammu_kaschmir"
+    beansprucht_von: "Indien (NE_UMSTR: „Admin. by Pakistan; Claimed by India“)"
+    verwaltet_von: "Pakistan (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: PAK
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: kaschmir_aksai_chin
+    name: "Kaschmir: Aksai Chin (von China verwaltet)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B07}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "keine UN-Quelle zu diesem Gebiet gelesen"
+    un_status: "unklar"
+    beansprucht_von: "Indien (NE_UMSTR: „Admin. by China; Claimed by India“)"
+    verwaltet_von: "China (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: CHN
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: kaschmir_shaksgam
+    name: "Kaschmir: Shaksgam-Tal (von China verwaltet)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B06}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "keine UN-Quelle zu diesem Gebiet gelesen"
+    un_status: "unklar"
+    beansprucht_von: "Indien (NE_UMSTR: „Admin. by China; Ceded to China by Pakistan; Claimed by India“)"
+    verwaltet_von: "China (NE_UMSTR)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: CHN
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: kaschmir_siachen
+    name: "Kaschmir: Siachen-Gletscher"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: KAS}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "keine UN-Quelle zu diesem Gebiet gelesen"
+    un_status: "unklar"
+    beansprucht_von: "Indien und Pakistan (NE_UMSTR, B45: „Claimed by Pakistan and India“)"
+    verwaltet_von: "unklar (NE_UMSTR ohne Angabe)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: null
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank"
+
+  - id: hongkong
+    name: "Hongkong (Sonderverwaltungszone)"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: HKG}
+    kategorien: [Sonderstatus/autonom]
+    un_m49: "344"
+    un_art: ausdrücklich
+    un_beleg: "M49: eigener Eintrag „China, Hong Kong Special Administrative Region“ (344). M49_FN 5: „the People's Republic of China resumed the exercise of sovereignty over the territory with effect from that date“ (01.07.1997)"
+    un_status: "Sonderverwaltungszone (Name des M49-Eintrags)"
+    beansprucht_von: "nicht umstritten laut den gelesenen Quellen"
+    verwaltet_von: "eigene Verwaltung als Sonderverwaltungszone Chinas (M49-Name); Einzelheiten unklar"
+    anerkennung: "nicht zutreffend"
+    gueltig: "ganzer Zeitraum 2013–2025"
+    weltbank_code: HKG
+    weltbank_art: belegt
+    weltbank_beleg: "eigener Weltbank-Eintrag; WDI Special Notes China: Daten Chinas ohne Hongkong"
+
+  - id: macau
+    name: "Macau (Sonderverwaltungszone)"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: MAC}
+    kategorien: [Sonderstatus/autonom]
+    un_m49: "446"
+    un_art: ausdrücklich
+    un_beleg: "M49: eigener Eintrag „China, Macao Special Administrative Region“ (446). M49_FN 6: „the People's Republic of China resumed the exercise of sovereignty over the territory with effect from that date“ (20.12.1999)"
+    un_status: "Sonderverwaltungszone (Name des M49-Eintrags)"
+    beansprucht_von: "nicht umstritten laut den gelesenen Quellen"
+    verwaltet_von: "eigene Verwaltung als Sonderverwaltungszone Chinas (M49-Name); Einzelheiten unklar"
+    anerkennung: "nicht zutreffend"
+    gueltig: "ganzer Zeitraum 2013–2025"
+    weltbank_code: MAC
+    weltbank_art: belegt
+    weltbank_beleg: "eigener Weltbank-Eintrag; WDI Special Notes China: Daten Chinas ohne Macau"
+
+  - id: groenland
+    name: "Grönland"
+    geometrie: {datei: laender, feld: ADM0_A3, wert: GRL}
+    kategorien: [Sonderstatus/autonom]
+    un_m49: "304"
+    un_art: ausdrücklich
+    un_beleg: "M49: eigener Eintrag „Greenland“ (304)"
+    un_status: "unklar (M49 nennt keinen Status)"
+    beansprucht_von: "nicht umstritten laut den gelesenen Quellen"
+    verwaltet_von: "NE_LAENDER: eigene Einheit mit übergeordnetem Staat Dänemark (SOV_A3 = DN1); Umfang der Selbstverwaltung nicht an einer Quelle geprüft"
+    anerkennung: "nicht zutreffend"
+    gueltig: "ganzer Zeitraum 2013–2025"
+    weltbank_code: GRL
+    weltbank_art: belegt
+    weltbank_beleg: "eigener Weltbank-Eintrag (GRL)"
+
+  - id: tibet
+    name: "Tibet (Autonome Region Tibet / Xizang)"
+    geometrie: {datei: provinzen, feld: adm1_code, wert: CHN-1662}
+    kategorien: [Sonderstatus/autonom]
+    un_m49: "156"
+    un_art: abgeleitet
+    un_beleg: "M49 führt Tibet nicht eigens; in der Grenzdatei liegt es im Umriss Chinas (NE_LAENDER). Eine abweichende UN-Aussage wurde nicht gefunden (nicht systematisch gesucht)."
+    un_status: "unklar"
+    beansprucht_von: "unklar (in den gelesenen Quellen nicht als umstritten geführt)"
+    verwaltet_von: "China (NE_PROV: Provinz Chinas, type_en „Autonomous Region“)"
+    anerkennung: "nicht zutreffend"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1, Provinzdatei)"
+    weltbank_code: CHN
+    weltbank_art: abgeleitet
+    weltbank_beleg: "WDI Special Notes China nennen nur Hongkong, Macau, Taiwan als ausgenommen; daraus geschlossen, dass Tibet enthalten ist"
+
+  # Ergänzt 2026-09-26 (Auftrag „Sabah und Süd-Belize als eigene Einheiten“). Beide Umrisse stehen in der
+  # Natural-Earth-Datei der umstrittenen Gebiete, aber ohne Anspruchsvermerk (NOTE_BRK leer); deshalb nahm
+  # die feste Regel sie nicht auf. Der Anspruch ist hier aus den Quellen ICJ_177 bzw. ICJ_102/RA_5446 belegt.
+  # Die Abgrenzung ist die von Natural Earth; welchen Anspruch genau der Umriss abbildet, sagt der Anbieter nicht.
+  - id: sued_belize
+    name: "Süd-Belize (von Guatemala beansprucht)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B51}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "M49 führt das Gebiet nicht eigens. ICJ_177: Streitfall „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“, Sondervereinbarung vom 8. Dezember 2008, Protokoll vom 25. Mai 2015, Gerichtshof befasst seit 12. Juni 2019; letzter Verfahrensschritt auf der Fallseite: Beschluss vom 24. Juni 2022 (Fristen für Replik und Gegenreplik); kein Urteil. Keine UN-Zuordnung des Gebiets gelesen."
+    un_status: "Verfahren vor dem Internationalen Gerichtshof anhängig (ICJ_177, Stand der Fallseite 2026-09-26)"
+    beansprucht_von: "Guatemala (ICJ_177, Titel des Falls: „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“); welche Fläche genau beansprucht wird, ist in den gelesenen Texten nicht beschrieben"
+    verwaltet_von: "Belize (NE_UMSTR: ADMIN „Belize“, SOVEREIGNT „Belize“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Verfahren anhängig seit 2019; Umriss NE 5.1.1)"
+    weltbank_code: BLZ
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank; Code = verwaltender Staat"
+    umriss_hinweis: "Umriss aus Natural Earth (Eintrag B51 „Belize“, Typ „Disputed“, ohne Vermerk); ob er den Anspruch Guatemalas genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."
+
+  - id: sabah_north_borneo
+    name: "Sabah / North Borneo (von den Philippinen beansprucht)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: C04}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "M49 führt das Gebiet nicht eigens. ICJ_102: Die Philippinen beantragten am 13. März 2001 die Zulassung als Streithelfer, um Rechte „arising from its claim to dominion and sovereignty over the territory of North Borneo“ zu wahren; der Gerichtshof lehnte den Antrag mit Urteil vom 23. Oktober 2001 ab (über den Anspruch selbst entschied er nicht). Keine UN-Zuordnung des Gebiets gelesen."
+    un_status: "unklar"
+    beansprucht_von: "Philippinen (RA_5446 Abschnitt 2: „the territory of Sabah, situated in North Borneo, over which the Republic of the Philippines has acquired dominion and sovereignty“; ICJ_102). Ob der Anspruch heute in dieser Form besteht, ist in den gelesenen Quellen (1968, 2001) nicht belegt."
+    verwaltet_von: "Malaysia (NE_UMSTR: ADMIN „Malaysia“, SOVEREIGNT „Malaysia“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: MYS
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank; Code = verwaltender Staat"
+    umriss_hinweis: "Umriss aus Natural Earth (Eintrag C04 „North Borneo“, Typ „Breakaway“, ohne Vermerk); er umfasst nur einen Teil des Bundesstaats Sabah. Welchen Anspruch er genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."

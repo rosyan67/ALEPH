@@ -317,11 +317,132 @@ def abgleich_weltbank(laender, weltbank_laender):
     }
 
 
+# --- Zusatzdateien derselben Version (seit 2026-09-26) ----------------------------
+#
+# Für die Sondereinheiten der Zell-Zuordnung (aleph/layers/zell_einheiten.py): umstrittene
+# Gebiete (Krim, Abchasien, Kaschmir-Teile usw.) und die Provinzdatei (nur für Tibet/Xizang).
+# Gleiches Muster wie oben: eigener Ordner raw/natural_earth/<Version>_<Schlüssel>/ mit
+# Manifest, Abbruch statt Ersatz. Die Anzahl ist bei beiden eine eigene Zählung vom
+# 2026-09-26 (die beiliegenden README-Dateien nennen keine Zahl), keine Anbieterangabe.
+ZUSATZ = {
+    "umstritten": {"datei": "ne_10m_admin_0_disputed_areas.zip", "anzahl_gemessen": 99},
+    "provinzen": {"datei": "ne_10m_admin_1_states_provinces.zip", "anzahl_gemessen": 4596},
+}
+
+
+def ordner_zusatz(schluessel):
+    return io.rohdaten_pfad("natural_earth", f"{VERSION}_{schluessel}")
+
+
+def _eintrag_zusatz(schluessel):
+    if schluessel not in ZUSATZ:
+        raise NaturalEarthFehler(f"Unbekannte Zusatzdatei „{schluessel}“, bekannt sind {sorted(ZUSATZ)}.")
+    return ZUSATZ[schluessel]
+
+
+def download_zusatz(schluessel, abrufzeit=None):
+    """Lädt eine Zusatzdatei (siehe ZUSATZ) nach raw/natural_earth/<Version>_<Schlüssel>/. Liefert den Ordner."""
+    eintrag = _eintrag_zusatz(schluessel)
+    ziel = ordner_zusatz(schluessel)
+    if (ziel / "manifest.json").is_file():
+        return ziel
+    if ziel.exists():
+        raise NaturalEarthFehler(f"{ziel.name}: Ordner ohne Manifest vorhanden. Bitte prüfen, es wird nichts überschrieben.")
+    io.pruefe_speicher()
+    abrufzeit = abrufzeit or datetime.now(timezone.utc)
+    hilfs = ziel.with_name(ziel.name + ".tmp")
+    if hilfs.exists():
+        shutil.rmtree(hilfs)
+    hilfs.mkdir(parents=True)
+    try:
+        url = f"https://naciscdn.org/naturalearth/10m/cultural/{eintrag['datei']}"
+        zip_pfad = hilfs / eintrag["datei"]
+        kopf = _hole_datei(url, zip_pfad)
+        version = _version_im_zip(zip_pfad)
+        if version != VERSION:
+            raise NaturalEarthFehler(f"{eintrag['datei']} hat Version {version}, erwartet {VERSION}.")
+        daten = _lies_zip(zip_pfad)
+        _pruefe_zusatz(daten, eintrag)
+        manifest = {
+            "abruf_utc": abrufzeit.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "url": url,
+            "datei": eintrag["datei"],
+            "version": version,
+            "bytes": zip_pfad.stat().st_size,
+            "sha256": _pruefsumme(zip_pfad),
+            "last_modified_laut_server": kopf.get("Last-Modified") or kopf.get("last-modified"),
+            "anzahl_einheiten": len(daten),
+        }
+        (hilfs / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    except BaseException:
+        shutil.rmtree(hilfs, ignore_errors=True)
+        raise
+    hilfs.rename(ziel)
+    return ziel
+
+
+def _pruefe_zusatz(daten, eintrag):
+    if len(daten) != eintrag["anzahl_gemessen"]:
+        raise NaturalEarthFehler(
+            f"{eintrag['datei']}: {len(daten)} Einträge, bei der Prüfung am 2026-09-26 waren es "
+            f"{eintrag['anzahl_gemessen']}. Andere Datei oder neue Version?"
+        )
+    if daten.crs is None or daten.crs.to_epsg() != 4326:
+        raise NaturalEarthFehler(f"{eintrag['datei']}: Koordinatensystem {daten.crs}, erwartet EPSG:4326.")
+
+
+def lade_zusatz(schluessel):
+    """Liest eine geladene Zusatzdatei als GeoDataFrame (Prüfsumme gegen Manifest). Liefert (Daten, Manifest).
+
+    Ungültige Umrisse werden nur repariert, wenn sich die Fläche nicht ändert (wie bei den Ländern).
+    """
+    eintrag = _eintrag_zusatz(schluessel)
+    abruf_ordner = ordner_zusatz(schluessel)
+    manifest_pfad = abruf_ordner / "manifest.json"
+    if not manifest_pfad.is_file():
+        raise NaturalEarthFehler(f"Zusatzdatei „{schluessel}“ ist nicht geladen. Zuerst download_zusatz('{schluessel}').")
+    manifest = json.loads(manifest_pfad.read_text(encoding="utf-8"))
+    zip_pfad = abruf_ordner / manifest["datei"]
+    if _pruefsumme(zip_pfad) != manifest["sha256"]:
+        raise NaturalEarthFehler(f"Prüfsumme von {manifest['datei']} stimmt nicht mit dem Manifest überein.")
+    daten = _lies_zip(zip_pfad)
+    _pruefe_zusatz(daten, eintrag)
+    repariert = []
+    for index in daten.index[~daten.geometry.is_valid]:
+        alt = daten.geometry[index]
+        neu = make_valid(alt)
+        if neu.geom_type not in ("Polygon", "MultiPolygon"):
+            neu = _nur_flaechen(neu)
+        if neu is None or not neu.is_valid or abs(neu.area - alt.area) > REPARATUR_TOLERANZ * alt.area:
+            raise NaturalEarthFehler(f"{manifest['datei']}: Umriss Zeile {index} ist nicht ohne Flächenänderung reparierbar.")
+        daten.at[index, "geometry"] = neu
+        repariert.append(int(index))
+    manifest["umriss_repariert_beim_lesen"] = repariert  # nur im Speicher; wird ins Manifest der Zuordnung übernommen
+    return daten, manifest
+
+
+def _nur_flaechen(geometrie):
+    """Aus einer GeometryCollection nur die Flächenteile (make_valid liefert manchmal Linienreste mit)."""
+    from shapely.geometry import MultiPolygon
+
+    teile = []
+    for teil in getattr(geometrie, "geoms", [geometrie]):
+        if teil.geom_type == "Polygon":
+            teile.append(teil)
+        elif teil.geom_type == "MultiPolygon":
+            teile.extend(teil.geoms)
+    return MultiPolygon(teile) if teile else None
+
+
 def main():
     argparse.ArgumentParser(description="Natural Earth Ländergrenzen laden und prüfen.").parse_args()
     ziel = download()
     laender = lade_laender(ziel)
     print(f"Natural Earth {VERSION} geladen: raw/natural_earth/{ziel.name} ({len(laender)} Einheiten, laut Quelle {ANZAHL_LAUT_QUELLE})")
+    for schluessel in ZUSATZ:
+        ordner_z = download_zusatz(schluessel)
+        daten, _ = lade_zusatz(schluessel)
+        print(f"Zusatzdatei {schluessel}: raw/natural_earth/{ordner_z.name} ({len(daten)} Einträge)")
 
 
 if __name__ == "__main__":

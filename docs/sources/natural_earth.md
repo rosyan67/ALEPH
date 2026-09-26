@@ -247,3 +247,17 @@ Bahrain bekommt bei 1:50m keine Zelle, bei 1:10m schon. Bei 1:110m fehlen 48 Wel
 - Einschränkungen durch lizenzierte Beiträge Dritter (Washington Post u. a.) zur Grundkarte.
 - Alle wörtlichen Zitate des Scouts: nur über die Hilfsmodell-Wiedergabe von WebFetch gelesen, nicht manuell am Original gegengelesen. Ausnahme: Die Sätze „There are 258 countries…“, „Natural Earth shows de facto boundaries by default…“ und „Known Problems: None.“ stehen in der `.README.html` der geladenen Dateien (von der Hauptsitzung gelesen).
 - Genauigkeit der Grenzlinien selbst (nicht mit einer anderen Quelle verglichen).
+
+## 16. Korrektur 2026-09-26: UN-Sicht als oberste Ebene, Sondereinheiten, Zuordnung nach Flächenanteil
+
+*Datierte Korrektur. Die Abschnitte oben bleiben unverändert stehen; wo sie dem hier Gesagten widersprechen, gilt dieser Abschnitt.*
+
+- **Entscheidung des Nutzers (2026-09-26):** ALEPH trifft keine eigenen Souveränitätsentscheidungen. Oberste Zuordnungsebene ist die Sicht der Vereinten Nationen (Liste M49, Steckbrief `docs/sources/un_m49.md`). Die Standardansicht von Natural Earth („de facto“ nach Anbieterregel) ist damit **nicht mehr** die Antwort auf die Frage „zu welchem Land gehört diese Zelle“, sondern nur noch die Quelle der Umrisse.
+- **Sondereinheiten:** Umstrittene Gebiete, besetzte Gebiete/Konfliktzonen und Gebiete mit Sonderstatus sind eigene, markierte Einheiten und gehen nie still im übergeordneten Staat auf. Liste mit Quellen: `aleph/layers/sondereinheiten.yaml`; weitere Einträge der Datei „umstrittene Gebiete“ nach fester Regel (`aleph/layers/zell_einheiten.py`). Insbesondere: Die **Krim** ist eine eigene Einheit mit übergeordnetem UN-Eintrag **Ukraine (804)** (Beleg: UN-Generalversammlung, Resolution 68/262 vom 27.03.2014). Die frühere Aussage „Krim → Russland“ (Abschnitte 7 und 14) beschreibt nur noch den Umriss der Standarddatei, nicht die Zuordnung in ALEPH.
+- **Zusätzliche Natural-Earth-Dateien derselben Version 5.1.1**, geladen mit derselben Ladelogik (`download_zusatz`, `lade_zusatz`):
+  - `ne_10m_admin_0_disputed_areas.zip` (99 Einträge, eigene Zählung; Feld `NOTE_BRK` nennt Verwaltung und Anspruch, z. B. Krim „Admin. by Russia; Claimed by Ukraine“) → `raw/natural_earth/5.1.1_umstritten/`.
+  - `ne_10m_admin_1_states_provinces.zip` (4 596 Einträge, eigene Zählung; nur für Tibet/Xizang, `adm1_code` CHN-1662, `type_en` „Autonomous Region“) → `raw/natural_earth/5.1.1_provinzen/`.
+  - Die Datei „umstrittene Gebiete“ enthält Donezk und Luhansk nur als „Self admin.“-Gebiete mit einer Linie ohne angegebenen Stichtag; die Lage seit 2022 ist darin nicht abgebildet.
+- **Zuordnungsregel Zelle → Einheit (entschieden 2026-09-26):** nach Flächenanteil, nicht nach Zellmitte. Damit hat jede der 217 Weltbank-Volkswirtschaften Zellfläche (bei Zellmitten waren es 26 ohne Zelle). Einheiten, die kleiner als eine Zelle sind, werden als „zu klein für 0,25°“ ausgewiesen, nicht weggelassen. Bericht: `berichte/2026-09-26_zell-laender-zuordnung.md`.
+- **Neuer Befund:** Der Vatikan ist in 1:10m nur 0,012 km² groß (echte Fläche deutlich größer, nicht an einer Quelle geprüft). Das ist eine Vereinfachung des Maßstabs.
+- **Zeitabhängigkeit:** Natural Earth ist ein fester Stand (Mai 2022) für alle Jahre. Geprüft wurde CShapes 2.0 (ETH Zürich) als Quelle historischer Grenzen: reicht nur bis 31.12.2019, ordnet nicht anerkannte Gebiete dem Mutterstaat zu, Lizenz nur nicht-kommerziell; Steckbrief `docs/sources/cshapes.md`. Für 2020–2025 (Ukraine 2022, Bergkarabach 2023) fehlt bisher eine geprüfte Quelle.
