@@ -8,7 +8,9 @@ Dateien laden, ein fetch() nicht.
 
 Regeln (Auftrag 2026-09-26, CLAUDE.md, ARCHITECTURE.md Abschnitte 4 und 9a):
 - Nur Monate mit `monat_fertig == 1` (vollständig nach der Regel vom
-  2026-09-25). Status 2 („unvollständig“) wird nie ausgegeben.
+  2026-09-25) oder `== 4` (vollständig nur für Afrika-Europa-Asien; übrige
+  Zellen bekommen die eigene Klasse „noch nicht geladen“, nie 0). Status 2
+  („unvollständig“) wird nie ausgegeben.
 - Nie Monate ab 2023-01 (Validierungs- und Endtestzeitraum), auch wenn fertig.
 - Fehlende Daten sind nie 0: Eine Zelle ohne gültigen Pixel (keine Kachel,
   Polarsommer ohne Nacht, Fehlwert −999,9) bekommt die eigene Klasse
@@ -31,7 +33,9 @@ Spalte 0 = Westrand −180°), danach 720 × 1440 Werte uint8.
 - uint16: Mittelwert beobachtet × WERT_SKALA, gerundet, auf 0 … WERT_MAX_CODE
   begrenzt (Zahl der begrenzten Zellen steht in der Statistik).
 - uint8: Anteil beobachteter Pixel in ganzen Prozent (0–100, abgerundet),
-  oder ANTEIL_KEINE_DATEN (255), wenn die Zelle keinen gültigen Pixel hat.
+  oder ANTEIL_KEINE_DATEN (255), wenn die Zelle keinen gültigen Pixel hat,
+  oder ANTEIL_NICHT_GELADEN (254) in Monaten mit Zustand 4 („vollständig nur
+  für Afrika-Europa-Asien“) für die Zellen außerhalb der Region (seit 2026-09-26).
 
 Aufruf:  python -m aleph.export.globus            (schreibt web/daten/)
          python -m aleph.export.globus --pruefansicht 2018-03,2018-06 --ziel <ordner>
@@ -65,8 +69,12 @@ PIXEL_JE_ZELLE = 3600  # 60 × 60 Rohpixel je 0,25°-Zelle
 WERT_SKALA = 100  # Auflösung 0,01 nW·cm⁻²·sr⁻¹, Obergrenze 650 (2018-03 unvollständig: Höchstwert 388)
 WERT_MAX_CODE = 65000
 ANTEIL_KEINE_DATEN = 255
+ANTEIL_NICHT_GELADEN = 254  # Zustand-4-Monat, Zelle außerhalb der Region: noch nicht geladen (nie „dunkel“)
 MIN_BEOBACHTET_ANTEIL = 0.5  # wie aleph/detect/anomalie.py Schwellen.min_beobachtet_anteil
 MONAT_FERTIG = 1
+MONAT_REGION = 4  # aleph.layers.vnp46a3.MONAT_REGION_VOLLSTAENDIG
+REGION = "afrika_europa_asien"
+ZUSTAND_TEXT = {MONAT_FERTIG: "vollständig", MONAT_REGION: "nur Afrika-Europa-Asien"}
 ENDTEST_AB = "2023-01"
 
 # Kontrollzellen für den Selbsttest im Browser (Werte nach dem Entpacken
@@ -124,25 +132,36 @@ def monatsstatus(ds) -> list[tuple[str, int]]:
 
 
 def anzeigbare_monate(ds) -> list[str]:
-    """Nur fertige Monate (Status 1) vor 2023-01."""
-    return [m for m, s in monatsstatus(ds) if s == MONAT_FERTIG and m < ENDTEST_AB]
+    """Monate mit Zustand 1 (fertig) oder 4 (nur Afrika-Europa-Asien), nur vor 2023-01."""
+    return [m for m, s in monatsstatus(ds) if s in (MONAT_FERTIG, MONAT_REGION) and m < ENDTEST_AB]
 
 
-def kodiere_monat(ds, monat: str) -> dict:
-    """Wert- und Anteil-Raster eines Monats plus Statistik und Kontrollzellen."""
+def kodiere_monat(ds, monat: str, nicht_geladen: np.ndarray | None = None) -> dict:
+    """Wert- und Anteil-Raster eines Monats plus Statistik und Kontrollzellen.
+
+    `nicht_geladen` (bool, Breite × Länge): Zellen, die in diesem Monat noch nicht
+    geladen sind (Zustand 4, außerhalb der Region). Sie bekommen ANTEIL_NICHT_GELADEN
+    und keinen Wert - unabhängig davon, was im Würfel steht.
+    """
     if monat >= ENDTEST_AB:
         raise ExportFehler(f"{monat} liegt im Validierungs-/Endtestzeitraum (ab {ENDTEST_AB})")
     s = ds.sel(zeit=f"{monat}-01")
     mittel_b = s[f"{FELD}_mittel_beobachtet"].values.astype("float64")
-    gueltig = s[f"{FELD}_gueltige_pixel"].values
-    aufgefuellt = s[f"{FELD}_aufgefuellt_pixel"].values
+    # Zähler können als NaN kommen (lies_monate_mit_region setzt außerhalb der Region alles auf NaN);
+    # diese Zellen werden unten ohnehin als „nicht geladen“ überschrieben.
+    gueltig = np.nan_to_num(s[f"{FELD}_gueltige_pixel"].values.astype("float64"), nan=0.0)
+    aufgefuellt = np.nan_to_num(s[f"{FELD}_aufgefuellt_pixel"].values.astype("float64"), nan=0.0)
+    if nicht_geladen is None:
+        nicht_geladen = np.zeros((BREITE, LAENGE), dtype=bool)
 
     anteil = _beobachtet_anteil(gueltig, aufgefuellt, PIXEL_JE_ZELLE)
     keine_daten = gueltig <= 0
     anteil_prozent = np.floor(anteil * 100 + 1e-9).astype("int64")
     anteil_u8 = np.where(keine_daten, ANTEIL_KEINE_DATEN, np.clip(anteil_prozent, 0, 100)).astype("uint8")
 
-    zeigbar = (~keine_daten) & (anteil >= MIN_BEOBACHTET_ANTEIL)
+    anteil_u8[nicht_geladen] = ANTEIL_NICHT_GELADEN
+    keine_daten = keine_daten & ~nicht_geladen
+    zeigbar = (~keine_daten) & (~nicht_geladen) & (anteil >= MIN_BEOBACHTET_ANTEIL)
     # Ein zeigbarer Wert ohne Zahl wäre ein Widerspruch im Würfel: nicht still als 0 zeigen.
     widerspruch = zeigbar & ~np.isfinite(mittel_b)
     if widerspruch.any():
@@ -166,7 +185,8 @@ def kodiere_monat(ds, monat: str) -> dict:
         "zellen_gesamt": int(BREITE * LAENGE),
         "zellen_mit_wert": int(zeigbar.sum()),
         "zellen_keine_daten": int(keine_daten.sum()),
-        "zellen_datenlage_unzureichend": int(((~keine_daten) & ~zeigbar).sum()),
+        "zellen_datenlage_unzureichend": int(((~keine_daten) & (~nicht_geladen) & ~zeigbar).sum()),
+        "zellen_nicht_geladen": int(nicht_geladen.sum()),
         "zellen_negativ_auf_0_gesetzt": negativ,
         "zellen_oben_begrenzt": begrenzt,
         "wert_max": round(float(werte.max()), 1) if werte.size else None,
@@ -180,6 +200,7 @@ def kodiere_monat(ds, monat: str) -> dict:
         "wert_skala": WERT_SKALA,
         "wert_max_code": WERT_MAX_CODE,
         "anteil_keine_daten": ANTEIL_KEINE_DATEN,
+        "anteil_nicht_geladen": ANTEIL_NICHT_GELADEN,
         "min_beobachtet_prozent": int(MIN_BEOBACHTET_ANTEIL * 100),
         "sha256_roh": hashlib.sha256(rohbytes).hexdigest(),
         "kontrolle": kontrolle,
@@ -316,11 +337,57 @@ def _js(variable: str, schluessel: str | None, inhalt) -> str:
     )
 
 
+def _region_monat(monat: str):
+    """Zustand-4-Monat über die geprüfte Lesefunktion aus aleph.layers.vnp46a3 (Stufe-1-Nachweis,
+    Kachelliste mit Prüfsumme). Rückgabe: (Dataset mit NaN außerhalb der Region, Maske „nicht geladen“)."""
+    from aleph.layers import vnp46a3, vnp46a3_regionen
+
+    jahr, mon = (int(t) for t in monat.split("-"))
+    variablen = [f"{FELD}_mittel_beobachtet", f"{FELD}_gueltige_pixel", f"{FELD}_aufgefuellt_pixel"]
+    try:
+        ds = vnp46a3.lies_monate_mit_region([(jahr, mon)], variablen, REGION)
+    except vnp46a3.MonatUnvollstaendig as e:
+        raise ExportFehler(f"{monat}: Region-Monat nicht belegt ({e})") from e
+    # „Noch nicht geladen“ nur, wo NASA überhaupt Kacheln liefert (Referenzliste
+    # der 540 Positionen). Zellen in Kacheln, die es nie gibt (Polkappen v00,
+    # v16, v17), sind „keine Daten“ wie in fertigen Monaten – sie kommen nie.
+    geliefert = vnp46a3_regionen.zellmaske(vnp46a3.lies_referenz_positionen(), BREITE, LAENGE)
+    return ds, ds["nicht_geladen"].values[0] & geliefert
+
+
 def exportiere(ziel: Path, pruefmonate: list[str] | None = None) -> dict:
-    """Schreibt alle Dateien nach `ziel` und gibt den Datenstand zurück."""
+    """Schreibt alle Dateien nach `ziel` und gibt den Datenstand zurück.
+
+    Geschrieben wird zuerst in einen Hilfsordner neben `ziel`; erst wenn alles
+    fertig ist, wird er gegen `ziel` getauscht. Bricht der Export ab, bleibt der
+    alte, in sich stimmige Stand stehen (Datenstand und Monatsdateien passen zusammen).
+    """
+    import shutil
+
+    endziel = ziel
+    ziel = endziel.with_name(endziel.name + ".neu")
+    if ziel.exists():
+        shutil.rmtree(ziel)
+    ziel.mkdir(parents=True)
+    try:
+        d = _exportiere_in(ziel, pruefmonate)
+    except BaseException:
+        shutil.rmtree(ziel, ignore_errors=True)
+        raise
+    alt = endziel.with_name(endziel.name + ".alt")
+    if alt.exists():
+        shutil.rmtree(alt)
+    if endziel.exists():
+        endziel.rename(alt)
+    ziel.rename(endziel)
+    if alt.exists():
+        shutil.rmtree(alt)
+    return d
+
+
+def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
     import xarray as xr
 
-    ziel.mkdir(parents=True, exist_ok=True)
     ds = xr.open_zarr(io.wuerfel_pfad(WUERFEL))
     pruefe_gitter(ds)
     status = monatsstatus(ds)
@@ -335,15 +402,20 @@ def exportiere(ziel: Path, pruefmonate: list[str] | None = None) -> dict:
                 raise ExportFehler(f"{m} liegt im Validierungs-/Endtestzeitraum")
         monate = list(pruefmonate)
 
-    # Alte Monatsdateien entfernen, damit nie ein Monat angezeigt wird, der nicht mehr fertig ist.
-    for alt in ziel.glob("nachtlicht_*.js"):
-        alt.unlink()
+    zustand_je_monat = dict(status)
     eintraege = []
     for m in monate:
-        eintrag = kodiere_monat(ds, m)
+        zustand = zustand_je_monat.get(m)
+        if zustand == MONAT_REGION and not pruefansicht:
+            region_ds, maske = _region_monat(m)
+            eintrag = kodiere_monat(region_ds, m, nicht_geladen=maske)
+        else:
+            eintrag = kodiere_monat(ds, m)
         eintrag["pruefansicht"] = pruefansicht
+        eintrag["zustand"] = zustand
+        eintrag["zustand_text"] = ZUSTAND_TEXT.get(zustand, f"Zustand {zustand}")
         (ziel / f"nachtlicht_{m}.js").write_text(_js("ALEPH_NACHTLICHT", m, eintrag), encoding="utf-8")
-        eintraege.append({k: eintrag[k] for k in ("monat", "statistik", "kontrolle")})
+        eintraege.append({k: eintrag[k] for k in ("monat", "statistik", "kontrolle", "zustand", "zustand_text")})
 
     ordner = io.aleph_data_dir().joinpath(*EINHEITEN_ORDNER)
     ok, grund = pruefe_einheiten(ordner)
@@ -371,9 +443,11 @@ def exportiere(ziel: Path, pruefmonate: list[str] | None = None) -> dict:
         "evidenzstufe": "beobachtet",
         "monate_gesamt": len(status),
         "status_zaehlung": zaehlung,
-        "status_bedeutung": {"0": "leer", "1": "fertig", "2": "unvollständig (wird neu geladen)", "3": "wird geschrieben"},
+        "status_bedeutung": {"0": "leer", "1": "fertig", "2": "unvollständig (wird neu geladen)", "3": "wird geschrieben",
+                             "4": "vollständig nur für Afrika-Europa-Asien"},
         "fertig_alle": [m for m, s in status if s == MONAT_FERTIG],
-        "fertig_gesperrt_endtest": [m for m, s in status if s == MONAT_FERTIG and m >= ENDTEST_AB],
+        "region_alle": [m for m, s in status if s == MONAT_REGION],
+        "fertig_gesperrt_endtest": [m for m, s in status if s in (MONAT_FERTIG, MONAT_REGION) and m >= ENDTEST_AB],
         "angezeigt": monate,
         "monate": eintraege,
         "min_beobachtet_prozent": int(MIN_BEOBACHTET_ANTEIL * 100),
@@ -400,7 +474,9 @@ def main(argv=None) -> int:
         print(f"Abbruch: {e}", file=sys.stderr)
         return 1
     print(f"Monate im Würfel: {d['monate_gesamt']}, Status-Zählung: {d['status_zaehlung']}")
-    print(f"Angezeigt: {', '.join(d['angezeigt']) or 'kein Monat (noch keiner vollständig)'}")
+    zt = {e["monat"]: e["zustand_text"] for e in d["monate"]}
+    print("Angezeigt: " + (", ".join(f"{m} ({zt.get(m, '?')})" for m in d["angezeigt"])
+                           or "kein Monat (noch keiner vollständig)"))
     if d["fertig_gesperrt_endtest"]:
         print(f"Fertig, aber gesperrt (ab {ENDTEST_AB}): {', '.join(d['fertig_gesperrt_endtest'])}")
     print(f"Einheiten: {'ja' if d['einheiten_verfuegbar'] else 'NEIN'} – {d['einheiten_grund']}")

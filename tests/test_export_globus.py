@@ -45,9 +45,9 @@ def _setze(ds, monat, lat, lon, **werte):
 # ---------------------------------------------------------------- Monate
 
 
-def test_nur_fertige_monate_vor_2023_werden_angezeigt():
-    ds = _wuerfel(["2018-01", "2018-02", "2018-03", "2022-12", "2023-01", "2024-01"], [1, 2, 0, 1, 1, 1])
-    assert g.anzeigbare_monate(ds) == ["2018-01", "2022-12"]
+def test_nur_fertige_und_region_monate_vor_2023_werden_angezeigt():
+    ds = _wuerfel(["2018-01", "2018-02", "2018-03", "2018-04", "2022-12", "2023-01", "2024-01"], [1, 2, 0, 4, 1, 1, 4])
+    assert g.anzeigbare_monate(ds) == ["2018-01", "2018-04", "2022-12"]
 
 
 def test_status_2_und_3_gelten_nie_als_fertig():
@@ -305,10 +305,87 @@ def test_echte_einheitentabelle_krim_taiwan_groenland():
     assert ok, grund
     gj = g.einheiten_geojson(ordner)
     f = {x["properties"]["einheit_id"]: x["properties"] for x in gj["features"]}
-    assert len(f) == 324
+    assert len(f) == 326  # seit 2026-09-26 mit Sabah und Süd-Belize
     assert f["krim"]["sondereinheit"] and f["krim"]["un_m49"] == "804" and f["krim"]["un_name"] == "Ukraine"
     assert f["taiwan"]["sondereinheit"] and f["taiwan"]["un_m49"] == "156"
     assert f["groenland"]["hauptkategorie"] == "Sonderstatus/autonom"
     for eid in ("tibet", "westjordanland", "gaza", "donezk_2014", "luhansk_2014", "kosovo", "nordzypern"):
         assert f[eid]["sondereinheit"], eid
-    assert sum(1 for p in f.values() if p["sondereinheit"]) == 87
+    assert sum(1 for p in f.values() if p["sondereinheit"]) == 89
+    assert f["sued_belize"]["hauptkategorie"] == "umstritten" and f["sued_belize"]["un_art"] == "unklar"
+    assert f["sabah_north_borneo"]["beansprucht_von"].startswith("Philippinen")
+
+
+# ---------------------------------------------------------------- Zustand 4 (nur Afrika-Europa-Asien)
+
+
+def test_nicht_geladene_zellen_bekommen_eigene_kennung_und_nie_0():
+    ds = _wuerfel(["2018-01"], [4])
+    maske = np.zeros((g.BREITE, g.LAENGE), dtype=bool)
+    maske[:, :720] = True  # westliche Hälfte „noch nicht geladen“
+    # lies_monate_mit_region liefert dort NaN in allen Variablen (auch Zählern)
+    for v in ("allangle_mittel_beobachtet", "allangle_gueltige_pixel", "allangle_aufgefuellt_pixel"):
+        ds[v] = ds[v].astype("float64")
+        ds[v].values[0][maske] = np.nan
+    e = g.kodiere_monat(ds, "2018-01", nicht_geladen=maske)
+    code, anteil = g.entpacke_monat(e)
+    assert (anteil[maske] == g.ANTEIL_NICHT_GELADEN).all() and (code[maske] == 0).all()
+    assert (anteil[~maske] == 100).all() and (code[~maske] == 500).all()
+    st = e["statistik"]
+    assert st["zellen_nicht_geladen"] == int(maske.sum())
+    assert st["zellen_keine_daten"] == 0 and st["zellen_datenlage_unzureichend"] == 0
+    assert e["anteil_nicht_geladen"] == 254 != g.ANTEIL_KEINE_DATEN
+
+
+def test_export_zeigt_region_monat_mit_zustand(fake_ssd, tmp_path, monkeypatch):
+    ds = _wuerfel(["2018-01", "2018-02"], [4, 1])
+    import shutil
+    shutil.rmtree(fake_ssd / "cube" / g.WUERFEL)
+    ds.to_zarr(fake_ssd / "cube" / g.WUERFEL)
+    maske = np.zeros((g.BREITE, g.LAENGE), dtype=bool)
+    maske[:10, :10] = True
+    aufrufe = []
+
+    def region_monat(monat):
+        aufrufe.append(monat)
+        return ds, maske
+
+    monkeypatch.setattr(g, "_region_monat", region_monat)
+    ziel = tmp_path / "web_daten"
+    d = g.exportiere(ziel)
+    assert aufrufe == ["2018-01"]  # nur der Zustand-4-Monat über die geprüfte Region-Lesefunktion
+    assert d["angezeigt"] == ["2018-01", "2018-02"]
+    zustand = {e["monat"]: e["zustand_text"] for e in d["monate"]}
+    assert zustand == {"2018-01": "nur Afrika-Europa-Asien", "2018-02": "vollständig"}
+    text = (ziel / "nachtlicht_2018-01.js").read_text(encoding="utf-8")
+    eintrag = json.loads(text.split('["2018-01"] = ', 1)[1].rstrip().rstrip(";"))
+    assert eintrag["zustand"] == 4
+    code, anteil = g.entpacke_monat(eintrag)
+    assert (anteil[:10, :10] == g.ANTEIL_NICHT_GELADEN).all()
+
+
+def test_export_tauscht_erst_am_ende(fake_ssd, tmp_path, monkeypatch):
+    """Bricht der Export ab, bleibt der alte, stimmige Stand stehen."""
+    ziel = tmp_path / "web_daten"
+    g.exportiere(ziel)
+    vorher = sorted(p.name for p in ziel.iterdir())
+    monkeypatch.setattr(g, "kodiere_monat", lambda *a, **k: (_ for _ in ()).throw(g.ExportFehler("simuliert")))
+    with pytest.raises(g.ExportFehler):
+        g.exportiere(ziel)
+    assert sorted(p.name for p in ziel.iterdir()) == vorher
+    assert not (tmp_path / "web_daten.neu").exists()
+
+
+@pytest.mark.echter_katalog
+def test_polkappen_ohne_nasa_kacheln_sind_keine_daten_statt_nicht_geladen(monkeypatch):
+    """Kacheln, die NASA nie liefert (nicht in der Referenzliste, z. B. v00 = 80–90° N),
+    dürfen nicht „noch nicht geladen“ heißen – sie kommen nie (Plausibilitätsprüfung 2026-09-26)."""
+    from aleph.layers import vnp46a3
+
+    alles = xr.Dataset({"nicht_geladen": (("zeit", "lat", "lon"), np.ones((1, g.BREITE, g.LAENGE), dtype=bool))})
+    monkeypatch.setattr(vnp46a3, "lies_monate_mit_region", lambda *a, **k: alles)
+    _, maske = g._region_monat("2018-01")
+    assert not maske[:40].any()          # v00: 90–80° N, keine NASA-Kachel
+    assert not maske[-80:].any()         # v16/v17: 70–90° S
+    assert maske[4 * 40 + 20, 10 * 40 + 20]   # h10v04 (Nordamerika) ist geliefert
+    assert int(maske.sum()) == 540 * 1600

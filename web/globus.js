@@ -46,6 +46,10 @@
   ];
   var KEINE_A = [138, 144, 153], KEINE_B = [112, 118, 128];
   var DUENN_A = [176, 160, 128], DUENN_B = [120, 110, 92];
+  // „noch nicht geladen“ (Monat nur für Afrika-Europa-Asien vollständig): bläulich,
+  // waagerecht gestreift - weder dunkel noch mit „keine Daten“ zu verwechseln.
+  var NICHT_A = [150, 158, 214], NICHT_B = [96, 106, 168];
+  var ANTEIL_NICHT_GELADEN = 254;
 
   function byId(id) { return document.getElementById(id); }
   function esc(s) {
@@ -200,7 +204,10 @@
       var basis = zeile * e.laenge;
       for (var x2 = 0; x2 < BILD; x2++) {
         var i = basis + spalteVon[x2], o = 4 * (y * BILD + x2), a = anteil[i], c3;
-        if (a === e.anteil_keine_daten) {
+        if (a === (e.anteil_nicht_geladen || ANTEIL_NICHT_GELADEN)) {
+          c3 = (y % SCHRAFFUR) < SCHRAFFUR / 2 ? NICHT_A : NICHT_B;
+          px[o] = c3[0]; px[o + 1] = c3[1]; px[o + 2] = c3[2];
+        } else if (a === e.anteil_keine_daten) {
           c3 = ((x2 + y) % SCHRAFFUR) < SCHRAFFUR / 2 ? KEINE_A : KEINE_B;
           px[o] = c3[0]; px[o + 1] = c3[1]; px[o + 2] = c3[2];
         } else if (a < grenze) {
@@ -220,6 +227,11 @@
     return url;
   }
 
+  function zustandText(monat) {
+    var e = (DS.monate || []).filter(function (x) { return x.monat === monat; })[0];
+    return e && e.zustand_text ? e.zustand_text : "vollständig";
+  }
+
   function zelleAn(lon, lat) {
     var zeile = Math.min(719, Math.max(0, Math.floor((90 - lat) / 0.25)));
     var l = ((lon + 180) % 360 + 360) % 360 - 180;
@@ -233,7 +245,10 @@
     var z = zelleAn(lon, lat), i = z.zeile * m.meta.laenge + z.spalte, a = m.anteil[i];
     var r = { monat: aktiverMonat, zeile: z.zeile, spalte: z.spalte, nord: 90 - 0.25 * z.zeile, west: -180 + 0.25 * z.spalte };
     if (Math.abs(lat) > MERC_MAX) r.ausserhalbBild = true;
-    if (a === m.meta.anteil_keine_daten) { r.klasse = "keine Daten"; r.text = "keine Daten (kein gültiger Pixel)"; }
+    if (a === (m.meta.anteil_nicht_geladen || ANTEIL_NICHT_GELADEN)) {
+      r.klasse = "noch nicht geladen";
+      r.text = "noch nicht geladen (in diesem Monat ist bisher nur Afrika-Europa-Asien geladen)";
+    } else if (a === m.meta.anteil_keine_daten) { r.klasse = "keine Daten"; r.text = "keine Daten (kein gültiger Pixel)"; }
     else if (a < m.meta.min_beobachtet_prozent) { r.klasse = "Datenlage unzureichend"; r.anteil = a; r.text = "Datenlage unzureichend (" + a + " % beobachtet)"; }
     else {
       r.klasse = "Wert"; r.anteil = a; r.wert = m.wert[i] / m.meta.wert_skala;
@@ -287,6 +302,15 @@
       }
       map.setLayoutProperty("nachtlicht", "visibility", nachtlichtSichtbar ? "visible" : "none");
       byId("monat").value = monat;
+      var hinweis = byId("nachtlicht-hinweis");
+      if (m.meta.zustand === 4) {
+        hinweis.className = "hinweis";
+        hinweis.textContent = "Dieser Monat ist bisher nur für Afrika, Europa und Asien vollständig geladen. " +
+          "Die übrigen Zellen sind „noch nicht geladen“ (blau gestreift) – das heißt nicht dunkel.";
+        hinweis.hidden = false;
+      } else {
+        hinweis.hidden = true;
+      }
       zeigeDatenstand();
       return m;
     }).catch(function (err) {
@@ -458,7 +482,7 @@
     var status = Object.keys(z).map(function (k) { return z[k] + " " + (b[k] || ("Status " + k)); }).join(", ");
     var stand = aktiverMonat && geladen[aktiverMonat];
     var zeilen = [
-      ["Angezeigt", DS.angezeigt.length ? DS.angezeigt.join(", ") : "kein Monat"],
+      ["Angezeigt", DS.angezeigt.length ? DS.angezeigt.map(function (m) { return m + " (" + zustandText(m) + ")"; }).join(", ") : "kein Monat"],
       ["Würfel", DS.monate_gesamt + " Monate (2013-01 bis 2025-12): " + status],
       ["Gesperrt", "2023–2025 (Validierungs- und Endtestzeitraum), nie angezeigt" +
         (DS.fertig_gesperrt_endtest.length ? "; fertig, aber gesperrt: " + DS.fertig_gesperrt_endtest.join(", ") : "")],
@@ -470,7 +494,8 @@
     if (stand) {
       var st = stand.meta.statistik, f = function (x) { return x.toLocaleString("de-DE"); };
       zeilen.push(["Zellen " + aktiverMonat, f(st.zellen_mit_wert) + " mit Wert, " + f(st.zellen_keine_daten) + " keine Daten, " +
-        f(st.zellen_datenlage_unzureichend) + " Datenlage unzureichend (von " + f(st.zellen_gesamt) + ")" +
+        f(st.zellen_datenlage_unzureichend) + " Datenlage unzureichend, " + f(st.zellen_nicht_geladen || 0) +
+        " noch nicht geladen (von " + f(st.zellen_gesamt) + ")" +
         (st.zellen_oben_begrenzt ? "; " + f(st.zellen_oben_begrenzt) + " an der Obergrenze abgeschnitten" : "")]);
       zeilen.push(["Selbsttest", "Kontrollzellen stimmen; " + stand.pruefText]);
     }
@@ -580,7 +605,7 @@
       var sel = byId("monat");
       DS.angezeigt.forEach(function (m) {
         var o = document.createElement("option");
-        o.value = m; o.textContent = m;
+        o.value = m; o.textContent = m + " · " + zustandText(m);
         sel.appendChild(o);
       });
       byId("monat-wahl").hidden = false;
