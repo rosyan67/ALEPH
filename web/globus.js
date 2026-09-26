@@ -7,9 +7,13 @@
  *   nachtlicht_<JJJJ-MM>.js   ein Monat, gepackt (zlib + Base64)
  *
  * Wichtigste Regel: Fehlende Daten sind nie dunkel. Zellen ohne gültigen
- * Pixel ("keine Daten") und Zellen mit zu wenig beobachteten Pixeln
- * ("Datenlage unzureichend") bekommen je ein eigenes, grau schraffiertes
- * Muster; nur gemessene Werte bekommen eine Farbe aus der Skala.
+ * Pixel ("keine Daten", grau), Zellen mit zu wenig beobachteten Pixeln
+ * ("zu wenig Messungen", intern "Datenlage unzureichend", braun) und noch
+ * nicht geladene Zellen (blau) bekommen je ein eigenes gestreiftes Muster;
+ * nur gemessene Werte bekommen eine Farbe aus der Skala.
+ *
+ * Aufbau der Seite nach dem alten Gerüst (Kopfleiste, linke Leiste, Dossier
+ * rechts, Zeitleiste unten); die Legende ist immer sichtbar.
  *
  * Zur Lage auf dem Globus: MapLibre legt ein Bild linear in Web-Mercator-
  * Koordinaten auf die Kugel. Das Würfel-Raster ist aber gleichabständig in
@@ -18,7 +22,7 @@
  * nur bis 85,05° N/S; die Polkappen darüber zeigt die Karte ohne Nachtlicht.
  *
  * Prüf-Parameter in der Adresse (für Bildschirmfotos, optional):
- *   #monat=2018-03&blick=13.4,52.5,4&einheit=krim&punkt=34.1,44.95
+ *   #monat=2018-03&blick=13.4,52.5,4&einheit=krim&punkt=34.1,44.95&leiste=1
  */
 (function () {
   "use strict";
@@ -246,14 +250,21 @@
     var r = { monat: aktiverMonat, zeile: z.zeile, spalte: z.spalte, nord: 90 - 0.25 * z.zeile, west: -180 + 0.25 * z.spalte };
     if (Math.abs(lat) > MERC_MAX) r.ausserhalbBild = true;
     if (a === (m.meta.anteil_nicht_geladen || ANTEIL_NICHT_GELADEN)) {
-      r.klasse = "noch nicht geladen";
+      r.klasse = "noch nicht geladen"; r.kurz = "noch nicht geladen";
+      r.erklaerung = "In diesem Monat ist bisher nur Afrika-Europa-Asien geladen; diese Zelle folgt, der Download läuft.";
       r.text = "noch nicht geladen (in diesem Monat ist bisher nur Afrika-Europa-Asien geladen)";
-    } else if (a === m.meta.anteil_keine_daten) { r.klasse = "keine Daten"; r.text = "keine Daten (kein gültiger Pixel)"; }
-    else if (a < m.meta.min_beobachtet_prozent) { r.klasse = "Datenlage unzureichend"; r.anteil = a; r.text = "Datenlage unzureichend (" + a + " % beobachtet)"; }
-    else {
+    } else if (a === m.meta.anteil_keine_daten) {
+      r.klasse = "keine Daten"; r.kurz = "keine Daten";
+      r.erklaerung = "Kein gültiger Pixel: keine Kachel, Polarsommer ohne Nacht oder Fehlwert.";
+      r.text = "keine Daten (kein gültiger Pixel)";
+    } else if (a < m.meta.min_beobachtet_prozent) {
+      r.klasse = "Datenlage unzureichend"; r.anteil = a; r.kurz = "zu wenig Messungen";
+      r.erklaerung = "Nur " + a + " % der Pixel im Monat beobachtet (Grenze " + m.meta.min_beobachtet_prozent + " %); der Rest ist aufgefüllt oder ohne gültigen Wert.";
+      r.text = "zu wenig Messungen (" + a + " % beobachtet)";
+    } else {
       r.klasse = "Wert"; r.anteil = a; r.wert = m.wert[i] / m.meta.wert_skala;
-      var wertText = m.wert[i] >= m.meta.wert_max_code ? "mindestens " + zahl(r.wert) + " (Obergrenze der Speicherung)" : zahl(r.wert);
-      r.text = wertText + " " + DS.einheit + " (" + a + " % der Pixel beobachtet)";
+      r.wertText = m.wert[i] >= m.meta.wert_max_code ? "mindestens " + zahl(r.wert) + " (Obergrenze der Speicherung)" : zahl(r.wert);
+      r.text = r.wertText + " " + DS.einheit + " (" + a + " % der Pixel beobachtet)";
     }
     return r;
   }
@@ -276,7 +287,7 @@
   });
   window.ALEPH_KARTE = map; // nur für Prüfungen von außen (Bildschirmfotos)
   map.on("error", function (e) { zeigeFehler("Kartenfehler: " + (e && e.error ? e.error.message : "unbekannt")); });
-  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
   map.addControl(new maplibregl.AttributionControl({
     compact: true,
     customAttribution: "Nachtlicht: NASA VIIRS Black Marble VNP46A3 · Umrisse: Natural Earth 5.1.1 · UN M49"
@@ -286,6 +297,39 @@
   var nachtlichtSichtbar = true;
   var gewaehlt = null; // einheit_id
   var einheitenIndex = {};
+  var START_BLICK = { center: [15, 30], zoom: 1.4 };
+
+  // ---------- Monat: Regler in der Zeitleiste ----------
+
+  function monatsIndex(monat) { return DS.angezeigt.indexOf(monat); }
+
+  function zeigeMonatWahl(monat) {
+    var i = monatsIndex(monat), n = DS.angezeigt.length;
+    byId("monat-regler").value = i;
+    byId("monat-name").textContent = monat;
+    byId("monat-zustand").textContent = zustandText(monat);
+    byId("monat-zurueck").disabled = i <= 0;
+    byId("monat-vor").disabled = i >= n - 1;
+    Array.prototype.forEach.call(byId("monat-marken").children, function (el) {
+      el.classList.toggle("is-aktiv", el.getAttribute("data-monat") === monat);
+    });
+  }
+
+  function baueMonatWahl() {
+    var n = DS.angezeigt.length, marken = byId("monat-marken");
+    byId("monat-regler").max = Math.max(0, n - 1);
+    byId("monat-regler").disabled = n < 2;
+    // Beschriftung: bei wenigen Monaten jeden, sonst nur jeden Januar und die Enden.
+    DS.angezeigt.forEach(function (m, i) {
+      if (n > 12 && i !== 0 && i !== n - 1 && m.slice(5) !== "01") return;
+      var s = document.createElement("span");
+      s.style.left = (n > 1 ? 100 * i / (n - 1) : 50) + "%";
+      s.textContent = n > 12 ? m.slice(0, 4) : m;
+      s.setAttribute("data-monat", m);
+      marken.appendChild(s);
+    });
+    byId("monat-wahl").hidden = false;
+  }
 
   function setzeMonat(monat) {
     return ladeMonat(monat).then(function (m) {
@@ -301,12 +345,13 @@
           map.getLayer("einheiten-fuellung") ? "einheiten-fuellung" : undefined);
       }
       map.setLayoutProperty("nachtlicht", "visibility", nachtlichtSichtbar ? "visible" : "none");
-      byId("monat").value = monat;
+      zeigeMonatWahl(monat);
       var hinweis = byId("nachtlicht-hinweis");
       if (m.meta.zustand === 4) {
-        hinweis.className = "hinweis";
-        hinweis.textContent = "Dieser Monat ist bisher nur für Afrika, Europa und Asien vollständig geladen. " +
-          "Die übrigen Zellen sind „noch nicht geladen“ (blau gestreift) – das heißt nicht dunkel.";
+        hinweis.className = "dock-hinweis";
+        hinweis.innerHTML = "<b>" + esc(monat) + " ist bisher nur für Afrika, Europa und Asien vollständig geladen.</b> " +
+          'Die übrigen Zellen sind <span class="feld feld--nicht"></span> „noch nicht geladen“ – das heißt nicht dunkel. ' +
+          "Einzelne Kacheln außerhalb (z. B. Französisch-Guayana, Azoren) sind schon geladen, weil sie Land eines Staates der Region enthalten.";
         hinweis.hidden = false;
       } else {
         hinweis.hidden = true;
@@ -326,18 +371,20 @@
     map.addLayer({
       id: "einheiten-fuellung", type: "fill", source: "einheiten",
       paint: {
-        "fill-color": ["match", ["get", "hauptkategorie"],
-          "umstritten", FARBE_KATEGORIE["umstritten"],
-          "besetzt/Konfliktzone", FARBE_KATEGORIE["besetzt/Konfliktzone"],
-          "Sonderstatus/autonom", FARBE_KATEGORIE["Sonderstatus/autonom"],
-          "#ffffff"],
-        "fill-opacity": 0 // unsichtbar, nur zum Anklicken; eine Tönung würde mit der Schraffur verwechselt
+        "fill-color": "#ffffff",
+        "fill-opacity": 0 // unsichtbar, nur zum Anklicken; eine Tönung würde mit „zu wenig Messungen“ verwechselt
       }
     });
     map.addLayer({
       id: "einheiten-linie", type: "line", source: "einheiten",
       filter: ["!", ["get", "sondereinheit"]],
       paint: { "line-color": "#ffffff", "line-opacity": 0.55, "line-width": 0.7 }
+    });
+    // Auswahl unter den Sondereinheiten-Linien, damit deren Kategoriefarbe sichtbar bleibt.
+    map.addLayer({
+      id: "auswahl-linie", type: "line", source: "einheiten",
+      filter: ["==", ["get", "einheit_id"], ""],
+      paint: { "line-color": "#ffffff", "line-width": 3 }
     });
     map.addLayer({
       id: "sonder-linie", type: "line", source: "einheiten",
@@ -351,12 +398,8 @@
         "line-width": 2, "line-dasharray": [2, 1.2]
       }
     });
-    map.addLayer({
-      id: "auswahl-linie", type: "line", source: "einheiten",
-      filter: ["==", ["get", "einheit_id"], ""],
-      paint: { "line-color": "#ffffff", "line-width": 3 }
-    });
     baueSonderListe();
+    baueSuche();
   }
 
   function setzeGrenzenSichtbar(an) {
@@ -365,10 +408,10 @@
     });
   }
 
-  // ---------- Angaben zur angeklickten Stelle ----------
+  // ---------- Dossier: Angaben zur angeklickten Stelle ----------
 
   function feld(wert) {
-    if (wert === null || wert === undefined || wert === "") return '<span class="klein">— (keine Angabe in der Einheitentabelle)</span>';
+    if (wert === null || wert === undefined || wert === "") return '<span class="inv-leer">— keine Angabe in der Einheitentabelle</span>';
     var s = esc(wert);
     return /^unklar/.test(String(wert)) ? '<span class="unklar">' + s + "</span>" : s;
   }
@@ -379,15 +422,20 @@
     return '<span class="unklar">unklar</span> – kein übergeordneter UN-Eintrag belegt';
   }
 
-  function einheitHtml(p) {
-    var marken = ['<span class="marke-k">' + esc(p.ebene) + "</span>"];
+  function katBadges(p) {
+    var b = [];
     (p.kategorien ? p.kategorien.split(",") : []).forEach(function (k) {
       k = k.trim();
-      marken.push('<span class="marke-k" style="color:' + (FARBE_KATEGORIE[k] || "#fff") + '">' + esc(k) + "</span>");
+      if (!k) return;
+      b.push('<span class="inv-badge inv-badge--kat"><span class="kat-strich" style="color:' + (FARBE_KATEGORIE[k] || "#fff") + '"></span>' + esc(k) + "</span>");
     });
-    if (p.kleiner_als_eine_zelle) marken.push('<span class="marke-k">zu klein für 0,25°</span>');
+    return b;
+  }
+
+  function einheitHtml(p) {
+    var badges = ['<span class="inv-badge">' + esc(p.ebene) + "</span>"].concat(katBadges(p));
+    if (p.kleiner_als_eine_zelle) badges.push('<span class="inv-badge inv-badge--hell">zu klein für 0,25°</span>');
     var zeilen = [
-      ["Übergeordneter UN-Eintrag", unEintrag(p)],
       ["Art der UN-Zuordnung", feld(p.un_art)],
       ["UN-Beleg", feld(p.un_beleg)],
       ["UN-Status", feld(p.un_status)],
@@ -400,27 +448,70 @@
       ["Fläche laut Grenzdatei", p.flaeche_km2 != null ? esc(Math.round(p.flaeche_km2).toLocaleString("de-DE")) + " km²" : feld("")]
     ];
     if (p.umriss_hinweis) zeilen.push(["Hinweis zum Umriss", feld(p.umriss_hinweis)]);
-    return "<h2>" + esc(p.name) + "</h2>" +
-      '<div class="marken">' + marken.join("") + "</div>" +
-      '<table class="info-tabelle">' + zeilen.map(function (z) { return "<tr><th>" + z[0] + "</th><td>" + z[1] + "</td></tr>"; }).join("") + "</table>" +
-      '<p class="klein">Quelle: Einheitentabelle <code>laender/zell_einheiten</code> (erstellt ' + esc(EH.erstellt_utc) +
-      "), gebaut aus Natural Earth 5.1.1, UN M49 und <code>sondereinheiten.yaml</code>. Keine Messung, sondern eine belegte Festlegung. " +
-      "Umriss und Kennzeichnung hängen nicht vom angezeigten Monat ab (fester Stand Mai 2022); ab wann ein Status gilt, steht unter „Gültigkeit“.</p>";
+    return {
+      kopf: '<div class="inv-badges">' + badges.join("") + "</div>" +
+        '<h2 class="inv-title">' + esc(p.name) + "</h2>" +
+        '<p class="inv-sub">Übergeordneter UN-Eintrag: ' + unEintrag(p) + "</p>",
+      felder: '<div class="inv-abschnitt">Einheit – belegte Festlegung, keine Messung</div>' +
+        zeilen.map(function (z) {
+          return '<div class="inv-field"><div class="inv-field-label">' + z[0] + '</div><div class="inv-field-value">' + z[1] + "</div></div>";
+        }).join("") +
+        '<p class="inv-fuss">Quelle: Einheitentabelle <code>laender/zell_einheiten</code> (erstellt ' + esc(EH.erstellt_utc) +
+        "), gebaut aus Natural Earth 5.1.1, UN M49 und <code>sondereinheiten.yaml</code>. " +
+        "Umriss und Kennzeichnung hängen nicht vom angezeigten Monat ab (fester Stand Mai 2022); ab wann ein Status gilt, steht unter „Gültigkeit“.</p>"
+    };
   }
 
+  var KLASSEN_FELD = { "keine Daten": "feld--keine", "Datenlage unzureichend": "feld--duenn", "noch nicht geladen": "feld--nicht" };
+
   function nachtlichtHtml(n) {
-    if (!n) return "";
+    if (!n) {
+      if (!aktiverMonat) return "";
+      return '<div class="inv-messung"><div class="inv-messung-kopf"><span>Nachtlicht ' + esc(aktiverMonat) + "</span></div>" +
+        '<div class="inv-messung-note">Für den Nachtlichtwert auf eine Stelle im Gebiet klicken.</div></div>';
+    }
     var ort = n.nord.toFixed(2).replace(".", ",") + "° bis " + (n.nord - 0.25).toFixed(2).replace(".", ",") + "° Breite, " +
       n.west.toFixed(2).replace(".", ",") + "° bis " + (n.west + 0.25).toFixed(2).replace(".", ",") + "° Länge";
-    return '<div class="info-abschnitt"><h3>Nachtlicht ' + esc(n.monat) + ' <span class="evidenz">beobachtet</span></h3>' +
-      "<div>" + esc(n.text) + "</div>" +
-      '<div class="klein">Zelle ' + ort + (n.ausserhalbBild ? " (über 85° – auf dem Globus nicht gezeichnet)" : "") + "</div></div>";
+    var inhalt;
+    if (n.klasse === "Wert") {
+      inhalt = '<div class="inv-messung-wert">' + esc(n.wertText) + ' <span class="einheit">' + esc(DS.einheit) + "</span></div>" +
+        '<div class="inv-messung-note">' + n.anteil + " % der Pixel im Monat beobachtet · Wert auf zwei gültige Ziffern gerundet</div>";
+    } else {
+      inhalt = '<div class="inv-messung-klasse"><span class="feld ' + KLASSEN_FELD[n.klasse] + '"></span>' + esc(n.kurz) + "</div>" +
+        '<div class="inv-messung-note">' + esc(n.erklaerung) + " Das ist keine Messung von Dunkelheit.</div>";
+    }
+    return '<div class="inv-messung"><div class="inv-messung-kopf"><span>Nachtlicht ' + esc(n.monat) + " · " + esc(zustandText(n.monat)) +
+      '</span><span class="inv-evidenz">beobachtet</span></div>' + inhalt +
+      '<div class="inv-messung-note">Zelle ' + ort + (n.ausserhalbBild ? " (über 85° – auf dem Globus nicht gezeichnet)" : "") + "</div></div>";
+  }
+
+  function oeffneDossier() {
+    var el = byId("info");
+    el.classList.add("is-open");
+    el.setAttribute("aria-hidden", "false");
+    document.body.classList.add("dossier-offen");
+  }
+  function schliesseDossier() {
+    var el = byId("info");
+    el.classList.remove("is-open");
+    el.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("dossier-offen");
+    waehle(null);
   }
 
   function zeigeInfo(p, n) {
-    var html = p ? einheitHtml(p) : "<h2>Keine Einheit</h2><p class='klein'>An dieser Stelle liegt keine Einheit der Tabelle (z. B. offenes Meer).</p>";
-    byId("info-inhalt").innerHTML = html + nachtlichtHtml(n);
-    byId("info").hidden = false;
+    var html;
+    if (p) {
+      var e = einheitHtml(p);
+      html = e.kopf + nachtlichtHtml(n) + e.felder;
+    } else {
+      html = '<div class="inv-badges"><span class="inv-badge inv-badge--hell">keine Einheit</span></div>' +
+        '<h2 class="inv-title">Keine Einheit</h2><p class="inv-sub">An dieser Stelle liegt keine Einheit der Tabelle (z. B. offenes Meer).</p>' +
+        nachtlichtHtml(n);
+    }
+    byId("info-inhalt").innerHTML = html;
+    byId("info-inhalt").scrollTop = 0;
+    oeffneDossier();
   }
 
   function waehle(id) {
@@ -443,6 +534,14 @@
     if (!f) { zeigeFehler("Einheit „" + id + "“ steht nicht in der Einheitentabelle."); return; }
     waehle(id);
     zeigeInfo(f.properties, punkt ? nachtlichtAn(punkt[0], punkt[1]) : null);
+  }
+
+  function springeZuEinheit(id) {
+    var f = einheitenIndex[id];
+    if (f && f.geometry) {
+      map.fitBounds(umfang(f.geometry), { padding: { top: 140, bottom: 150, left: 60, right: 460 }, maxZoom: 6, duration: 900 });
+    }
+    zeigeEinheit(id);
   }
 
   function klick(e) {
@@ -475,7 +574,84 @@
     });
   }
 
-  // ---------- Seitenleiste ----------
+  // ---------- Suche (nur Einheiten aus der Tabelle) ----------
+
+  function normal(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  function baueSuche() {
+    var feldEl = byId("suche-einheit"), liste = byId("suche-treffer");
+    var alle = EH.geojson.features.map(function (f) {
+      var p = f.properties;
+      return { id: p.einheit_id, name: p.name, sonder: !!p.sondereinheit, kat: p.hauptkategorie, sub: p.un_name || "", schluessel: normal(p.name) };
+    });
+    var aktiv = -1;
+
+    function eintrag(t) {
+      var strich = t.sonder ? '<span class="kat-strich" style="color:' + (FARBE_KATEGORIE[t.kat] || "#fff") + '"></span>' : "";
+      var sub = t.sonder ? esc(t.kat) : (t.sub && t.sub !== t.name ? "UN: " + esc(t.sub) : "");
+      return '<button class="search-item" role="option" data-id="' + esc(t.id) + '">' + strich + "<span>" + esc(t.name) + "</span>" +
+        (sub ? '<span class="item-sub">' + sub + "</span>" : "") + "</button>";
+    }
+
+    function zeichne() {
+      var q = normal(feldEl.value.trim());
+      aktiv = -1;
+      if (!q) { liste.hidden = true; return; }
+      var treffer = alle.filter(function (t) { return t.schluessel.indexOf(q) >= 0; })
+        .sort(function (a, b) { return (a.schluessel.indexOf(q) === 0 ? 0 : 1) - (b.schluessel.indexOf(q) === 0 ? 0 : 1) || a.name.localeCompare(b.name, "de"); });
+      var sonder = treffer.filter(function (t) { return t.sonder; }).slice(0, 8);
+      var staaten = treffer.filter(function (t) { return !t.sonder; }).slice(0, 8);
+      var html = "";
+      if (staaten.length) html += '<div class="search-group-label">Staaten und Gebiete</div>' + staaten.map(eintrag).join("");
+      if (sonder.length) html += '<div class="search-group-label">Sondereinheiten</div>' + sonder.map(eintrag).join("");
+      liste.innerHTML = html || '<div class="search-empty">Keine Einheit in der Tabelle heißt so. Gesucht wird nur in Länder- und Gebietsnamen.</div>';
+      liste.hidden = false;
+    }
+
+    function markiere(i) {
+      var knoepfe = liste.querySelectorAll(".search-item");
+      if (!knoepfe.length) return;
+      aktiv = (i + knoepfe.length) % knoepfe.length;
+      Array.prototype.forEach.call(knoepfe, function (k, j) { k.classList.toggle("is-aktiv", j === aktiv); });
+      knoepfe[aktiv].scrollIntoView({ block: "nearest" });
+    }
+
+    function nimm(id) {
+      liste.hidden = true;
+      feldEl.value = "";
+      feldEl.blur();
+      springeZuEinheit(id);
+    }
+
+    feldEl.addEventListener("input", zeichne);
+    feldEl.addEventListener("focus", zeichne);
+    feldEl.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); markiere(aktiv + 1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); markiere(aktiv - 1); }
+      else if (e.key === "Enter") {
+        var knoepfe = liste.querySelectorAll(".search-item");
+        var k = knoepfe[aktiv >= 0 ? aktiv : 0];
+        if (k) nimm(k.getAttribute("data-id"));
+      } else if (e.key === "Escape") { liste.hidden = true; feldEl.blur(); }
+    });
+    liste.addEventListener("mousedown", function (e) {
+      var k = e.target.closest(".search-item");
+      if (k) { e.preventDefault(); nimm(k.getAttribute("data-id")); }
+    });
+    feldEl.addEventListener("blur", function () { setTimeout(function () { liste.hidden = true; }, 120); });
+  }
+
+  // ---------- Linke Leiste ----------
+
+  function setzeEbenenLeiste(offen) {
+    var p = byId("ebenen-panel");
+    p.classList.toggle("is-open", offen);
+    p.setAttribute("aria-hidden", offen ? "false" : "true");
+    byId("ebenen-auf").setAttribute("aria-expanded", offen ? "true" : "false");
+    document.body.classList.toggle("ebenen-offen", offen);
+  }
 
   function zeigeDatenstand() {
     var z = DS.status_zaehlung, b = DS.status_bedeutung;
@@ -488,47 +664,44 @@
         (DS.fertig_gesperrt_endtest.length ? "; fertig, aber gesperrt: " + DS.fertig_gesperrt_endtest.join(", ") : "")],
       ["Feld", DS.feld],
       ["Quelle", DS.quelle],
+      ["Evidenzstufe", DS.evidenzstufe || "beobachtet"],
       ["Einheiten", EH && EH.verfuegbar ? "Natural Earth 5.1.1 (Umrisse), UN M49, sondereinheiten.yaml; Tabelle erstellt " + EH.erstellt_utc : "nicht angezeigt"],
       ["Export", DS.erstellt_utc]
     ];
     if (stand) {
       var st = stand.meta.statistik, f = function (x) { return x.toLocaleString("de-DE"); };
       zeilen.push(["Zellen " + aktiverMonat, f(st.zellen_mit_wert) + " mit Wert, " + f(st.zellen_keine_daten) + " keine Daten, " +
-        f(st.zellen_datenlage_unzureichend) + " Datenlage unzureichend, " + f(st.zellen_nicht_geladen || 0) +
+        f(st.zellen_datenlage_unzureichend) + " zu wenig Messungen, " + f(st.zellen_nicht_geladen || 0) +
         " noch nicht geladen (von " + f(st.zellen_gesamt) + ")" +
         (st.zellen_oben_begrenzt ? "; " + f(st.zellen_oben_begrenzt) + " an der Obergrenze abgeschnitten" : "")]);
       zeilen.push(["Selbsttest", "Kontrollzellen stimmen; " + stand.pruefText]);
     }
     byId("datenstand").innerHTML = "<dl>" + zeilen.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>";
+
+    // Kurzfassung, immer sichtbar in der Zeitleiste
+    byId("quelle-zeile").innerHTML = "Quelle: <b>NASA VIIRS Black Marble VNP46A3</b> (LAADS DAAC) · Evidenzstufe <b>" +
+      esc(DS.evidenzstufe || "beobachtet") + "</b> · Datenstand " + esc(DS.erstellt_utc.replace("T", " ").replace("Z", " UTC")) +
+      " · 2023–2025 gesperrt";
   }
 
   function baueSonderListe() {
     var sonder = EH.geojson.features.filter(function (f) { return f.properties.sondereinheit; });
     byId("anzahl-sonder").textContent = sonder.length;
     var gruppen = ["besetzt/Konfliktzone", "umstritten", "Sonderstatus/autonom"];
-    function zeichne(filter) {
-      var q = (filter || "").toLowerCase();
-      var html = "";
-      gruppen.forEach(function (g) {
-        var liste = sonder.filter(function (f) {
-          return f.properties.hauptkategorie === g && (!q || f.properties.name.toLowerCase().indexOf(q) >= 0);
-        }).sort(function (a, b) { return a.properties.name.localeCompare(b.properties.name, "de"); });
-        if (!liste.length) return;
-        html += '<div class="listen-kopf"><span class="punkt" style="background:' + FARBE_KATEGORIE[g] + '"></span>' + esc(g) + " (" + liste.length + ")</div>";
-        liste.forEach(function (f) {
-          html += '<button class="listen-eintrag" data-id="' + esc(f.properties.einheit_id) + '">' + esc(f.properties.name) + "</button>";
-        });
+    var html = "";
+    gruppen.forEach(function (g) {
+      var liste = sonder.filter(function (f) { return f.properties.hauptkategorie === g; })
+        .sort(function (a, b) { return a.properties.name.localeCompare(b.properties.name, "de"); });
+      if (!liste.length) return;
+      html += '<div class="listen-kopf"><span class="kat-strich" style="color:' + FARBE_KATEGORIE[g] + '"></span>' + esc(g) + " (" + liste.length + ")</div>";
+      liste.forEach(function (f) {
+        html += '<button class="listen-eintrag" data-id="' + esc(f.properties.einheit_id) + '">' + esc(f.properties.name) + "</button>";
       });
-      byId("sonder-liste").innerHTML = html;
-    }
-    zeichne("");
-    byId("suche").addEventListener("input", function (e) { zeichne(e.target.value); });
+    });
+    byId("sonder-liste").innerHTML = html;
     byId("sonder-liste").addEventListener("click", function (e) {
       var id = e.target.getAttribute("data-id");
-      if (!id) return;
-      var f = einheitenIndex[id];
-      if (f.geometry) map.fitBounds(umfang(f.geometry), { padding: 120, maxZoom: 6, duration: 900 });
-      zeigeEinheit(id);
+      if (id) springeZuEinheit(id);
     });
   }
 
@@ -551,14 +724,34 @@
     var b = h.blick.split(",").map(Number);
     map.jumpTo({ center: [b[0], b[1]], zoom: b[2] || 3 });
   }
+  if (h.leiste === "1") setzeEbenenLeiste(true);
 
+  byId("ebenen-auf").addEventListener("click", function () { setzeEbenenLeiste(!byId("ebenen-panel").classList.contains("is-open")); });
+  byId("ebenen-zu").addEventListener("click", function () { setzeEbenenLeiste(false); });
+  byId("blick-erde").addEventListener("click", function () { map.easeTo({ center: START_BLICK.center, zoom: START_BLICK.zoom, bearing: 0, pitch: 0, duration: 900 }); });
   byId("an-nachtlicht").addEventListener("change", function (e) {
     nachtlichtSichtbar = e.target.checked;
     if (map.getLayer("nachtlicht")) map.setLayoutProperty("nachtlicht", "visibility", nachtlichtSichtbar ? "visible" : "none");
   });
   byId("an-grenzen").addEventListener("change", function (e) { setzeGrenzenSichtbar(e.target.checked); });
-  byId("monat").addEventListener("change", function (e) { setzeMonat(e.target.value); });
-  byId("info-zu").addEventListener("click", function () { byId("info").hidden = true; waehle(null); });
+  byId("monat-regler").addEventListener("input", function (e) {
+    var m = DS.angezeigt[Number(e.target.value)];
+    if (m && m !== aktiverMonat) setzeMonat(m);
+  });
+  byId("monat-zurueck").addEventListener("click", function () {
+    var i = monatsIndex(aktiverMonat);
+    if (i > 0) setzeMonat(DS.angezeigt[i - 1]);
+  });
+  byId("monat-vor").addEventListener("click", function () {
+    var i = monatsIndex(aktiverMonat);
+    if (i >= 0 && i < DS.angezeigt.length - 1) setzeMonat(DS.angezeigt[i + 1]);
+  });
+  byId("info-zu").addEventListener("click", schliesseDossier);
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || e.target.id === "suche-einheit") return;
+    if (byId("info").classList.contains("is-open")) schliesseDossier();
+    else setzeEbenenLeiste(false);
+  });
 
   function schraffurBild() {
     var n = SCHRAFFUR, d = new Uint8Array(n * n * 4);
@@ -572,6 +765,11 @@
   map.on("load", function () {
     var arbeit = [];
 
+    // Quellenzeile der Karte nur als (i)-Knopf: Die Quelle steht fest in der Zeitleiste,
+    // die ausgeklappte Zeile würde sonst in die Zeitleiste ragen.
+    var attrib = document.querySelector(".maplibregl-ctrl-attrib");
+    if (attrib) { attrib.classList.remove("maplibregl-compact-show"); attrib.removeAttribute("open"); }
+
     // Grund des Globus: überall "keine Daten", bis ein gemessenes Bild darüber liegt
     // (auch die Polkappen über 85°, die das Mercator-Bild nicht abdeckt).
     map.addImage("keine-daten", schraffurBild());
@@ -581,34 +779,32 @@
     if (EH && EH.verfuegbar) {
       einheitenEinbauen();
     } else {
+      var grund = "Keine Ländergrenzen angezeigt: " + (EH ? EH.grund : "Datei daten/einheiten.js fehlt") +
+        ". Ohne vollständige Einheitentabelle zeigt ALEPH absichtlich auch keine Standardgrenzen (sonst würden z. B. umstrittene Gebiete einem Staat zugeschlagen).";
       var hin = byId("einheiten-hinweis");
       hin.className = "hinweis hinweis--stark";
-      hin.textContent = "Keine Ländergrenzen angezeigt: " + (EH ? EH.grund : "Datei daten/einheiten.js fehlt") +
-        ". Ohne vollständige Einheitentabelle zeigt ALEPH absichtlich auch keine Standardgrenzen (sonst würden z. B. umstrittene Gebiete einem Staat zugeschlagen).";
+      hin.textContent = grund;
       hin.hidden = false;
-      byId("einheiten-legende").hidden = true;
+      byId("einheiten-legende").innerHTML = '<div class="legende-trenner">Einheiten</div><div class="hinweis hinweis--stark">' + esc(grund) + "</div>";
+      byId("block-einheiten").hidden = true;
       byId("an-grenzen").disabled = true;
+      byId("an-grenzen").checked = false;
+      byId("suche-einheit").disabled = true;
+      byId("suche-einheit").placeholder = "Suche nicht verfügbar (keine Einheitentabelle)";
     }
 
     // Nachtlicht – nur Monate, die der Export als fertig ausgegeben hat.
     if (!DS.angezeigt.length) {
       var hn = byId("nachtlicht-hinweis");
-      hn.className = "hinweis hinweis--stark";
-      hn.innerHTML = "<b>Noch kein Nachtlicht-Monat vollständig geladen.</b> Nach der Vollständigkeitsregel vom 25.09.2026 zählt nur ein Monat mit allen Kacheln (Status „fertig“). " +
+      hn.className = "dock-hinweis dock-hinweis--stark";
+      hn.innerHTML = "<b>Noch kein Nachtlicht-Monat vollständig geladen.</b> Nachtlicht wird deshalb nicht angezeigt; der Globus trägt überall das Muster „keine Daten“. " +
         "Im Würfel: " + esc(Object.keys(DS.status_zaehlung).map(function (k) { return DS.status_zaehlung[k] + " × " + (DS.status_bedeutung[k] || k); }).join(", ")) +
         ". Sobald ein Monat fertig ist: „Globus aktualisieren.command“ doppelklicken.";
       hn.hidden = false;
-      byId("legende").style.opacity = 0.45;
       byId("an-nachtlicht").checked = false;
       byId("an-nachtlicht").disabled = true;
     } else {
-      var sel = byId("monat");
-      DS.angezeigt.forEach(function (m) {
-        var o = document.createElement("option");
-        o.value = m; o.textContent = m + " · " + zustandText(m);
-        sel.appendChild(o);
-      });
-      byId("monat-wahl").hidden = false;
+      baueMonatWahl();
       var start = (h.monat && DS.angezeigt.indexOf(h.monat) >= 0) ? h.monat
         : (DS.angezeigt.filter(function (m) { return m.indexOf("2018") === 0; })[0] || DS.angezeigt[0]);
       arbeit.push(setzeMonat(start));

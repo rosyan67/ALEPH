@@ -10,69 +10,116 @@
 </head>
 <body>
   <div id="map" aria-label="Globus"></div>
+  <div class="vignette" aria-hidden="true"></div>
 
   <div id="pruef-banner" class="pruef-banner" hidden>
     PRÜFANSICHT – unvollständiger Monat (Status 2), nur zum Prüfen der Darstellung. Nicht verwenden.
   </div>
 
-  <aside class="panel panel--links" aria-label="Datenstand und Legende">
-    <header class="panel-kopf">
-      <span class="marke">ALEPH</span>
-      <span class="untertitel">Globus · Nachtlicht und Einheiten</span>
-    </header>
+  <!-- ---------- Kopfleiste: Ebenen links, Marke und Suche Mitte, Blick rechts ---------- -->
+  <header class="topbar">
+    <button id="ebenen-auf" class="corner-btn corner-btn--left" aria-expanded="false" aria-controls="ebenen-panel">
+      Ebenen und Quellen
+    </button>
 
-    <section class="block" id="block-nachtlicht">
-      <div class="block-titel">
-        <label class="schalter"><input type="checkbox" id="an-nachtlicht" checked> Nachtlicht</label>
-        <span class="evidenz" title="Direkt in Satellitendaten gemessen (ARCHITECTURE.md Abschnitt 2)">Evidenzstufe: beobachtet</span>
+    <div class="topbar-center">
+      <div class="brand">
+        <span class="brand-mark">ALEPH</span>
+        <span class="brand-badge" title="Nachtlicht ist direkt in Satellitendaten gemessen (ARCHITECTURE.md Abschnitt 2)">Nachtlicht · Evidenzstufe: beobachtet</span>
       </div>
-      <div id="nachtlicht-hinweis" class="hinweis" hidden></div>
-      <div id="monat-wahl" class="monat-wahl" hidden>
-        <label for="monat">Monat</label>
-        <select id="monat"></select>
+      <div class="search-wrap">
+        <label class="sr-only" for="suche-einheit">Land oder Gebiet suchen</label>
+        <input id="suche-einheit" type="text" autocomplete="off" placeholder="Land oder Gebiet suchen …" />
+        <div id="suche-treffer" class="search-results" hidden role="listbox"></div>
       </div>
-      <div class="legende" id="legende">
-        <div class="legende-titel">Mittlere Strahldichte, <span id="einheit">nW·cm⁻²·sr⁻¹</span></div>
-        <div class="verlauf" id="verlauf"></div>
-        <div class="verlauf-achse" id="verlauf-achse"></div>
-        <div class="legende-zeile"><span class="feld feld--dunkel"></span><span>0 = gemessen dunkel (z. B. Meer, Wüste), angezeigt als „unter 0,1“</span></div>
-        <div class="legende-zeile"><span class="feld feld--keine"></span><span><b>keine Daten</b>: keine Kachel, Polarsommer ohne Nacht oder Fehlwert −999,9</span></div>
-        <div class="legende-zeile"><span class="feld feld--nicht"></span><span><b>noch nicht geladen</b>: Monat bisher nur für Afrika-Europa-Asien vollständig; übrige Zellen folgen (Download läuft)</span></div>
-        <div class="legende-zeile"><span class="feld feld--duenn"></span><span><b>Datenlage unzureichend</b>: unter <span id="min-proz">50</span> % der Pixel im Monat beobachtet (Rest aus historischen Daten aufgefüllt oder ohne gültigen Wert)</span></div>
-        <p class="klein">Gestreifte Flächen (grau, braun, blau) sind nie „dunkel“, sondern ohne Messung.
-          Quelle: NASA VIIRS Black Marble VNP46A3 (LAADS DAAC), Evidenzstufe „beobachtet“. Werte auf zwei gültige Ziffern gerundet; 0,25°-Zellen (am Äquator ca. 28 km).</p>
-      </div>
-    </section>
+    </div>
 
-    <section class="block" id="block-einheiten">
-      <div class="block-titel">
-        <label class="schalter"><input type="checkbox" id="an-grenzen" checked> Länder und Sondereinheiten</label>
-      </div>
+    <div class="corner-group corner-group--right">
+      <button id="blick-erde" class="corner-btn" title="Zurück zur ganzen Erde">Ganze Erde</button>
+    </div>
+  </header>
+
+  <!-- ---------- Linke Leiste: Ebenen, Sondereinheiten, Datenstand ---------- -->
+  <aside id="ebenen-panel" class="filter-panel" aria-hidden="true" aria-label="Ebenen, Sondereinheiten und Datenstand">
+    <div class="filter-head">
+      <h2>Ebenen und Quellen</h2>
+      <button id="ebenen-zu" class="icon-btn" aria-label="Leiste schließen">✕</button>
+    </div>
+
+    <section class="filter-group">
+      <span class="group-label">Ebenen</span>
+      <label class="check-row"><input type="checkbox" id="an-nachtlicht" checked> Nachtlicht (VNP46A3, monatlich)</label>
+      <label class="check-row"><input type="checkbox" id="an-grenzen" checked> Länder und Sondereinheiten</label>
       <div id="einheiten-hinweis" class="hinweis" hidden></div>
-      <div id="einheiten-legende">
-        <div class="legende-zeile"><span class="linie linie--land"></span> Staat bzw. Gebiet (Grundeinheit, Umriss Natural Earth)</div>
-        <div class="legende-zeile"><span class="linie linie--umstritten"></span> umstritten</div>
-        <div class="legende-zeile"><span class="linie linie--besetzt"></span> besetzt / Konfliktzone</div>
-        <div class="legende-zeile"><span class="linie linie--sonder"></span> Sonderstatus / autonom</div>
-        <p class="klein">Sondereinheiten sind eigene Einheiten und gehen nie still im Staat auf. Anklicken zeigt UN-Eintrag, Anspruch, Verwaltung und Quelle – nur was in der Einheitentabelle belegt ist. Umrisse und Kennzeichnung: fester Stand Mai 2022, unabhängig vom gewählten Monat.</p>
-        <details class="liste">
-          <summary>Liste der Sondereinheiten (<span id="anzahl-sonder">0</span>)</summary>
-          <input id="suche" type="search" placeholder="Name suchen …" autocomplete="off" />
-          <div id="sonder-liste"></div>
-        </details>
-      </div>
     </section>
 
-    <section class="block klein" id="block-stand">
-      <div class="block-titel">Datenstand und Quellen</div>
+    <section class="filter-group filter-group--linie" id="block-einheiten">
+      <span class="group-label">Sondereinheiten</span>
+      <p class="group-hint">Umstrittene, besetzte und Sonderstatus-Gebiete sind eigene Einheiten und gehen nie still im Staat auf. Anklicken zeigt UN-Eintrag, Anspruch, Verwaltung und Quelle – nur, was in der Einheitentabelle belegt ist. Umrisse und Kennzeichnung: fester Stand Mai 2022, unabhängig vom gewählten Monat.</p>
+      <details class="liste">
+        <summary>Liste der Sondereinheiten (<span id="anzahl-sonder">0</span>)</summary>
+        <div id="sonder-liste"></div>
+      </details>
+    </section>
+
+    <section class="filter-group filter-group--linie" id="block-stand">
+      <span class="group-label">Datenstand und Quellen</span>
       <div id="datenstand"></div>
     </section>
   </aside>
 
-  <aside class="panel panel--rechts" id="info" hidden aria-label="Angaben zur angeklickten Stelle">
-    <button class="schliessen" id="info-zu" aria-label="Schließen">✕</button>
-    <div id="info-inhalt"></div>
+  <!-- ---------- Legende: immer sichtbar ---------- -->
+  <section id="legende" class="legende-karte" aria-label="Legende">
+    <div class="legende-kopf">
+      <span class="legende-titel">Nachtlicht, mittlere Strahldichte</span>
+      <span class="legende-einheit" id="einheit">nW·cm⁻²·sr⁻¹</span>
+    </div>
+    <div class="verlauf" id="verlauf"></div>
+    <div class="verlauf-achse" id="verlauf-achse"></div>
+    <div class="legende-zeile"><span class="feld feld--dunkel"></span><span><b>0</b> = gemessen dunkel (Meer, Wüste), angezeigt als „unter 0,1“</span></div>
+    <div class="legende-trenner">ohne Messung – gestreift, nie „dunkel“</div>
+    <div class="legende-zeile"><span class="feld feld--keine"></span><span><b>keine Daten</b>: keine Kachel, Polarsommer ohne Nacht, Fehlwert</span></div>
+    <div class="legende-zeile"><span class="feld feld--duenn"></span><span><b>zu wenig Messungen</b>: unter <span id="min-proz">50</span> % der Pixel im Monat beobachtet</span></div>
+    <div class="legende-zeile"><span class="feld feld--nicht"></span><span><b>noch nicht geladen</b>: Monat bisher nur für Afrika-Europa-Asien vollständig, Download läuft</span></div>
+    <div id="einheiten-legende">
+      <div class="legende-trenner">Einheiten – Umrisse, keine Messung</div>
+      <div class="linien-raster">
+        <span class="legende-zeile"><span class="linie linie--land"></span>Staat / Gebiet</span>
+        <span class="legende-zeile"><span class="linie linie--besetzt"></span>besetzt / Konfliktzone</span>
+        <span class="legende-zeile"><span class="linie linie--umstritten"></span>umstritten</span>
+        <span class="legende-zeile"><span class="linie linie--sonder"></span>Sonderstatus / autonom</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Rechte Leiste: Dossier zur angeklickten Stelle ---------- -->
+  <aside id="info" class="investigation" aria-hidden="true" aria-label="Angaben zur angeklickten Stelle">
+    <div class="inv-header">
+      <span class="inv-header-titel">Angaben zur angeklickten Stelle</span>
+      <span class="inv-header-spacer"></span>
+      <button class="icon-btn" id="info-zu" aria-label="Schließen">✕</button>
+    </div>
+    <div id="info-inhalt" class="investigation-content"></div>
   </aside>
+
+  <!-- ---------- Zeitleiste unten: Monat, Zustand, Quelle ---------- -->
+  <footer class="timeline-dock" id="zeitleiste">
+    <div id="nachtlicht-hinweis" class="dock-hinweis" hidden></div>
+    <div id="monat-wahl" class="tl-main" hidden>
+      <span class="tl-label">Monat</span>
+      <button id="monat-zurueck" class="tl-schritt" aria-label="Voriger Monat">‹</button>
+      <div class="tl-regler">
+        <input id="monat-regler" type="range" min="0" max="0" value="0" step="1" aria-label="Monat wählen">
+        <div class="tl-marken" id="monat-marken"></div>
+      </div>
+      <button id="monat-vor" class="tl-schritt" aria-label="Nächster Monat">›</button>
+      <div class="tl-anzeige">
+        <span id="monat-name" class="tl-monat">–</span>
+        <span id="monat-zustand" class="tl-zustand"></span>
+      </div>
+    </div>
+    <div class="tl-quelle" id="quelle-zeile"></div>
+  </footer>
 
   <div id="zeiger" class="zeiger" hidden></div>
   <div id="fehler" class="fehler" hidden></div>

@@ -1,0 +1,6 @@
+Schriften für web/globus.html, lokal abgelegt, damit die Seite ohne Internet läuft.
+Abruf: 2026-09-26 über cdn.jsdelivr.net (npm-Pakete von Fontsource), nur Teilmenge "latin".
+- fraunces-latin-wght-normal.woff2   @fontsource-variable/fraunces 5.3.0   (variable Stärke)
+- ibm-plex-sans-latin-{400,500,600}-normal.woff2   @fontsource/ibm-plex-sans 5.3.0
+Lizenz: SIL Open Font License 1.1 (siehe LICENSE-*.txt).
+Zeichen außerhalb "latin" (z. B. hochgestelltes Minus) zeichnet der Browser mit einer Systemschrift.
