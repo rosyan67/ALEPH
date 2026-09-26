@@ -41,6 +41,9 @@ quellen:
   NE_UMSTR: "Natural Earth 5.1.1, Admin 0 – Breakaway, Disputed Areas, 1:10m, Feld NOTE_BRK (Angabe des Anbieters, Stand Mai 2022), raw/natural_earth/5.1.1_umstritten"
   NE_LAENDER: "Natural Earth 5.1.1, Admin 0 – Countries, 1:10m, Felder TYPE und SOV_A3, raw/natural_earth/5.1.1"
   NE_PROV: "Natural Earth 5.1.1, Admin 1 – States, Provinces, 1:10m, Felder name, type_en, raw/natural_earth/5.1.1_provinzen"
+  ICJ_177: "Internationaler Gerichtshof, Fallseite „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“, https://www.icj-cij.org/case/177, abgerufen 2026-09-26 13:27 UTC (HTML-Text gelesen; die PDFs dort sind durch einen Cloudflare-Schutz gesperrt und wurden nicht gelesen)"
+  ICJ_102: "Internationaler Gerichtshof, Fallseite „Sovereignty over Pulau Ligitan and Pulau Sipadan (Indonesia/Malaysia)“, Zusammenfassung des Falls, https://www.icj-cij.org/case/102, abgerufen 2026-09-26 13:30 UTC (HTML-Text gelesen)"
+  RA_5446: "Philippinen, Republic Act No. 5446 vom 18.09.1968, Abschnitt 2, Text bei The Lawphil Project (Arellano Law Foundation), https://lawphil.net/statutes/repacts/ra1968/ra_5446_1968.html, abgerufen 2026-09-26 13:30 UTC (private Rechtsbibliothek; das amtliche Gesetzblatt officialgazette.gov.ph war durch Cloudflare gesperrt)"
   WDI: "Weltbank, WDI-Gesamtpaket WDI_CSV.zip (Stand 15.07.2026), abgerufen 2026-09-25; Einzelheiten und Zitate: berichte/2026-09-26_weltbank-gebiete.md"
 
 # Hinweise zur Weltbank-Sicht für ganze Weltbank-Länder (Phase 2). gebiet: passt | unklar | abweichend
@@ -498,3 +501,41 @@ einheiten:
     weltbank_code: CHN
     weltbank_art: abgeleitet
     weltbank_beleg: "WDI Special Notes China nennen nur Hongkong, Macau, Taiwan als ausgenommen; daraus geschlossen, dass Tibet enthalten ist"
+
+  # Ergänzt 2026-09-26 (Auftrag „Sabah und Süd-Belize als eigene Einheiten“). Beide Umrisse stehen in der
+  # Natural-Earth-Datei der umstrittenen Gebiete, aber ohne Anspruchsvermerk (NOTE_BRK leer); deshalb nahm
+  # die feste Regel sie nicht auf. Der Anspruch ist hier aus den Quellen ICJ_177 bzw. ICJ_102/RA_5446 belegt.
+  # Die Abgrenzung ist die von Natural Earth; welchen Anspruch genau der Umriss abbildet, sagt der Anbieter nicht.
+  - id: sued_belize
+    name: "Süd-Belize (von Guatemala beansprucht)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: B51}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "M49 führt das Gebiet nicht eigens. ICJ_177: Streitfall „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“, Sondervereinbarung vom 8. Dezember 2008, Protokoll vom 25. Mai 2015, Gerichtshof befasst seit 12. Juni 2019; letzter Verfahrensschritt auf der Fallseite: Beschluss vom 24. Juni 2022 (Fristen für Replik und Gegenreplik); kein Urteil. Keine UN-Zuordnung des Gebiets gelesen."
+    un_status: "Verfahren vor dem Internationalen Gerichtshof anhängig (ICJ_177, Stand der Fallseite 2026-09-26)"
+    beansprucht_von: "Guatemala (ICJ_177, Titel des Falls: „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“); welche Fläche genau beansprucht wird, ist in den gelesenen Texten nicht beschrieben"
+    verwaltet_von: "Belize (NE_UMSTR: ADMIN „Belize“, SOVEREIGNT „Belize“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Verfahren anhängig seit 2019; Umriss NE 5.1.1)"
+    weltbank_code: BLZ
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank; Code = verwaltender Staat"
+    umriss_hinweis: "Umriss aus Natural Earth (Eintrag B51 „Belize“, Typ „Disputed“, ohne Vermerk); ob er den Anspruch Guatemalas genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."
+
+  - id: sabah_north_borneo
+    name: "Sabah / North Borneo (von den Philippinen beansprucht)"
+    geometrie: {datei: umstritten, feld: BRK_A3, wert: C04}
+    kategorien: [umstritten]
+    un_m49: null
+    un_art: unklar
+    un_beleg: "M49 führt das Gebiet nicht eigens. ICJ_102: Die Philippinen beantragten am 13. März 2001 die Zulassung als Streithelfer, um Rechte „arising from its claim to dominion and sovereignty over the territory of North Borneo“ zu wahren; der Gerichtshof lehnte den Antrag mit Urteil vom 23. Oktober 2001 ab (über den Anspruch selbst entschied er nicht). Keine UN-Zuordnung des Gebiets gelesen."
+    un_status: "unklar"
+    beansprucht_von: "Philippinen (RA_5446 Abschnitt 2: „the territory of Sabah, situated in North Borneo, over which the Republic of the Philippines has acquired dominion and sovereignty“; ICJ_102). Ob der Anspruch heute in dieser Form besteht, ist in den gelesenen Quellen (1968, 2001) nicht belegt."
+    verwaltet_von: "Malaysia (NE_UMSTR: ADMIN „Malaysia“, SOVEREIGNT „Malaysia“)"
+    anerkennung: "unklar"
+    gueltig: "ganzer Zeitraum 2013–2025 (Umriss NE 5.1.1)"
+    weltbank_code: MYS
+    weltbank_art: unklar
+    weltbank_beleg: "keine Gebietsangabe der Weltbank; Code = verwaltender Staat"
+    umriss_hinweis: "Umriss aus Natural Earth (Eintrag C04 „North Borneo“, Typ „Breakaway“, ohne Vermerk); er umfasst nur einen Teil des Bundesstaats Sabah. Welchen Anspruch er genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."

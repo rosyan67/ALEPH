@@ -143,6 +143,8 @@ def test_summe_der_anteile_je_zelle_hoechstens_eins(gebaut):
     ("tibet", 91.1, 29.7),            # bei Lhasa
     ("westjordanland", 35.25, 32.2),  # bei Nablus
     ("groenland", -40.0, 72.0),       # Inlandeis
+    ("sued_belize", -88.81, 16.10),   # Punta Gorda (seit 2026-09-26)
+    ("sabah_north_borneo", 118.12, 5.84),  # Sandakan (seit 2026-09-26)
 ])
 def test_zellen_gehoeren_zur_eigenen_einheit(gebaut, einheit, lon, lat):
     _, zuordnung, _, _ = gebaut
@@ -337,3 +339,19 @@ def test_weltbank_sicht_und_reinheit():
     # AAA: Zelle 0 rein (10), Zelle 1 geteilt (5), Zelle 2 rein bezogen auf Land (3) → 13/18
     assert r.loc["AAA", "reinheit"] == pytest.approx(13 / 18)
     assert r.loc["BBB", "reinheit"] == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize("einheit, verwaltet, beansprucht, quelle", [
+    ("sued_belize", "Belize", "Guatemala", "ICJ_177"),
+    ("sabah_north_borneo", "Malaysia", "Philippinen", "RA_5446"),
+])
+def test_sabah_und_sued_belize_sind_umstrittene_eigene_einheiten(gebaut, einheit, verwaltet, beansprucht, quelle):
+    """Auftrag 2026-09-26: eigene Einheiten nach denselben Regeln; keine UN-Zuordnung behauptet, die nicht belegt ist."""
+    einheiten, zuordnung, _, _ = gebaut
+    e = einheiten.set_index("einheit_id").loc[einheit]
+    assert e.kategorien == "umstritten" and e.ebene == "Sondereinheit"
+    assert e.un_art == "unklar" and (e.un_m49 is None or e.un_m49 != e.un_m49 or e.un_m49 == "")  # leer bzw. NaN
+    assert e.beansprucht_von.startswith(beansprucht) and quelle in e.beansprucht_von + e.un_beleg
+    assert e.verwaltet_von.startswith(verwaltet)
+    assert "Nicht selbst nachgezeichnet" in e.umriss_hinweis
+    assert zuordnung[zuordnung.einheit_id == einheit].anteil.sum() > 1

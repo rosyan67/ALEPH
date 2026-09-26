@@ -125,3 +125,23 @@ Erweiterungen über die vorgegebene Liste, mit Begründung: Ostjerusalem (S/RES/
 - Die Resolutionstexte wurden mit pypdf aus den PDFs gewonnen und die Stellen darin gelesen (keine Zusammenfassung durch ein Hilfsmodell); bei S/RES/541 und S/RES/47 sind die PDFs Sammelseiten. Die Seiten wurden nicht als Bild geprüft.
 - Vergleichsflächen des Plausibilitäts-Prüfers stammen teils aus seinem Allgemeinwissen (im Prüfbericht gekennzeichnet).
 - Beide Prüfer konnten keinen Code ausführen; alle Zahlen stammen aus meinen Läufen.
+
+## Nachtrag 2026-09-26 (Sabah und Süd-Belize)
+
+- **Anlass:** Oben war offen, ob „North Borneo“ (Sabah) und „Belize“ eigene Einheiten werden. Natural Earth führt beide Umrisse ohne Anspruchsvermerk; deshalb hatte die feste Regel sie nicht aufgenommen.
+- **Belege** (abgerufen am 26.09.2026; Einzelheiten in `aleph/layers/sondereinheiten.yaml`, Quellen ICJ_177, ICJ_102, RA_5446):
+  - **Belize:** IGH-Fallseite „Guatemala's Territorial, Insular and Maritime Claim (Guatemala/Belize)“.
+    - Sondervereinbarung 08.12.2008, Protokoll 25.05.2015.
+    - Gerichtshof befasst seit 12.06.2019; letzter Schritt Beschluss vom 24.06.2022; kein Urteil.
+    - Welche Fläche genau beansprucht wird, steht nicht im gelesenen Seitentext. Die PDFs waren durch einen Cloudflare-Schutz gesperrt und sind nicht gelesen.
+  - **Sabah:** IGH-Fallseite Pulau Ligitan/Sipadan.
+    - Die Philippinen beantragten am 13.03.2001 den Beitritt zum Verfahren (Streithilfe) wegen „claim to dominion and sovereignty over the territory of North Borneo“.
+    - Abgelehnt mit Urteil vom 23.10.2001; über den Anspruch selbst entschied der Gerichtshof nicht.
+    - Republic Act 5446 (1968), Abschnitt 2, gelesen bei lawphil.net: „the territory of Sabah, situated in North Borneo, over which the Republic of the Philippines has acquired dominion and sovereignty“.
+    - Ob der Anspruch heute so besteht, ist in diesen Quellen (1968, 2001) nicht belegt.
+- **Neue Einheiten** (Kategorie „umstritten“, UN-Zuordnung „unklar“):
+  - `sued_belize` (Natural Earth B51, 7 940 km²).
+  - `sabah_north_borneo` (Natural Earth C04, 38 482 km²; nur der Osten Sabahs: Sandakan liegt darin, Kota Kinabalu nicht).
+  - Die Umrisse stammen von Natural Earth und sind nicht nachgezeichnet. Welchen Anspruch sie genau abbilden, sagt der Anbieter nicht (offen).
+- **Neu gebaut:** 326 Einheiten, 374 668 Zeilen, 41 Einträge nicht aufgenommen. Der alte Stand liegt als Kopie unter `laender/zell_einheiten_stand_2026-09-25T2310Z` auf der SSD.
+- **Kachelliste Afrika-Europa-Asien:** unverändert (Belize liegt in Amerika, Sabah bleibt über Malaysia in Asien). Der Kopf der Liste nennt noch die Prüfsumme der alten Zuordnung; die Liste selbst prüft nur die Positionen.
