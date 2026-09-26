@@ -283,9 +283,12 @@ def test_verbindungsfehler_bei_vorhandener_ssd_wird_wiederholt(monkeypatch, tmp_
 
 
 class _Granule:
-    def __init__(self, h: int):
-        self.h = h
-        self._link = f"https://example.org/VNP46A3.A2024001.h{h:02d}v03.002.20240101000000.h5"
+    def __init__(self, nr: int):
+        # Nur echte Gitterpositionen (h 0-35): die Referenzprüfung in
+        # lade_monat lehnt erfundene Positionen wie h36 ab.
+        self.h = nr % 36
+        v = 3 + nr // 36
+        self._link = f"https://example.org/VNP46A3.A2024001.h{self.h:02d}v{v:02d}.002.20240101000000.h5"
 
     def data_links(self):
         return [self._link]
@@ -353,7 +356,7 @@ def test_wiederaufnahme_laedt_vorhandene_kacheln_nicht_neu(monkeypatch, tmp_path
     angefragt.clear()
     ausfall["aktiv"] = False
     meldungen: list[str] = []
-    dateien = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1, melde=meldungen.append)
+    dateien = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1, melde=meldungen.append).dateien
 
     assert angefragt == [granules[3].dateiname]
     assert sorted(p.name for p in dateien) == sorted(g.dateiname for g in granules)
@@ -374,7 +377,7 @@ def test_wiederaufnahme_ersetzt_kaputte_kachel_und_raeumt_reste_auf(monkeypatch,
         return _schreibe_gueltige_kachel(ziel_ordner, granule)
 
     monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
-    dateien = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1)
+    dateien = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1).dateien
 
     assert angefragt == [granules[0].dateiname]  # nur die kaputte wird neu geladen
     assert len(dateien) == 5
@@ -462,7 +465,7 @@ class LaufAttrappe:
         ziel_ordner.mkdir(parents=True, exist_ok=True)
         (ziel_ordner / f"kachel_a_{aufruf_nr}.h5").touch()  # ein Teil ist da
         if verhalten == "ok":
-            return [ziel_ordner / f"kachel_a_{aufruf_nr}.h5"]
+            return vnp46a3.MonatsLadung(dateien=[ziel_ordner / f"kachel_a_{aufruf_nr}.h5"], zustaende={})
         if verhalten == "fehlt":
             raise vnp46a3.KachelnFehlen(f"{jahr:04d}-{monat:02d}: 1 von 2 Kacheln fehlen (HTTP 404).", dauerhaft=1, vorlaeufig=0)
         if verhalten == "502":

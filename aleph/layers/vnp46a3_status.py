@@ -268,7 +268,7 @@ def main() -> int:
         print(
             f"  Restzeit grob: {offen} offene Monate (von {len(alle)}), etwa {round(untere)} bis {max(round(obere), round(untere))} Tage "
             f"(schnellster bis langsamster gemessener Monat, Grundlage: {n} Monat(e); "
-            f"Kachelzahl je Monat mit Ø {MITTLERE_KACHELN_JE_MONAT:.0f} angenommen, echte Monate schwanken, z. B. hatte 2024-01 nur 460)."
+            f"Kachelzahl je Monat mit Ø {MITTLERE_KACHELN_JE_MONAT:.0f} angenommen, gemessen 534 bis 540 je Monat)."
         )
     else:
         print(

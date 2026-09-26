@@ -181,15 +181,83 @@ def test_pruefe_ausrichtung_erkennt_gedrehte_lat(tmp_path):
 # --- Vollständigkeitsprüfung -------------------------------------------------
 
 
-def test_pruefe_vollstaendigkeit_akzeptiert_uebereinstimmende_zahl():
-    dateien = [Path(f"kachel_{i}.h5") for i in range(460)]
-    vnp46a3.pruefe_vollstaendigkeit(2024, 1, 460, dateien)  # kein Fehler
+def _katalog(positionen):
+    return {
+        p: vnp46a3.KachelSoll(f"VNP46A3.A2024001.{p}.002.2025000000000.h5", 100, "0" * 32) for p in positionen
+    }
 
 
-def test_pruefe_vollstaendigkeit_bricht_bei_abweichender_zahl_ab():
-    dateien = [Path(f"kachel_{i}.h5") for i in range(459)]
-    with pytest.raises(vnp46a3.MonatUnvollstaendig):
-        vnp46a3.pruefe_vollstaendigkeit(2024, 1, 460, dateien)
+REFERENZ = {"h00v00", "h01v00", "h02v00", "h03v00"}
+
+
+def test_pruefe_vollstaendigkeit_akzeptiert_vollstaendigen_monat_und_kennzeichnet_fehlende_beim_anbieter():
+    katalog = _katalog(["h00v00", "h01v00", "h02v00"])  # h03v00 gibt es im Juni beim Anbieter nicht
+    geladen = {p: Path(s.datei) for p, s in katalog.items()}
+    zustaende = vnp46a3.pruefe_vollstaendigkeit(2024, 6, 3, katalog, geladen, REFERENZ)
+    assert {p: e.zustand for p, e in zustaende.items()} == {
+        "h00v00": vnp46a3.ZUSTAND_GELADEN,
+        "h01v00": vnp46a3.ZUSTAND_GELADEN,
+        "h02v00": vnp46a3.ZUSTAND_GELADEN,
+        "h03v00": vnp46a3.ZUSTAND_NICHT_BEIM_ANBIETER,
+    }
+
+
+def test_pruefe_vollstaendigkeit_erkennt_nicht_geladene_kachel():
+    """Der alte Fehler: gegen die eigene (abgeschnittene) Liste geprüft, galt ein Monat mit Lücke als fertig."""
+    katalog = _katalog(["h00v00", "h01v00", "h02v00"])
+    geladen = {"h00v00": Path(katalog["h00v00"].datei), "h02v00": Path(katalog["h02v00"].datei)}
+    with pytest.raises(vnp46a3.MonatUnvollstaendig) as info:
+        vnp46a3.pruefe_vollstaendigkeit(2024, 1, 3, katalog, geladen, set(katalog))
+    assert info.value.zustaende["h01v00"].zustand == vnp46a3.ZUSTAND_NICHT_GELADEN
+    assert "1 von 3" in str(info.value)
+
+
+def test_pruefe_vollstaendigkeit_andere_dateiversion_gilt_als_nicht_geladen():
+    katalog = _katalog(["h00v00"])
+    geladen = {"h00v00": Path("VNP46A3.A2024001.h00v00.002.2024999999999.h5")}  # älterer Erzeugungsstand
+    with pytest.raises(vnp46a3.MonatUnvollstaendig) as info:
+        vnp46a3.pruefe_vollstaendigkeit(2024, 1, 1, katalog, geladen, set(katalog))
+    assert "andere Datei" in info.value.zustaende["h00v00"].grund
+
+
+def test_pruefe_vollstaendigkeit_bricht_ab_wenn_katalogzahl_nicht_zu_den_positionen_passt():
+    katalog = _katalog(["h00v00", "h01v00"])
+    geladen = {p: Path(s.datei) for p, s in katalog.items()}
+    with pytest.raises(vnp46a3.MonatUnvollstaendig, match="meldet 3 Kacheln"):
+        vnp46a3.pruefe_vollstaendigkeit(2024, 1, 3, katalog, geladen, REFERENZ)
+
+
+@pytest.mark.parametrize(
+    "monat, fehlend, grund",
+    [
+        (6, [f"h{h:02d}v01" for h in range(11)], "höchstens 10"),  # zu viele
+        (1, ["h04v01"], "außerhalb April bis August"),  # falsche Jahreszeit
+        (6, ["h21v05"], "südlich 50° N"),  # Kairo fehlt nie wegen Polartag
+    ],
+)
+def test_beim_anbieter_nicht_vorhanden_nur_im_bekannten_muster(monat, fehlend, grund):
+    """Sonst bekäme eine lückenhafte Katalogantwort still diesen Namen (Auflage statistik-pruefer)."""
+    referenz = {"h00v00"} | set(fehlend)
+    katalog = _katalog(["h00v00"])
+    geladen = {p: Path(s.datei) for p, s in katalog.items()}
+    with pytest.raises(vnp46a3.MonatUnvollstaendig, match=grund):
+        vnp46a3.pruefe_vollstaendigkeit(2024, monat, 1, katalog, geladen, referenz)
+
+
+@pytest.mark.echter_katalog  # echte Referenzdatei, keine Katalog-Attrappe
+def test_katalog_mit_nur_einem_treffer_gilt_nicht_als_vollstaendig():
+    referenz = vnp46a3.lies_referenz_positionen(vnp46a3.REFERENZ_KACHELN_DATEI)
+    katalog = _katalog(["h21v05"])
+    geladen = {p: Path(s.datei) for p, s in katalog.items()}
+    with pytest.raises(vnp46a3.MonatUnvollstaendig, match="539 Positionen"):
+        vnp46a3.pruefe_vollstaendigkeit(2024, 6, 1, katalog, geladen, referenz)
+
+
+def test_pruefe_vollstaendigkeit_meldet_position_ausserhalb_der_referenzliste():
+    katalog = _katalog(["h00v00", "h35v17"])
+    geladen = {p: Path(s.datei) for p, s in katalog.items()}
+    with pytest.raises(vnp46a3.ReferenzlisteVeraltet, match="h35v17"):
+        vnp46a3.pruefe_vollstaendigkeit(2024, 1, 2, katalog, geladen, REFERENZ)
 
 
 # --- Würfel schreiben, Fortsetzung, Manifest (mit vorgetäuschter SSD) ------
@@ -214,12 +282,26 @@ def test_wuerfel_schreiben_und_fortsetzung_erkennen(tmp_path, fake_ssd):
     assert vnp46a3.vorhandene_monate() == {(2020, 6), (2020, 7)}
 
 
-def test_manifest_enthaelt_dateinamen(fake_ssd):
-    dateien = [Path("VNP46A3.A2024001.h19v03.002.123.h5"), Path("VNP46A3.A2024001.h20v03.002.124.h5")]
-    ziel = vnp46a3.schreibe_manifest(2024, 1, dateien)
-    inhalt = ziel.read_text(encoding="utf-8").splitlines()
-    assert sorted(inhalt) == sorted(p.name for p in dateien)
-    assert ziel == fake_ssd / "protokoll" / "manifeste" / "vnp46a3" / "2024-01.txt"
+def test_manifest_enthaelt_zustand_groesse_und_pruefsumme_je_position(fake_ssd):
+    soll = vnp46a3.KachelSoll("VNP46A3.A2024001.h19v03.002.123.h5", 57392259, "12ef3568fcda5fd0f4e74b3837e94d97")
+    zustaende = {
+        "h19v03": vnp46a3.KachelEintrag(vnp46a3.ZUSTAND_GELADEN, soll),
+        "h04v01": vnp46a3.KachelEintrag(vnp46a3.ZUSTAND_NICHT_BEIM_ANBIETER),
+        "h20v03": vnp46a3.KachelEintrag(
+            vnp46a3.ZUSTAND_NICHT_GELADEN,
+            vnp46a3.KachelSoll("VNP46A3.A2024001.h20v03.002.124.h5", 10, "a" * 32),
+            "HTTP 502\tnach Wiederholung",
+        ),
+    }
+    ziel = vnp46a3.schreibe_manifest(2024, 1, zustaende)
+    assert ziel == fake_ssd / "protokoll" / "manifeste" / "vnp46a3" / "2024-01.tsv"
+    zeilen = ziel.read_text(encoding="utf-8").splitlines()
+    assert zeilen[0].startswith("# VNP46A3 2024-01") and "geladen: 1" in zeilen[0]
+    assert zeilen[1] == "position\tzustand\tdatei\tgroesse_bytes\tmd5\tgrund"
+    tabelle = {z.split("\t")[0]: z.split("\t") for z in zeilen[2:]}
+    assert tabelle["h19v03"] == ["h19v03", "geladen", soll.datei, "57392259", soll.md5, "-"]
+    assert tabelle["h04v01"] == ["h04v01", "beim Anbieter nicht vorhanden", "-", "-", "-", "-"]
+    assert tabelle["h20v03"][1] == "nicht geladen" and len(tabelle["h20v03"]) == 6  # Tab im Grund entschärft
 
 
 # --- Kachel-Download: Zeitlimit und Wiederholung (2026-09-23) --------------
@@ -328,14 +410,15 @@ def test_lade_monat_nutzt_gleichzeitige_downloads_und_sammelt_dateien(monkeypatc
 
     def fake_lade_kachel(granule, ziel_ordner, **kwargs):
         aufrufe.append(granule)
-        pfad = ziel_ordner / f"kachel_{len(aufrufe)}.h5"
+        pfad = ziel_ordner / granule.data_links()[0].rsplit("/", 1)[-1]
         pfad.touch()
         return pfad
 
     monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
-    dateien = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2)
-    assert len(dateien) == 3
+    ladung = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2)
+    assert len(ladung.dateien) == 3
     assert len(aufrufe) == 3
+    assert sum(e.zustand == vnp46a3.ZUSTAND_GELADEN for e in ladung.zustaende.values()) == 3
 
 
 def test_lade_monat_meldet_kacheln_die_auch_nach_wiederholung_scheitern(monkeypatch, tmp_path):
@@ -468,14 +551,19 @@ def test_lade_monat_meldet_kachelzahl(monkeypatch, tmp_path):
     monkeypatch.setattr(vnp46a3.earthaccess, "search_data", lambda **kwargs: _attrappen_granules(3))
 
     def fake_lade_kachel(granule, ziel_ordner, **kwargs):
-        pfad = ziel_ordner / f"kachel_{id(granule)}.h5"
+        pfad = ziel_ordner / granule.data_links()[0].rsplit("/", 1)[-1]
         pfad.touch()
         return pfad
 
     monkeypatch.setattr(vnp46a3, "_lade_kachel", fake_lade_kachel)
     meldungen = []
     vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=2, melde=meldungen.append)
-    assert meldungen == ["3 Kacheln bei NASA gemeldet, Download beginnt."]
+    assert meldungen == [
+        "3 Kacheln bei NASA gemeldet (Katalog: 3 Treffer, alle geholt; Referenzliste 3 Positionen), "
+        "Download beginnt."
+    ]
+    # Das Statusmodul liest die Zahl am Zeilenanfang; das Format muss dazu passen.
+    assert vnp46a3_status._MONAT_GEMELDET.match("2024-01: " + meldungen[0]).group(3) == "3"
 
 
 # --- Lauf: Reihenfolge und Protokoll ----------------------------------------
@@ -512,7 +600,7 @@ def test_verarbeite_monat_schreibt_zeitstempel_und_ordnet_richtig_ein(monkeypatc
         ziel_ordner.mkdir(parents=True, exist_ok=True)
         if melde:
             melde("1 Kacheln bei NASA gemeldet, Download beginnt.")
-        return [_kachel_h19v03(ziel_ordner, jahr=jahr, tag=1)]
+        return vnp46a3.MonatsLadung(dateien=[_kachel_h19v03(ziel_ordner, jahr=jahr, tag=1)], zustaende={})
 
     monkeypatch.setattr(vnp46a3.io, "aleph_data_dir", lambda: fake_ssd)
     monkeypatch.setattr(vnp46a3, "lade_monat", fake_lade_monat)
@@ -526,7 +614,7 @@ def test_verarbeite_monat_schreibt_zeitstempel_und_ordnet_richtig_ein(monkeypatc
         assert (np.diff(ds["zeit"].values) > np.timedelta64(0, "ns")).all()
     # Rohdaten weg, Manifest da
     assert not (fake_ssd / "raw" / "vnp46a3" / "2018-01").exists()
-    assert (fake_ssd / "protokoll" / "manifeste" / "vnp46a3" / "2013-01.txt").exists()
+    assert (fake_ssd / "protokoll" / "manifeste" / "vnp46a3" / "2013-01.tsv").exists()
 
     text = (fake_ssd / "protokoll" / "vnp46a3.log").read_text(encoding="utf-8")
     assert "2018-01: Start " in text and "2013-01: Start " in text

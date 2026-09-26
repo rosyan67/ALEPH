@@ -116,6 +116,7 @@ Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Down
 - Ein Monat, bei dem danach Dateien fehlen, wird nicht als fertig markiert und seine Rohdaten bleiben liegen. Er kommt auf die Liste „später erneut versuchen"; der Lauf geht zum nächsten Monat weiter und versucht die Liste am Ende erneut, in bis zu drei Durchgängen mit 30 Minuten Pause dazwischen, solange im vorigen Durchgang mindestens ein Monat dazukam.
 - Der Lauf endet nur bei echten Blockern: kein Speicherplatz, SSD nicht erreichbar, Anmeldung fehlgeschlagen.
 - Die Statusanzeige nennt fertige Monate, offene Monate und die Monate, die nachgeholt werden müssen.
+- **Vollständigkeit** (Regel seit 2026-09-25, nach dem Befund „Kachelabfrage abgeschnitten“): Die Dateiliste eines Zeitschritts wird über alle Katalogseiten geholt und mit der vom Katalog gemeldeten Trefferzahl verglichen; eine Abweichung bricht den Zeitschritt ab. Vollständig heißt: gegen diese Trefferzahl **und** gegen eine feste Referenzliste der erwarteten Positionen geprüft (als Datei im Projekt, mit Herkunft und Datum; eine unbekannte Position ist ein Fehler, kein stilles Übergehen). Jede Position steht im Manifest mit genau einem Zustand (`geladen` / `beim Anbieter nicht vorhanden` / `nicht geladen`), dazu Dateiname, Größe und Prüfsumme aus dem Katalog. Jede Datei wird nach dem Laden gegen Größe und Prüfsumme geprüft. `monat_fertig`: 0 leer, 1 fertig, 2 unvollständig (Daten vorhanden, werden neu geladen), 3 wird geschrieben; nur 1 zählt als vorhanden.
 
 **Kandidaten für die ersten Layer** (NASA-Daten zuerst, weil Space Apps sie verlangt):
 
@@ -126,6 +127,8 @@ Für NASA-Downloads wird die Bibliothek `earthaccess` genutzt, keine eigene Down
 | Brände | FIRMS Active Fire (MODIS + VIIRS) | Brände, Brandrodung |
 | Luftqualität | OMI NO₂ (OMNO2d) | Industrie, Verkehr, Lockdowns |
 | Niederschlag | GPM IMERG (monatlich) | Dürre, Überschwemmung |
+
+**Stand der Layer (2026-09-25):** Der Nachtlicht-Layer ist geladen und im Umbau (neue Variablen `*_mittel_beobachtet`, `*_beobachtete_pixel`; AllAngle als Standardfeld). Der Niederschlag-Layer (`aleph/layers/gpm_imerg.py`) ist gebaut und in Arbeit. Die übrigen Layer (Vegetation, Brände, Luftqualität) sind noch nicht geladen.
 
 Nicht als Erkennungs-Layer, sondern als **Kontext**:
 - Nachrichten: GDELT (Ereignisse und Artikel-Links pro Region und Zeitraum)
@@ -148,6 +151,17 @@ Beide werden wie jeder andere Layer auf das gemeinsame Raster gebracht (z. B. Sc
 | Quelle | Inhalt | Rolle in ALEPH |
 |---|---|---|
 | NASA Earthdata | alle NASA-Satellitendaten oben | Grundlage |
+| Copernicus Data Space | Sentinel-5P (NO₂ in höherer Auflösung), Sentinel-1 (Radar) | Ergänzung zu OMI, ab 2018 |
+| Copernicus Climate Data Store | ERA5 Klimadaten (Temperatur, Bodenfeuchte u. a.) | Klima-Layer |
+
+**GPM IMERG Layer Details:**
+- **Ladereihenfolge:** Der Layer nutzt dieselbe Ladelogik wie alle anderen (via `earthaccess`), aber mit **maximal 2 gleichzeitigen Downloads** (wie im layer-bauer-Agent angegeben), um den Nachtlicht-Download nicht zu beeinträchtigen.
+- **Aggregation:** Da das native 0,1°-Raster nicht ganzzahlig in das ALEPH-Zielraster 0,25° passt (Verhältnis 2,5), wird eine zweistufige Aggregation verwendet:
+  1. 0,1° → 0,5° (glatte 5:1 Mittelung)
+  2. 0,5° → 0,25° (bilineare Interpolation)
+  Dies ist eine Annäherung an die flächengewichtete Mittelung und ist für Analysen ausreichend genau.
+- **Validierung:** Nach dem Download werden Werte für die Sahara (nahe null) und Amazonas (hoch) kontrolliert.
+- **Hinweis:** Die frühen TRMM-Monate (2013 bis Anfang 2014) sind möglicherweise weniger verlässlich außerhalb 35° N–S, aber für ALEPHs Zeitraum 2013–2025 vollständig nach Juni 2000 ohne Bedeutung.
 | Copernicus Data Space | Sentinel-5P (NO₂ in höherer Auflösung), Sentinel-1 (Radar) | Ergänzung zu OMI, ab 2018 |
 | Copernicus Climate Data Store | ERA5 Klimadaten (Temperatur, Bodenfeuchte u. a.) | Klima-Layer |
 | ACLED | georeferenzierte Konflikt- und Gewaltereignisse, inkl. Explosionen | Kontext und Referenz, verlässlicher als GDELT |

@@ -7,6 +7,11 @@
 # (1.11.2026) früher, liegen so bereits acht vollständige Jahre vor. Ein
 # neuer Aufruf setzt bei den noch offenen Monaten in derselben Reihenfolge fort.
 #
+# Vorrang (Auftrag 2026-09-25): Davor kommen 2018-01 bis 2019-12 und 2024-01
+# (in dieser Reihenfolge). Diese Monate waren mit abgeschnittener Kachelabfrage
+# geladen und werden vollständig neu geladen; nach 2018 liegt so zuerst ein
+# vollständiges Jahr für die erste Auswertung vor.
+#
 # Zahl gleichzeitiger Kachel-Downloads einstellbar über das erste Argument
 # (Vorschlag 2-4, Standard 3). Bei erneuten Hängern eine kleinere Zahl
 # probieren statt zu raten, z. B.:
@@ -33,7 +38,8 @@ fi
 
 mkdir -p logs
 nohup caffeinate -ims .venv/bin/python -m aleph.layers.vnp46a3_lauf \
-  --start 2013-01 --ende 2025-12 --zuerst-ab 2018-01 --gleichzeitig "$GLEICHZEITIG" \
+  --start 2013-01 --ende 2025-12 --zuerst-ab 2018-01 --vorrang 2018-01..2019-12,2024-01 \
+  --gleichzeitig "$GLEICHZEITIG" \
   > logs/vnp46a3_absturz.log 2>&1 &
 disown
 

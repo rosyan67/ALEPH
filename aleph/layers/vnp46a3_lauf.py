@@ -5,6 +5,8 @@ Aufruf (normalerweise über scripts/vnp46a3_start.sh, nicht direkt):
     .venv/bin/python -m aleph.layers.vnp46a3_lauf --start 2013-01 --ende 2025-12
     .venv/bin/python -m aleph.layers.vnp46a3_lauf --start 2024-01 --ende 2024-01 --gleichzeitig 2
     .venv/bin/python -m aleph.layers.vnp46a3_lauf --start 2013-01 --ende 2025-12 --zuerst-ab 2018-01
+    .venv/bin/python -m aleph.layers.vnp46a3_lauf --start 2013-01 --ende 2025-12 --zuerst-ab 2018-01 \
+        --vorrang 2018-01..2019-12,2024-01
 
 Eigenschaften:
 - setzt nach einem Abbruch beim letzten fertigen Monat wieder an
@@ -13,7 +15,10 @@ Eigenschaften:
   `--zuerst-ab 2018-01` kommen zuerst alle Monate ab 2018-01 (zeitlich
   aufsteigend), danach die früheren (ebenfalls aufsteigend). Sinn: bricht der
   Lauf ab oder greift die NASA-Frist (1.11.2026) früher, liegen bereits die
-  jüngeren Jahre vollständig vor. Die Reihenfolge des Ladens hat keinen
+  jüngeren Jahre vollständig vor. Mit `--vorrang` kommen einzelne Monate oder
+  Bereiche (z. B. `2018-01..2019-12,2024-01`) in der angegebenen Reihenfolge
+  noch davor (Auftrag 2026-09-25: erst ein vollständiges Jahr 2018 für die
+  erste Auswertung). Die Reihenfolge des Ladens hat keinen
   Einfluss auf die Ablage: jeder Monat wird an seine Position auf der festen
   Zeitachse des Würfels geschrieben,
 - schreibt für jeden Monat echte Zeitstempel (Start, Ende) und die gemessene
@@ -27,11 +32,13 @@ Eigenschaften:
   Zahl eintragen statt zu raten), mit eigenem Zeitlimit je Kachel
   (DATEI_TIMEOUT_SEKUNDEN) und automatischer Wiederholung mit wachsender
   Wartezeit (aleph.layers.vnp46a3._lade_kachel),
-- prüft nach dem Laden, ob der Monat vollständig ist (Soll-Ist-Vergleich
-  gegen die Zahl der bei NASA gemeldeten Kacheln, nicht gegen eine feste
-  Zahl), bevor er verarbeitet wird,
-- schreibt ein Protokoll und ein Manifest der Quelldateien auf die SSD
-  (protokoll/vnp46a3.log, protokoll/manifeste/vnp46a3/<Monat>.txt),
+- prüft nach dem Laden, ob der Monat vollständig ist (gegen die Trefferzahl
+  des NASA-Katalogs über alle Seiten und gegen die Referenzliste der
+  Kachelpositionen; jede Kachel zusätzlich gegen Größe und MD5 aus dem
+  Katalog), bevor er verarbeitet wird,
+- schreibt ein Protokoll und ein Manifest mit Zustand, Größe und MD5 je
+  Kachelposition auf die SSD (protokoll/vnp46a3.log,
+  protokoll/manifeste/vnp46a3/<Monat>.tsv),
 - prüft nach dem Schreiben, dass der Monat tatsächlich im Würfel steht,
   bevor die Rohdaten gelöscht werden,
 - bricht den GANZEN Monat nach vnp46a3.DOWNLOAD_TIMEOUT_SEKUNDEN ohne
@@ -120,15 +127,39 @@ def _monat_argument(text: str) -> str:
     return text
 
 
-def _reihenfolge(monate: list[tuple[int, int]], zuerst_ab: str | None) -> list[tuple[int, int]]:
-    """Ordnet die Monate: erst alle ab `zuerst_ab` (aufsteigend), dann die früheren (aufsteigend).
+def _reihenfolge(
+    monate: list[tuple[int, int]],
+    zuerst_ab: str | None,
+    vorrang: list[tuple[int, int]] | None = None,
+) -> list[tuple[int, int]]:
+    """Ordnet die Monate: erst die `vorrang`-Monate (in ihrer Reihenfolge, soweit
+    offen), dann alle ab `zuerst_ab` (aufsteigend), dann die früheren (aufsteigend).
 
-    Ohne `zuerst_ab` bleibt es bei der zeitlichen Reihenfolge.
+    Ohne `zuerst_ab` bleibt es für den Rest bei der zeitlichen Reihenfolge.
     """
+    vorne = [m for m in (vorrang or []) if m in set(monate)]
+    rest = [m for m in monate if m not in set(vorne)]
     if zuerst_ab is None:
-        return sorted(monate)
+        return vorne + sorted(rest)
     grenze = tuple(int(t) for t in zuerst_ab.split("-"))
-    return sorted(m for m in monate if m >= grenze) + sorted(m for m in monate if m < grenze)
+    return vorne + sorted(m for m in rest if m >= grenze) + sorted(m for m in rest if m < grenze)
+
+
+def _vorrang_argument(text: str) -> list[tuple[int, int]]:
+    """'2018-01..2019-12,2024-01' -> Monatsliste in dieser Reihenfolge, ohne Doppelte (argparse-Typ)."""
+    monate: list[tuple[int, int]] = []
+    for teil in text.split(","):
+        grenzen = teil.strip().split("..")
+        if len(grenzen) not in (1, 2) or not all(re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", g) for g in grenzen):
+            raise argparse.ArgumentTypeError(
+                f"'{teil}' ist weder ein Monat JJJJ-MM noch ein Bereich JJJJ-MM..JJJJ-MM."
+            )
+        if len(grenzen) == 2 and grenzen[0] > grenzen[1]:
+            raise argparse.ArgumentTypeError(f"Bereich '{teil}' läuft rückwärts.")
+        for m in _monatsliste(grenzen[0], grenzen[-1]):
+            if m not in monate:
+                monate.append(m)
+    return monate
 
 
 class Protokoll:
@@ -161,19 +192,29 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
     t0 = time.monotonic()
     protokoll.schreibe(f"{name}: Start {_stempel(start_wand)}.")
 
-    # lade_monat prüft selbst die Vollständigkeit (Soll-Ist-Vergleich gegen
-    # die NASA-Abfrage) und bricht mit KachelnFehlen bzw. MonatUnvollstaendig
+    # lade_monat prüft selbst die Vollständigkeit (gegen Katalog und
+    # Referenzliste) und bricht mit KachelnFehlen bzw. MonatUnvollstaendig
     # ab, BEVOR etwas geschrieben oder gelöscht wird - die Rohdaten bleiben
     # dann für den nächsten Versuch liegen.
-    dateien = vnp46a3.lade_monat(
+    ladung = vnp46a3.lade_monat(
         jahr,
         monat,
         raw_ordner,
         gleichzeitige_downloads=gleichzeitige_downloads,
         melde=lambda text: protokoll.schreibe(f"{name}: {text}"),
     )
+    dateien = ladung.dateien
     t_download = time.monotonic()
     protokoll.schreibe(f"{name}: Download fertig nach {(t_download - t0) / 60:.1f} Minuten.")
+
+    # Manifest VOR dem Schreiben in den Würfel: Bricht es danach ab, gibt es
+    # trotzdem einen Nachweis dieses Ladestands (Auflage statistik-pruefer
+    # 2026-09-25). Die Kopfzeile nennt, was der Würfel bis dahin enthielt.
+    stand = vnp46a3.MONATSSTATUS_TEXT.get(vnp46a3.monatsstatus(jahr, monat), "unbekannt")
+    manifest_pfad = vnp46a3.schreibe_manifest(
+        jahr, monat, ladung.zustaende,
+        hinweis=f"Würfel-Stand dieses Monats vor dem Schreiben: {stand}; Manifest beschreibt den neuen Ladestand.",
+    )
 
     monatsdaten = vnp46a3.verkleinere_monat(dateien, erwarteter_monat=(jahr, monat))
     # schreibe_in_wuerfel legt den Monat an seine Position auf der festen
@@ -190,7 +231,6 @@ def verarbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
         )
     t_wuerfel = time.monotonic()
 
-    manifest_pfad = vnp46a3.schreibe_manifest(jahr, monat, dateien)
     shutil.rmtree(raw_ordner)
 
     ende_wand = datetime.now(timezone.utc)
@@ -219,6 +259,16 @@ def _bearbeite_monat(jahr: int, monat: int, protokoll: Protokoll, gleichzeitige_
         raise
     except (vnp46a3.KachelnFehlen, vnp46a3.DownloadHaengt, vnp46a3.MonatUnvollstaendig) as fehler:
         grund = str(fehler)
+        # Zustand je Kachelposition festhalten, auch wenn der Monat offen bleibt
+        # (welche Positionen „nicht geladen" sind und warum).
+        zustaende = getattr(fehler, "zustaende", None)
+        if zustaende:
+            stand = vnp46a3.MONATSSTATUS_TEXT.get(vnp46a3.monatsstatus(jahr, monat), "unbekannt")
+            pfad = vnp46a3.schreibe_manifest(
+                jahr, monat, zustaende,
+                hinweis=f"Ladeversuch GESCHEITERT; der Würfel enthält für diesen Monat: {stand}.",
+            )
+            grund += f" Manifest {pfad.name}."
         protokoll.schreibe(
             f"{name}: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert, "
             f"Rohdaten bleiben erhalten. {grund}"
@@ -248,6 +298,15 @@ def main() -> int:
         help=(
             "Monat JJJJ-MM: erst alle Monate ab hier (aufsteigend), dann die früheren "
             "(aufsteigend). Ohne Angabe: zeitliche Reihenfolge."
+        ),
+    )
+    parser.add_argument(
+        "--vorrang",
+        default=None,
+        type=_vorrang_argument,
+        help=(
+            "Monate oder Bereiche, die vor allen anderen geladen werden, in dieser Reihenfolge, "
+            "z. B. 2018-01..2019-12,2024-01."
         ),
     )
     parser.add_argument(
@@ -282,11 +341,19 @@ def main() -> int:
     except vnp46a3.WuerfelFormat as fehler:
         protokoll.schreibe(f"ABBRUCH vor Start: {fehler}")
         return 1
-    offene_monate = _reihenfolge([m for m in alle_monate if m not in fertige_monate], args.zuerst_ab)
+    offene_monate = _reihenfolge(
+        [m for m in alle_monate if m not in fertige_monate], args.zuerst_ab, args.vorrang
+    )
 
     reihenfolge_text = (
         f", Reihenfolge: zuerst ab {args.zuerst_ab}, dann davor" if args.zuerst_ab else ", zeitliche Reihenfolge"
     )
+    if args.vorrang:
+        reihenfolge_text += (
+            f", Vorrang für {len(args.vorrang)} Monate "
+            f"({args.vorrang[0][0]:04d}-{args.vorrang[0][1]:02d} bis "
+            f"{args.vorrang[-1][0]:04d}-{args.vorrang[-1][1]:02d})"
+        )
     protokoll.schreibe(
         f"Lauf gestartet: {args.start} bis {args.ende}, gleichzeitig={args.gleichzeitig}"
         f"{reihenfolge_text}, "
