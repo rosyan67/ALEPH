@@ -7,7 +7,7 @@
 - Die Stichproben stimmen: Berlin 11,3, Paris 50, Kairo 41 (Nil und Delta hell), Sahara 0, Amerika gestreift, die Krim als eigene Einheit.
 - Es gibt jetzt nur noch einen Globus: `web/globus.html`. Das alte Gerüst mit erfundenen Beispieldaten heißt jetzt `web/geruest_beispieldaten.html` und ist rot als VERALTET markiert.
 - Sabah (Anspruch der Philippinen) und Süd-Belize (Anspruch Guatemalas, IGH-Verfahren anhängig) sind eigene umstrittene Einheiten. Die Belege stammen von den Originalseiten, abgerufen am 26.09.2026.
-- Tests: Worktree 635 bestanden, der Export-Test danach 27 bestanden; main siehe Belege.
+- Tests: Worktree 635 bestanden, der Export-Test danach 27 bestanden; main 609 bestanden.
 - Hochladen: main ja, ui-geruest nein. Grund: Im Verlauf von ui-geruest steckt der alte, zurückgezogene OpenRouter-Schlüssel. Die Entscheidung liegt beim Nutzer.
 
 ## Urteil
@@ -75,7 +75,7 @@ Der Plausibilitätsprüfer hat einen Fehler gefunden, der behoben ist: Zellen in
 ### Tests
 
 - Worktree `~/ALEPH-ui`: 635 bestanden (ganze Suite, vor der Polkappen-Korrektur). Danach lief `tests/test_export_globus.py`: 27 bestanden, darunter der neue Test für die Polkappen.
-- `~/ALEPH` (main): siehe Nachtrag am Ende.
+- `~/ALEPH` (main): 609 bestanden (ganze Suite, 26.09.2026, nach Commit 3991cf2).
 
 ### Plausibilitätsprüfung (Agent, 26.09.2026)
 
