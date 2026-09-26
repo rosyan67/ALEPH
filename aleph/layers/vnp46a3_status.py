@@ -141,9 +141,13 @@ def lies_protokoll(zeilen: list[str]) -> dict:
                 "gemeldet": None,
                 "download_fertig": False,
                 "start": zeitpunkt,
+                "download_seit": None,
+                "teil": False,
             }
         elif (m := _MONAT_GEMELDET.match(text)) and ergebnis["aktuell"]:
             ergebnis["aktuell"]["gemeldet"] = int(m.group(3))
+            ergebnis["aktuell"]["download_seit"] = zeitpunkt
+            ergebnis["aktuell"]["teil"] = "ausgewählte Positionen" in text
         elif _MONAT_DOWNLOAD_FERTIG.match(text) and ergebnis["aktuell"]:
             ergebnis["aktuell"]["download_fertig"] = True
         elif m := _MONAT_STATISTIK.match(text):
@@ -160,6 +164,8 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             })
         elif m := _MONAT_WIEDERAUFGENOMMEN.match(text):
             ergebnis["wiederaufgenommen"].add((int(m.group(1)), int(m.group(2))))
+            if ergebnis["aktuell"]:
+                ergebnis["aktuell"]["download_seit"] = zeitpunkt  # Prüfung der vorhandenen Kacheln ist vorbei
         elif m := _MONAT_ZURUECKGESTELLT.match(text):
             monat = (int(m.group(1)), int(m.group(2)))
             # Grund: der Teil nach dem Standardsatz, gekürzt (die volle Meldung steht im Protokoll)
@@ -204,22 +210,34 @@ def _rohordner_zustand(monat: tuple[int, int]) -> tuple[int, datetime | None]:
     return len(dateien), datetime.fromtimestamp(neueste, tz=timezone.utc)
 
 
-def durchsatz_im_ordner(ordner: Path, jetzt: datetime, fenster_minuten: float = DURCHSATZ_FENSTER_MINUTEN) -> float | None:
+def durchsatz_im_ordner(
+    ordner: Path, jetzt: datetime, fenster_minuten: float = DURCHSATZ_FENSTER_MINUTEN,
+    download_seit: datetime | None = None,
+) -> float | None:
     """MB/s aus den fertigen Kacheln (.h5, ohne `partial_`) im Ordner, die im Zeitfenster fertig wurden.
 
-    None, wenn im Fenster keine Kachel fertig wurde oder der Ordner fehlt.
-    Unterschätzt leicht (die gerade übertragenen Kacheln zählen noch nicht).
+    Das Fenster beginnt frühestens bei `download_seit` (Beginn des eigentlichen
+    Ladens laut Protokoll); sonst würde die Prüfzeit wiederverwendeter Kacheln am
+    Monatsanfang mitgezählt und der Durchsatz viel zu niedrig angezeigt.
+    None, wenn im Fenster keine Kachel fertig wurde, das Fenster kürzer als
+    2 Minuten ist oder der Ordner fehlt. Unterschätzt leicht (die gerade
+    übertragenen Kacheln zählen noch nicht).
     """
     if not ordner.exists():
         return None
     grenze = jetzt.timestamp() - fenster_minuten * 60
+    if download_seit is not None:
+        grenze = max(grenze, download_seit.timestamp())
+    sekunden = jetzt.timestamp() - grenze
+    if sekunden < 120:
+        return None
     summe = 0
     for p in ordner.iterdir():
         if p.suffix == ".h5" and not p.name.startswith("partial"):
             st = p.stat()
             if st.st_mtime >= grenze:
                 summe += st.st_size
-    return summe / 1e6 / (fenster_minuten * 60) if summe else None
+    return summe / 1e6 / sekunden if summe else None
 
 
 def rohdaten_bytes(basis: Path) -> int:
@@ -318,9 +336,18 @@ def main() -> int:
         seit = _minuten(aktuell["start"], jetzt)
         if not aktuell["download_fertig"]:
             dateien, letzte = _rohordner_zustand(aktuell["monat"])
-            von = f" von {aktuell['gemeldet']}" if aktuell["gemeldet"] else ""
-            print(f"Aktuell: {monat_text}, Download, {dateien}{von} Kacheln im Rohordner, seit {seit:.0f} Minuten.")
-            referenz = letzte or aktuell["start"]
+            if aktuell.get("teil"):
+                print(
+                    f"Aktuell: {monat_text}, Download (nur eine Stufe: {aktuell['gemeldet']} Kacheln), "
+                    f"{dateien} Dateien im Rohordner (auch Kacheln der anderen Stufe), seit {seit:.0f} Minuten."
+                )
+            else:
+                von = f" von {aktuell['gemeldet']}" if aktuell["gemeldet"] else ""
+                print(f"Aktuell: {monat_text}, Download, {dateien}{von} Kacheln im Rohordner, seit {seit:.0f} Minuten.")
+            # Späterer Zeitpunkt aus neuester Datei und Monats- bzw. Download-Beginn: Ein
+            # Rohordner mit Kacheln aus einem früheren Versuch hat alte Dateien; die
+            # sagen nichts darüber, ob der laufende Versuch steht (Befund 2026-09-26).
+            referenz = max(t for t in (letzte, aktuell["start"], aktuell.get("download_seit")) if t is not None)
             still = _minuten(referenz, jetzt)
             print(f"  Letzte Bewegung im Rohordner vor {still:.1f} Minuten.")
             if still > HAENGT_STILLSTAND_MINUTEN:
@@ -384,10 +411,13 @@ def main() -> int:
     raten: list[float] = []
     quellen: list[str] = []
     if aktuell and prozesse and not aktuell["download_fertig"]:
-        r = durchsatz_im_ordner(io.rohdaten_pfad("vnp46a3", f"{aktuell['monat'][0]:04d}-{aktuell['monat'][1]:02d}"), jetzt)
+        r = durchsatz_im_ordner(
+            io.rohdaten_pfad("vnp46a3", f"{aktuell['monat'][0]:04d}-{aktuell['monat'][1]:02d}"), jetzt,
+            download_seit=aktuell.get("download_seit"),
+        )
         if r:
             raten.append(r)
-            quellen.append(f"laufender Monat, letzte {DURCHSATZ_FENSTER_MINUTEN} Minuten")
+            quellen.append(f"laufender Monat, höchstens die letzten {DURCHSATZ_FENSTER_MINUTEN} Minuten seit Download-Beginn")
     if p["statistik"]:
         st = p["statistik"][-1]
         print(

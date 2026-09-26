@@ -353,3 +353,21 @@
 - **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“, Berichtigungen eingearbeitet.
 - **Nichts geändert:** Prozess 41131, Würfel, Code, Git. Zwei Geschwindigkeitstests von je 15 s gegen öffentliche Server.
 - **Bericht:** `berichte/2026-09-26_diagnose-download.md` (nicht committet). Entscheidungen offen (Frist, Speicherfalle, Netz, Commit).
+
+## 2026-09-26 (Download repariert: gesichert, Stillstands-Erkennung, Messung, Vorrang Afrika-Europa-Asien, Neustart)
+
+- **Gesichert:** `82802f2` (Reparatur 25.09. inkl. `komposit_masked`), `f3b69bc` (Ergebnisse 26.09.), `0ff8001` (Schlüssel entfernt, Historie unverändert); vorher 567/567 Tests.
+- **Angehalten:** 07:43 UTC per SIGTERM (kein eingebauter Stopp-Weg); es lief 2018-05, nichts im Schreiben.
+- **Messung:** networkQuality nicht verwertbar (Apple-Server Zeitüberschreitung). NASA mit echten 2018-05-Kacheln, je 5 min: 1 = 1,69, 3 = 2,06, 5 = 2,31 MB/s. Die Leitung bremst. Erster Messversuch ungültig, weil der Mac eingeschlafen war (Ruhezustand nach 1 min; der Download selbst nutzt `caffeinate`).
+- **Umbau (`8541064`):**
+  - Stillstand 30 min ohne neue geprüfte Kachel statt 4-h-Gesamtfrist; Notbremse 12 h.
+  - Statistik je Monat im Protokoll; Zeitlimit je Kachel nach Größe; Fingerabdruck-Prüfung.
+  - Status mit Durchsatz und Hochrechnung; 5 gleichzeitig.
+  - Vorrang Afrika-Europa-Asien: 188 Kacheln (`vnp46a3_kacheln_afrika_europa_asien.txt`), Zustand 4, Stufe 2 vereinigt mit Prüfsummen-Nachweis. Lesen nur über `lies_monate_mit_region` (außerhalb NaN + `nicht_geladen`).
+  - Gebaut, weil die Hochrechnung bis 26./27.10. reichte.
+- **statistik-pruefer:** zweimal „bestanden mit Auflagen“; A1–A5 und B1/B2 umgesetzt, mit Tests.
+- **Neustart:** 12:13 UTC, Prozess 63920, Ampel nach 15 min OK. 2018-01 nach 19 min „fertig für Afrika-Europa-Asien“ (1,98 MB/s, 0 verworfen, 0 Wiederholungen).
+- **Status-Skript danach berichtigt:** Durchsatz-Fenster ab Download-Beginn; falsches „HÄNGT“ durch alte Dateien im Rohordner.
+- **Tests:** 605/605.
+- **Hochrechnung:** Afrika-Europa-Asien etwa 08.–10.10., alles etwa 21.–26.10.2026 (bei 2,0 MB/s).
+- **Bericht:** `berichte/2026-09-26_download-umbau.md`. Nicht gepusht.

@@ -314,3 +314,50 @@ def test_status_zeigt_statistik_durchsatz_und_hochrechnung(monkeypatch, tmp_path
     assert "Hochrechnung Stufe 1 (nur Afrika-Europa-Asien, 156 Monate" in aus
     assert "Vollständig für Afrika-Europa-Asien (Zustand 4 oder fertig): 0 von 156" in aus
     assert "Annahme: der Durchsatz bleibt in dieser Spanne" in aus
+
+
+def test_durchsatz_zaehlt_erst_ab_download_beginn(tmp_path):
+    """Am Monatsanfang prüft der Lauf erst die vorhandenen Kacheln; diese Zeit darf den Durchsatz nicht drücken."""
+    jetzt = datetime(2026, 9, 26, 12, 28, tzinfo=timezone.utc)
+    beginn = datetime(2026, 9, 26, 12, 18, tzinfo=timezone.utc)  # 10 Minuten geladen
+    p = tmp_path / "neu.h5"
+    p.write_bytes(b"")
+    os.truncate(p, 1_200_000_000)
+    os.utime(p, (jetzt.timestamp() - 60, jetzt.timestamp() - 60))
+    assert vnp46a3_status.durchsatz_im_ordner(tmp_path, jetzt, 30) == pytest.approx(1200 / 1800)
+    assert vnp46a3_status.durchsatz_im_ordner(tmp_path, jetzt, 30, download_seit=beginn) == pytest.approx(1200 / 600)
+    # zu kurzes Fenster: kein Wert statt eines Zufallswerts
+    assert vnp46a3_status.durchsatz_im_ordner(tmp_path, jetzt, 30, download_seit=jetzt) is None
+
+
+def test_protokoll_merkt_download_beginn_und_teilstufe():
+    zeilen = [
+        "2026-09-26 12:13:05 UTC  2018-01: Start 2026-09-26 12:13:05 UTC (Stufe 1: nur Afrika-Europa-Asien).",
+        "2026-09-26 12:13:16 UTC  2018-01: 188 Kacheln bei NASA gemeldet für 188 ausgewählte Positionen (Katalog gesamt 540) (Katalog: 540 Treffer, alle geholt; Referenzliste 188 Positionen), Download beginnt.",
+        "2026-09-26 12:18:47 UTC  2018-01: 167 Kacheln aus einem früheren Versuch schon vorhanden und gültig (Größe und MD5 geprüft), 0 verworfen, weil sie nicht zum Katalog passten, 21 werden noch geladen.",
+    ]
+    a = vnp46a3_status.lies_protokoll(zeilen)["aktuell"]
+    assert a["gemeldet"] == 188 and a["teil"] is True
+    assert a["download_seit"] == datetime(2026, 9, 26, 12, 18, 47, tzinfo=timezone.utc)
+
+
+def test_alte_dateien_im_rohordner_melden_keinen_haenger(monkeypatch, tmp_path, capsys):
+    """Ein Monat mit Kacheln vom Vortag im Rohordner, eben gestartet: Ampel darf nicht HÄNGT zeigen."""
+    monkeypatch.setenv("ALEPH_DATA_DIR", str(tmp_path))
+    jetzt = datetime.now(timezone.utc)
+    ordner = tmp_path / "raw" / "vnp46a3" / "2018-02"
+    ordner.mkdir(parents=True)
+    alt = ordner / "VNP46A3.A2018032.h19v03.002.x.h5"
+    alt.write_bytes(b"x")
+    os.utime(alt, (jetzt.timestamp() - 86400, jetzt.timestamp() - 86400))  # von gestern
+    (tmp_path / "protokoll").mkdir()
+    start = jetzt.strftime("%Y-%m-%d %H:%M:%S")
+    (tmp_path / "protokoll" / "vnp46a3.log").write_text(
+        f"{start} UTC  Lauf gestartet: Test.\n{start} UTC  2018-02: Start {start} UTC (Stufe 1: nur Afrika-Europa-Asien).\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vnp46a3, "vorhandene_monate", lambda: set())
+    monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: ["123"])
+    vnp46a3_status.main()
+    aus = capsys.readouterr().out
+    assert "AMPEL: OK" in aus
