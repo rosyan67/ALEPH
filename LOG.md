@@ -371,3 +371,13 @@
 - **Tests:** 605/605.
 - **Hochrechnung:** Afrika-Europa-Asien etwa 08.–10.10., alles etwa 21.–26.10.2026 (bei 2,0 MB/s).
 - **Bericht:** `berichte/2026-09-26_download-umbau.md`. Nicht gepusht.
+
+## 2026-09-26 (Globus mit echten Nachtlichtdaten, ein Globus, Sabah und Süd-Belize)
+
+- **Sabah und Süd-Belize (main, `3991cf2`):** eigene umstrittene Einheiten (326 Einheiten, 89 Sondereinheiten; Tabelle auf der SSD neu gebaut, Sicherung `zell_einheiten_stand_2026-09-25T2310Z`). Belege: IGH-Fall 177 (Guatemala/Belize, anhängig, kein Urteil; letzter Schritt Beschluss 24.6.2022), RA 5446 (1968) und IGH-Fall 102 (2001); abgerufen 26.09.2026, HTML-Seiten (PDFs durch Cloudflare gesperrt, nicht umgangen). Umrisse aus Natural Earth, nicht nachgezeichnet; Sabah-Umriss nur Ost-Sabah – offen.
+- **Worktree ui-geruest (`4e42400`, `21095a0`):** main übernommen; Globus zeigt Monate mit Zustand 1 und 4 vor 2023 (jetzt 2018-01 bis -03, „nur Afrika-Europa-Asien“). Außerhalb der Region „noch nicht geladen“ (blau gestreift, Kennung 254, nie 0). Export tauscht erst am Ende. `web/index.html` (Beispieldaten) → `geruest_beispieldaten.html`, als VERALTET markiert.
+- **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“. Behoben: Polkappen ohne NASA-Kachel hießen „noch nicht geladen“, jetzt „keine Daten“. Offen: Winterschwankung Moskau/Stockholm, Höchstwert 234,9 vor Vietnam, Name Sabah.
+- **Tests:** main 609/609, Worktree 635/635, danach Export 27/27.
+- **Hochladen:** main hochgeladen. ui-geruest nicht: Commit 4d08637 mit dem alten (zurückgezogenen) OpenRouter-Schlüssel gehört zu seinem Verlauf – Entscheidung beim Nutzer.
+- **Nicht angefasst:** Download (Prozess 63920), `vnp46a3*.py`, Kachellisten, `scripts/`.
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-26_globus-echtdaten.md`.
