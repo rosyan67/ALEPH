@@ -446,3 +446,23 @@
   - Nach der Nachbesserung (Login-Zeitlimit) 15:25 UTC erneut gestartet (Prozess 82367).
 - **Prüfer:** plausibilitaets-pruefer „plausibel mit Vorbehalt“, alle Punkte eingearbeitet oder als Grenze benannt.
 - **Bericht:** `berichte/2026-09-27_robustheit.md`.
+
+## 2026-09-27 (Machbarkeitsprüfung Google Earth Engine für Nachtlicht; nur geprüft, nichts eingebaut)
+
+- **Einrichtung:** `earthengine-api==1.7.45` in `.venv` (uv). Anmeldung im Browser durch den Nutzer; das Token liegt außerhalb des Repos (`~/.config/earthengine/`). Das Projekt steht in `.env` als `EE_PROJECT` und wird nur zur Laufzeit geladen (`aleph/core/earth_engine.py`). `.gitignore` erfasst jetzt Muster für Google-Zugangsdaten. Die Git-Adresse dieses Repos ist fest die noreply-Adresse.
+- **Katalog:** VNP46A3 gibt es in Earth Engine nicht. VNP46A2 v2 ist vorhanden, aber ohne Blickwinkel-Band; die Tabelle zum Qualitätsfeld auf der Katalogseite ist veraltet (gilt NASA-Tabelle 9, an echten Werten bestätigt: Wert 5 kommt vor). VCMCFG ab 2012-04.
+- **Kriterien K1–K6** am 16:24 UTC festgelegt, vor jeder Rechnung; im Code als Konstanten mit Schutztest.
+- **B (VCMCFG), 2018-10, Afrika-Europa-Asien: „teilweise“.**
+  - r 0,955 (Block-Bootstrap 0,933–0,971).
+  - K2 verfehlt: Städte q 0,89, mittlere Zellen 1,17. Der Versatz bleibt auch bei Klassen nach dem geometrischen Mittel.
+  - K5 verfehlt: scharfe Kante, ab etwa 65,5° N keine Daten.
+  - Falsches Licht auf dem Meer (Boote?) und in Brandgebieten.
+  - Aufwand: 92 s und 2,4 MB je Monat für die Region.
+- **A (VNP46A2-Nachbau): offen.** Der Lauf hing nach 185 von 188 Blöcken; drei Anfragen ohne Antwort und ohne Zeitlimit. Eigener Fehler: Ich habe den Lauf zwischendurch fälschlich für beendet gehalten (`ps` kürzt Befehlszeilen) und kurz einen zweiten gestartet, nach 27 s wieder beendet. Behoben: Zeitlimit 600 s, Zwischenspeicherung je Block, kein Ergebnis bei fehlenden Blöcken.
+- **Empfehlung:** B nicht als Ersatz und nicht an der Grenze Amerika/Ozeanien; allenfalls als Gegenprobe südlich 60° N. A nur bei Bedarf neu rechnen (etwa 50 min). IMERG monatlich V07 bis 2025-09, MOD13C2 fehlt in Earth Engine, MOD13A3 vorhanden.
+- **Prüfer:**
+  - statistik-pruefer „bestanden mit Auflagen“, plausibilitaets-pruefer „plausibel mit Vorbehalt“; Auflagen eingearbeitet (u. a. Regionsmaske, Empfindlichkeitsprüfung, Bootstrap, Karte bis 60° S).
+  - `.claude/agents/plausibilitaets-pruefer.md` hat keine `---`-Kopfzeile und wurde nicht als Agent erkannt. Ersatzweise lief ein allgemeiner Agent mit dieser Rollenbeschreibung; die Datei ist nicht geändert.
+- **Tests:** 700/700, keiner übersprungen.
+- **Nicht angefasst:** Download (Prozess 82367, Ampel OK), `vnp46a3*.py`, Kachellisten, `scripts/`, `.env`. Keine Daten aus 2023–2025.
+- **Bericht:** `berichte/2026-09-27_earth-engine-pruefung.md` (mit Abweichungskarte).
