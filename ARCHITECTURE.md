@@ -197,6 +197,13 @@ Pro Layer, pro Gitterzelle, pro Monat:
 - **Endtest-Sperre:** Monate ab 2023-01 werden ohne ausdrückliche `endtest_freigabe=True` verweigert. Wegen der Ladereihenfolge (2018–2025 zuerst) sind vor dem Laden von 2013–2017 überhaupt nur Monate ab 2023 bewertbar. Jede Freigabe löst eine Warnung aus; der Code kann „nur einmal pro Hauptversion“ nicht erzwingen. Der Endtest ist bei der Datenqualität vorbelastet: Die 50-%-Grenze für beobachtete Pixel wurde nach den Anteilen aufgefüllter Pixel des Testmonats 2024-01 gewählt (nur Datenqualität, nicht Ereignisse).
 - Offen für die Kalibrierung: Mit „nur frühere Jahre" und mindestens 5 Basisjahren hat der Zeitraum 2013–2019 nur 24 bewertbare Monate (2018–2019); Abschnitt 9 (Blindtest 2019–2024) und 9a (Endtest 2023–2025) widersprechen sich in den Zeiträumen.
 
+**Statistisches Grundgerüst, Version 0.2 (Stand 2026-09-26, nur mit künstlichen Daten geprüft; Methoden und Quellen: `docs/methoden.md`):**
+- Anomalie: klassischer z-Wert parallel zum robusten, Widerspruch als Kennzeichen `z_uneinig`; Basislinie jetzt nur aus beobachteten Pixeln (Fehler behoben).
+- Trend je Zelle (`aleph/detect/trend.py`): Mann-Kendall und Sen-Steigung auf Abweichungen vom Kalendermonats-Median, Autokorrelation getrennt nach Hamed-Rao und Yue korrigiert; als Trend gilt nur, was beide melden. Benjamini-Hochberg mit αFDR = 2·αglobal (Wilks 2016), Flächengewichtung für jede Flächenaussage, Moran's I als Diagnose, Mindestlängen je Verfahren („nicht bestimmbar“ statt Zahl).
+- Schnee: Der Würfel hat nur schneefreie Felder und kein Schnee-Kennzeichen; ersatzweise „Schnee-Verdacht“ (`aleph/detect/schnee.py`), der die Datenlage deckelt (Anomalie) bzw. Monate ausschließt (Trend).
+- Pflichtfelder jeder Ausgabe: Evidenzstufe, Unsicherheit, Zahl gültiger Werte, Methode, Version.
+- Verknüpfung Nachtlicht × Einheiten × Weltbank-Sicht (`aleph/link/nachtlicht_einheiten.py`), bisher nur als Technikprobe ohne BIP.
+
 ## 7. Anomalien benennen
 
 Zusammenhängende auffällige Zellen werden zu einer Anomalie zusammengefasst. Keine Anomalie bleibt ohne Namen: Jede bekommt entweder einen **bekannten Typ** oder wird ausdrücklich als **unerklärt** geführt.

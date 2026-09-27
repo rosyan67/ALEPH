@@ -381,3 +381,43 @@
 - **Hochladen:** main hochgeladen. ui-geruest nicht: Commit 4d08637 mit dem alten (zurückgezogenen) OpenRouter-Schlüssel gehört zu seinem Verlauf – Entscheidung beim Nutzer.
 - **Nicht angefasst:** Download (Prozess 63920), `vnp46a3*.py`, Kachellisten, `scripts/`.
 - **Bericht:** `~/ALEPH-ui/berichte/2026-09-26_globus-echtdaten.md`.
+- **Nachtrag (Entscheidung Nutzer):** ui-geruest am 26.09. 16:30 hochgeladen (`dfa9264..d37cca8`), obwohl Commit 4d08637 mit dem widerrufenen Schlüssel dazu gehört (liegt über main ohnehin auf GitHub; Historie nicht umgeschrieben). Die 7 neuen Commits enthalten keine Zugangsdaten; einzige Datei über 1 MB ist die MapLibre-Bibliothek (1,0 MB).
+
+## 2026-09-26 (Globus-Design nach dem alten Gerüst, nur Worktree ui-geruest)
+
+- **Design (`48143d7`, hochgeladen `d37cca8..48143d7`):** `web/globus.html` im Aufbau und Aussehen von `geruest_beispieldaten.html`: Kopfleiste mit Suche (nur Einheitentabelle), linke Leiste „Ebenen und Quellen“, helles Dossier rechts, Zeitleiste mit Monatsregler, Zustand, Quelle, Datenstand und „beobachtet“. Legende immer sichtbar. Keine Beispielinhalte übernommen. Datenlogik unverändert. Schriften lokal (`web/vendor/fonts/`, OFL).
+- **Stichproben 2018-01:** Berlin 11, Paris 50, Kairo 41, Sahara unter 0,1, Amerika „noch nicht geladen“, Arktis „keine Daten“, Krim eigene Einheit 2,4; Moskau 2018-02 „zu wenig Messungen“ (48 %).
+- **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“, alle 7 Punkte umgesetzt, u. a. Streifenrichtung der Legende (war schon vorher vertauscht), Hinweisbalken neutral statt gold, Auswahl-Linie unter der Kategoriefarbe.
+- **Tests:** Worktree 636/636, nach den Korrekturen Export 27/27.
+- **Offen für eine spätere Sitzung (hier in main nicht geändert):** Einheit `sabah_north_borneo` in `sondereinheiten.yaml` umbenennen, z. B. „Ost-Sabah (beanspruchtes Gebiet)“, danach Tabelle neu bauen. Flüssigkeit mit echter Grafikkarte vom Nutzer prüfen lassen.
+- **Nicht angefasst:** Download, Würfel, `.env`, Export, main (außer diesem Eintrag).
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-26_globus-design.md`.
+
+## 2026-09-26/27 (Statistisches Grundgerüst und Verknüpfungsgerüst Nachtlicht × Weltbank)
+
+- **Teil A (nur künstliche Daten):**
+  - `aleph/detect/statistik.py`: Mann-Kendall, Sen mit Band, Hamed-Rao (3 Lags, Faktor ≥ 1 als eigene Festlegung), Yue-Prewhitening, αFDR = 2·αglobal nach Wilks (Autorenmanuskript im Originaltext gelesen, sonst Crossref-Metadaten), Flächengewichte, Moran's I mit `scipy.sparse`, Mindestlängen.
+  - Neu: `trend.py`, `schnee.py`, `synthetische_pruefung.py`.
+  - `anomalie.py` 0.2.0: klassischer z parallel mit `z_uneinig`; **Fehler behoben**: Die Basislinie nutzte das Mittel mit aufgefüllten Pixeln.
+- **Hauptbefund:** Bei Autokorrelation hält keine Korrektur das Niveau.
+  - AR 0,5, kein Trend: 90 % der Würfel mit Meldung (Hamed-Rao); Yue schlechter als gar keine Korrektur.
+  - Mit Mindestgröße 4 Zellen: 0 % (AR 0,8: 10 %). Gilt nur bei räumlich unabhängigem Rauschen.
+  - Unabhängiges Rauschen: 9 % der Würfel (Soll etwa 10 %).
+  - Rechenzeit Trend, volles Raster: etwa 10 min.
+- **Schnee:**
+  - Der Würfel hat nur Snow_Free-Felder und kein Kennzeichen.
+  - Moskau 2018-02 (192 bei 49 % beobachtet) ist vermutlich nicht erkannter Schnee plus Auswahl-Effekt.
+  - „Schnee-Verdacht“ wird bei Anomalie (Ziel und Basis) und Trend ausgeschlossen.
+  - Empfehlung Kern-Umbau: `*_Snow_Covered_Num` speichern.
+- **Teil B (`aleph/link/nachtlicht_einheiten.py`), Technikprobe 2018-01, keine Aussage, kein BIP:**
+  - 146 von 236 Ländern mit Summe, Rest gekennzeichnet.
+  - EGY 0,71 / DEU 1,12 / SAU 1,03 / NGA 0,32 / IND 0,73 nW·cm⁻²·sr⁻¹ je km².
+- **Prüfer:**
+  - statistik-pruefer „bestanden mit Auflagen“; umgesetzt bis auf: r1 an echten Kalibrierdaten, räumlich abhängiges Rauschen, lichtgewichtete Abdeckung, Ausschlüsse vor der Regression.
+  - Plausibilität „plausibel mit Vorbehalt“; Schnee-Deutung berichtigt.
+- **Tests:** 644/644, keiner übersprungen.
+- **Sonstiges:**
+  - `scipy` in `requirements.txt` nachgetragen (war installiert).
+  - Beim Suchen nach Wilks' Volltext wurde versehentlich die E-Mail-Adresse des Nutzers an Unpaywall gesendet (Abfrageparameter); gemeldet, nicht wiederholt.
+- **Nicht angefasst:** Download, `vnp46a3*.py`, Kachellisten, `scripts/`, `.env`. Keine Daten aus 2023–2025.
+- **Bericht:** `berichte/2026-09-26_statistik-geruest.md`.

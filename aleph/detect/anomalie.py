@@ -44,6 +44,24 @@ aller Zellen mit Basislinie, nur aus der Basislinie geschätzt, also unabhängig
 Wert) bringt den Rand bei GLEICHMÄSSIGEM Rauschen unter das Normalverteilungs-Niveau (T >= 4 in
 etwa 5e-6 statt 6,3e-5; T >= 5 in keinem von 6 Millionen Fällen).
 
+Nachtrag 2026-09-26 (Statistisches Grundgerüst, Version 0.2.0):
+- BERICHTIGT: Die Basislinie nahm bisher `<feld>_mittel` (Mittel über beobachtete UND aufgefüllte Pixel),
+  der untersuchte Monat dagegen `<feld>_mittel_beobachtet`. Beide Seiten nutzen jetzt das Mittel nur über
+  beobachtete Pixel, wie der Kommentar in `_bewerte_monat` es schon verlangte. (Künstliche Würfel waren
+  nicht betroffen, weil dort beide Mittel gleich sind; echte Daten wurden damit nie ausgewertet.)
+- Klassischer z-Wert (Mittelwert/Standardabweichung, `z_klassisch`) PARALLEL zum robusten (Median/MAD).
+  Beide mit derselben Mindest-Streuung, damit nur der Unterschied Mittel/Median bzw. Standardabweichung/MAD
+  wirkt. `z_uneinig`: Die beiden Werte widersprechen sich bei der Zellschwelle (einer >= z_min_zelle, der
+  andere nicht). Das ist ein DIAGNOSE-Kennzeichen (z. B. Ausreißer in der Basislinie), keine Auswahl:
+  gemeldet wird weiter nach dem robusten Wert.
+- Schnee-Verdacht (aleph/detect/schnee.py), gleiche Behandlung wie beim Trend (Auflage statistik-pruefer
+  2026-09-26): Zellmonate mit Verdacht werden NICHT bewertet – im untersuchten Monat (Karte `schnee_verdacht`,
+  Datenlage 0, also nie Teil eines Ereignisses) und in der Basislinie (Wert fällt heraus, zählt nicht zu
+  n_basis). Grund: Moskau 2018-02 zeigt, dass solche Monate um ein Vielfaches abweichen können, und ein
+  verschneiter Basismonat verschiebt Median und MAD. Verglichen wird ohnehin nur mit demselben Kalendermonat.
+- Pflichtfelder in jeder Ereigniszeile: evidenzstufe, unsicherheit, n_zellen und n_basis_min (gültige
+  Werte), methode, erkennung_version.
+
 Endtest-Sperre (ARCHITECTURE.md 9a): Der Endtest (2023-2025) darf nur einmal pro Hauptversion
 angesehen werden. Solange 2013-2017 nicht geladen sind, sind wegen `min_basisjahre` überhaupt
 nur Monate ab 2023 bewertbar, also genau der Endtest-Zeitraum. Deshalb verweigern
@@ -99,8 +117,10 @@ Was nicht garantiert ist (bitte nicht als Garantie darstellen):
   Bänder bedeuten für Anstieg und Rückgang deshalb nicht dasselbe („wie viele typische
   Schwankungen", nicht „wie viel Prozent"). Ob ein Wechsel auf ein Verhältnis oder eine
   logarithmische Skala nötig ist, klärt die Kalibrierung (das reale rho ist unbekannt).
-- Der Zellmittelwert mischt beobachtete und aufgefüllte Pixel (der Würfel speichert nur
-  das gemeinsame Mittel). Aufgefüllte Pixel sind aus historischen Daten abgeleitet und
+- (Stand 2026-09-26: Ziel und Basislinie nutzen nur noch das Mittel über BEOBACHTETE Pixel. Der folgende
+  Absatz beschreibt die frühere Nutzung des gemeinsamen Mittels und gilt so nicht mehr; das neue Risiko ist
+  der Auswahl-Effekt: Sind nur wenige Pixel beobachtet, ist das Mittel eines anderen Teils der Zelle –
+  siehe aleph/detect/schnee.py.) Früher: Der Zellmittelwert mischt beobachtete und aufgefüllte Pixel. Aufgefüllte Pixel sind aus historischen Daten abgeleitet und
   dämpfen deshalb eine echte Änderung (bei 50 % Auffüllung erscheint ein Rückgang um 90 %
   nur noch als etwa 45 %). Ebenso glättet die Auffüllung die Monate der Basislinie und
   verkleinert deren Streuung, was z vergrößert; die Dämpfung der Änderung im untersuchten
@@ -145,9 +165,15 @@ import pandas as pd
 import xarray as xr
 
 from aleph.detect import wuerfel as lesen
+from aleph.detect.schnee import SchneeRegel, schnee_verdacht
 from aleph.detect.statistik import benjamini_hochberg, normal_zweiseitig
+from aleph.detect.statistik import zellflaeche_km2 as _zellflaeche_km2
 
-ERKENNUNG_VERSION = "0.1.0"
+ERKENNUNG_VERSION = "0.2.0"
+METHODE = (
+    "robuste Abweichung (Median/MAD, gemeinsame Mindest-Streuung) mit klassischem z (Mittel/Standardabweichung) "
+    "parallel; derselbe Kalendermonat früherer Jahre; Benjamini-Hochberg auf nominellen p-Werten, |z| >= z_min, Mindestgröße"
+)
 
 # Endtest-Zeitraum (ARCHITECTURE.md 9a: 2023-2025, nur einmal pro Hauptversion ansehen).
 ENDTEST_AB = (2023, 1)
@@ -198,6 +224,9 @@ class Schwellen:
     diagnose_median_z: float = 0.5
     diagnose_anteil_markiert: float = 0.10  # ein großes lokales Ereignis (Land, Region) soll nicht als „global" gelten
 
+    # Schnee-Verdacht (aleph/detect/schnee.py): betroffene Zellmonate werden nicht bewertet
+    schnee_regel: SchneeRegel = field(default_factory=SchneeRegel)
+
     def __post_init__(self):
         if not (0 < self.min_beobachtet_anteil <= self.datenlage_mittel_anteil <= self.datenlage_gut_anteil <= 1):
             raise ValueError("Datenlage-Anteile müssen 0 < unzureichend <= mittel <= gut <= 1 erfüllen.")
@@ -244,7 +273,8 @@ SPALTEN_EREIGNISSE = [
     "id", "nr", "feld", "monat", "richtung", "band", "n_zellen", "flaeche_km2", "breite_mitte",
     "laenge_mitte", "breite_min", "breite_max", "laenge_min", "laenge_max", "z_median", "z_maximal",
     "aenderung_relativ_median", "datenlage", "aufgefuellt_anteil_mittel", "n_basis_min",
-    "basis_von", "basis_bis", "n_fehlende_basismonate", "monat_verdaechtig", "evidenzstufe", "erkennung_version",
+    "basis_von", "basis_bis", "n_fehlende_basismonate", "monat_verdaechtig", "anteil_z_uneinig",
+    "anteil_schnee_verdacht", "unsicherheit", "methode", "evidenzstufe", "erkennung_version",
 ]
 
 
@@ -293,6 +323,9 @@ class _Zellbewertung:
     beobachtet_anteil: np.ndarray
     aufgefuellt_anteil: np.ndarray
     aenderung_relativ: np.ndarray
+    z_klassisch: np.ndarray
+    z_uneinig: np.ndarray
+    schnee: np.ndarray
     bh_nominal: np.ndarray  # BH auf nominellen p-Werten
     hell: np.ndarray  # bewertbar und Basislinien-Median >= pool_helligkeit (für die Monatsdiagnose)
     markiert: np.ndarray  # BH und |z| >= z_min_zelle
@@ -342,11 +375,14 @@ def _gemeinsame_streuung(n_basis, med, s_mad, s: Schwellen) -> tuple[np.ndarray,
     return rho, info
 
 
-def _bewerte_monat(ziel: dict, basis: dict, s: Schwellen) -> _Zellbewertung:
+def _bewerte_monat(ziel: dict, basis: dict, s: Schwellen, schnee: np.ndarray | None = None,
+                   schnee_basis: np.ndarray | None = None) -> _Zellbewertung:
     """Kern: Datenlage, robuste Abweichung, p-Werte, Benjamini-Hochberg, Mindestwert.
 
     `ziel`: Arrays (y, x) `mittel`, `gueltig`, `aufgefuellt` des untersuchten Monats.
     `basis`: Arrays (n, y, x) derselben Größen der Basismonate (nur frühere Jahre, nur fertige).
+    `schnee`: optionale Bool-Karte Schnee-Verdacht im untersuchten Monat (diese Zellen werden nicht bewertet).
+    `schnee_basis`: optional (n, y, x) Schnee-Verdacht der Basismonate (diese Werte fallen aus der Basislinie).
     """
     pixel = s.pixel_pro_zelle
     # Anomalieerkennung nutzt ausschließlich das Mittel über beobachtete Pixel
@@ -356,11 +392,15 @@ def _bewerte_monat(ziel: dict, basis: dict, s: Schwellen) -> _Zellbewertung:
     x = ziel["obs"].astype("float64")
     beob_ziel = _beobachtet_anteil(ziel["gueltig"], ziel["aufgefuellt"], pixel)
     ok_ziel = (beob_ziel >= s.min_beobachtet_anteil) & np.isfinite(x)
+    schnee = np.zeros(x.shape, dtype=bool) if schnee is None else (np.asarray(schnee, bool) & ok_ziel)
+    ok_ziel &= ~schnee
 
     if basis["mittel"].shape[0] > 0:
         beob_basis = _beobachtet_anteil(basis["gueltig"], basis["aufgefuellt"], pixel)
-        ok_basis = (beob_basis >= s.min_beobachtet_anteil) & np.isfinite(basis["mittel"])
-        werte = np.where(ok_basis, basis["mittel"].astype("float64"), np.nan)
+        ok_basis = beob_basis >= s.min_beobachtet_anteil
+        if schnee_basis is not None:
+            ok_basis &= ~np.asarray(schnee_basis, bool)
+        werte = np.where(ok_basis & np.isfinite(basis["obs"]), basis["obs"].astype("float64"), np.nan)
     else:
         werte = np.full((0,) + x.shape, np.nan)
     n_basis = np.isfinite(werte).sum(axis=0).astype("int16")
@@ -387,6 +427,24 @@ def _bewerte_monat(ziel: dict, basis: dict, s: Schwellen) -> _Zellbewertung:
     markiert = bh & (np.abs(z) >= s.z_min_zelle)
     vorzeichen = np.where(markiert, np.sign(z), 0).astype("int8")
 
+    # Klassischer z-Wert parallel (Mittel und Standardabweichung der Basislinie, gleiche Mindest-Streuung;
+    # Faktor sqrt(1 + 1/n): der Mittelwert ist selbst aus n Werten geschätzt).
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        mittel_b = np.nanmean(werte, axis=0) if werte.shape[0] else np.full(x.shape, np.nan)
+        sd_b = np.nanstd(werte, axis=0, ddof=1) if werte.shape[0] > 1 else np.full(x.shape, np.nan)
+    streuung_k = np.maximum.reduce(
+        [
+            np.nan_to_num(sd_b, nan=0.0),
+            rho * np.maximum(np.abs(np.nan_to_num(mittel_b, nan=0.0)), s.pool_helligkeit),
+            np.full(x.shape, s.abs_min_streuung),
+        ]
+    )
+    z_k = np.full(x.shape, np.nan)
+    faktor_k = np.sqrt(1.0 + 1.0 / np.maximum(n_basis, 1))
+    z_k[bewertbar] = ((x - mittel_b) / (streuung_k * faktor_k))[bewertbar]
+    z_uneinig = bewertbar & ((np.abs(z) >= s.z_min_zelle) != (np.abs(z_k) >= s.z_min_zelle))
+
     datenlage = np.zeros(x.shape, dtype="int8")
     datenlage[bewertbar] = 1
     datenlage[bewertbar & (beob_ziel >= s.datenlage_mittel_anteil) & (n_basis >= s.datenlage_mittel_basisjahre)] = 2
@@ -398,7 +456,8 @@ def _bewerte_monat(ziel: dict, basis: dict, s: Schwellen) -> _Zellbewertung:
 
     return _Zellbewertung(
         z=z, p=p, datenlage=datenlage, n_basis=n_basis, beobachtet_anteil=beob_ziel,
-        aufgefuellt_anteil=aufgefuellt_anteil, aenderung_relativ=relativ, bh_nominal=bh,
+        aufgefuellt_anteil=aufgefuellt_anteil, aenderung_relativ=relativ, z_klassisch=z_k, z_uneinig=z_uneinig,
+        schnee=schnee, bh_nominal=bh,
         hell=bewertbar & np.isfinite(med) & (med >= s.pool_helligkeit),
         markiert=markiert, vorzeichen=vorzeichen, n_getestet=int(bewertbar.sum()), mindest_streuung=info,
     )
@@ -447,15 +506,20 @@ def zusammenhaengende_gruppen(maske: np.ndarray) -> tuple[np.ndarray, int]:
 
 
 def zellflaeche_km2(breite_mitte: np.ndarray, zellgroesse_grad: float = 0.25) -> np.ndarray:
-    """Fläche von Gitterzellen (Kugelnäherung) in km² je Zellmittelpunkt-Breite.
+    """Fläche von Gitterzellen (Kugelnäherung) in km² je Zellmittelpunkt-Breite (seit 2026-09-26 gemeinsame
+    Umsetzung in aleph/detect/statistik.py; hier nur weitergereicht)."""
+    return _zellflaeche_km2(breite_mitte, zellgroesse_grad)
 
-    A = R² * Delta-Laenge * (sin(Breite_oben) - sin(Breite_unten)); bei 0° etwa 770 km², bei 60° die Hälfte.
-    """
-    halb = np.radians(zellgroesse_grad) / 2.0
-    lat = np.radians(np.asarray(breite_mitte, dtype="float64"))
-    oben = np.clip(lat + halb, -np.pi / 2, np.pi / 2)
-    unten = np.clip(lat - halb, -np.pi / 2, np.pi / 2)
-    return ERDRADIUS_KM**2 * np.radians(zellgroesse_grad) * (np.sin(oben) - np.sin(unten))
+
+def _unsicherheit_text(bew: "_Zellbewertung", maske: np.ndarray) -> str:
+    teile = ["p-Werte nominell"]
+    uneinig = float(bew.z_uneinig[maske].mean())
+    if uneinig > 0:
+        teile.append(f"klassischer und robuster z-Wert uneinig in {uneinig:.0%} der Zellen")
+    schnee = float(bew.schnee[maske].mean())
+    if schnee > 0:
+        teile.append(f"Schnee-Verdacht in {schnee:.0%} der Zellen")
+    return "; ".join(teile)
 
 
 def _band(z_betrag: float, s: Schwellen) -> int:
@@ -535,6 +599,10 @@ def _meldungen(
                     "basis_bis": _monat_text(max(basis_monate)) if basis_monate else "",
                     "n_fehlende_basismonate": len(fehlend),
                     "monat_verdaechtig": monat_verdaechtig,
+                    "anteil_z_uneinig": float(bew.z_uneinig[maske].mean()),
+                    "anteil_schnee_verdacht": float(bew.schnee[maske].mean()),
+                    "unsicherheit": _unsicherheit_text(bew, maske),
+                    "methode": METHODE,
                     "evidenzstufe": "beobachtet",
                     "erkennung_version": ERKENNUNG_VERSION,
                 }
@@ -544,6 +612,9 @@ def _meldungen(
         {
             "z": (dims, bew.z.astype("float32")),
             "p_nominal": (dims, bew.p.astype("float32")),
+            "z_klassisch": (dims, bew.z_klassisch.astype("float32")),
+            "z_uneinig": (dims, bew.z_uneinig),
+            "schnee_verdacht": (dims, bew.schnee),
             "datenlage": (dims, bew.datenlage),
             "n_basis": (dims, bew.n_basis),
             "beobachtet_anteil": (dims, bew.beobachtet_anteil.astype("float32")),
@@ -556,7 +627,9 @@ def _meldungen(
             "band": (dims, band),
         },
         coords={"breite": breite, "laenge": laenge},
-        attrs={"datenlage_codes": "0 unzureichend, 1 dünn, 2 mittel, 3 gut", "band_codes": "0 keines, 1 auffällig, 2 stark, 3 extrem"},
+        attrs={"datenlage_codes": "0 unzureichend, 1 dünn, 2 mittel, 3 gut", "band_codes": "0 keines, 1 auffällig, 2 stark, 3 extrem",
+               "evidenzstufe": "beobachtet", "methode": METHODE, "version": ERKENNUNG_VERSION,
+               "unsicherheit": "p-Werte nominell (keine garantierte Falschmeldungsrate); z_uneinig und Datenlage je Zelle"},
     )
     tabelle = pd.DataFrame(zeilen, columns=SPALTEN_EREIGNISSE)
     return zellen, tabelle, int((ereignis_nr > 0).sum())
@@ -580,6 +653,7 @@ def _leere_zellen(breite, laenge) -> xr.Dataset:
         z=np.full(form, np.nan), p=np.full(form, np.nan), datenlage=np.zeros(form, "int8"),
         n_basis=np.zeros(form, "int16"), beobachtet_anteil=np.full(form, np.nan),
         aufgefuellt_anteil=np.full(form, np.nan), aenderung_relativ=np.full(form, np.nan),
+        z_klassisch=np.full(form, np.nan), z_uneinig=np.zeros(form, bool), schnee=np.zeros(form, bool),
         bh_nominal=np.zeros(form, bool), hell=np.zeros(form, bool), markiert=np.zeros(form, bool), vorzeichen=np.zeros(form, "int8"),
         n_getestet=0, mindest_streuung={},
     )
@@ -656,8 +730,22 @@ def erkenne_monat(
     ziel, basis, breite, laenge, basis_monate, fehlend = _lade(wuerfel, monat, feld, s)
     if len(basis_monate) < s.min_basisjahre:
         return _nicht_bewertbar(monat, feld, s, breite, laenge, basis_monate, fehlend)
-    bew = _bewerte_monat(ziel, basis, s)
+    bew = _bewerte_monat(ziel, basis, s, _schnee(ziel, breite, monat, s), _schnee_basis(basis, breite, monat, s))
     return _fertige_erkennung(bew, bew.markiert, monat, feld, breite, laenge, basis_monate, fehlend, s)
+
+
+def _schnee(ziel: dict, breite: np.ndarray, monat: tuple[int, int], s: Schwellen) -> np.ndarray:
+    anteil = _beobachtet_anteil(ziel["gueltig"], ziel["aufgefuellt"], s.pixel_pro_zelle)
+    anteil = np.where(np.asarray(ziel["gueltig"], dtype="float64") > 0, anteil, np.nan)
+    return schnee_verdacht(breite, monat[1], anteil, s.schnee_regel)
+
+
+def _schnee_basis(basis: dict, breite: np.ndarray, monat: tuple[int, int], s: Schwellen) -> np.ndarray | None:
+    """Schnee-Verdacht der Basismonate (derselbe Kalendermonat wie `monat`)."""
+    if basis["gueltig"].shape[0] == 0:
+        return None
+    return np.stack([_schnee({"gueltig": basis["gueltig"][i], "aufgefuellt": basis["aufgefuellt"][i]}, breite, monat, s)
+                     for i in range(basis["gueltig"].shape[0])])
 
 
 def _diagnose(bew: _Zellbewertung, s: Schwellen) -> dict:
@@ -739,7 +827,7 @@ def erkenne_zeitraum(
             ergebnisse.append(_nicht_bewertbar(monat, feld, s, breite, laenge, basis_monate, fehlend))
             vorher_monat, vorher_vorzeichen, lauf = None, None, None
             continue
-        bew = _bewerte_monat(ziel, basis, s)
+        bew = _bewerte_monat(ziel, basis, s, _schnee(ziel, breite, monat, s), _schnee_basis(basis, breite, monat, s))
         angrenzend = vorher_monat is not None and (monat[0] * 12 + monat[1] - 1) == (vorher_monat[0] * 12 + vorher_monat[1])
         if angrenzend and lauf is not None:
             gleich = (bew.vorzeichen != 0) & (bew.vorzeichen == vorher_vorzeichen)
