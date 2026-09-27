@@ -421,3 +421,28 @@
   - Beim Suchen nach Wilks' Volltext wurde versehentlich die E-Mail-Adresse des Nutzers an Unpaywall gesendet (Abfrageparameter); gemeldet, nicht wiederholt.
 - **Nicht angefasst:** Download, `vnp46a3*.py`, Kachellisten, `scripts/`, `.env`. Keine Daten aus 2023–2025.
 - **Bericht:** `berichte/2026-09-26_statistik-geruest.md`.
+
+## 2026-09-27 (Robustheit: E-Mail-Adresse und Datenschutz, Login-Wiederholung, 2019-05, Sabah)
+
+- **Datenschutz (nur geprüft, Historie nicht umgeschrieben):**
+  - Die E-Mail-Adresse steht als Git-Autorangabe in allen 46 Commits; das Repo ist öffentlich (GitHub-API: `visibility: public`).
+  - Ein alter OpenRouter-Schlüssel steht in `4d08637` (Teil von origin/main).
+  - In Dateien, LOG.md, Berichten und Commit-Nachrichten steht die Adresse nicht.
+  - Der Unpaywall-Abruf vom 26.09. nahm die Adresse aus dem Sitzungskontext von Claude Code, nicht aus `.env`.
+  - `.claude/settings.local.json.aus` (enthält einen Schlüssel) war nicht ignoriert; jetzt über `.gitignore` erfasst.
+  - **Regelabweichung:** Das Suchskript hat `.env`-Werte geladen (nicht ausgegeben); ein Variablenname wurde im Chat genannt.
+  - Möglichkeiten für die Historie stehen im Bericht; die Entscheidung liegt beim Nutzer.
+- **Neu:** `aleph/core/unpaywall.py`. Die Adresse kommt nur aus `.env` (`UNPAYWALL_EMAIL`, neu in `.env.example`) und erscheint in keiner Meldung, keinem Protokoll und keinem Traceback. 9 Tests.
+- **Login-Wiederholung** (Ursache des Abbruchs vom 26.09. 22:01 UTC):
+  - earthaccess ruft bei jedem Login `/profile` ohne Zeitlimit ab; jeder Fehler wurde zu „Login fehlgeschlagen“.
+  - `auth.py` ordnet jetzt ein (abgelehnt / nicht erreichbar / fehlt) und wiederholt nach 1, 2, 5, 10, 15, 30 min. „Nicht erreichbar“ wird weiter alle 30 min bis 12 h versucht; Zeitlimit 120 s je Versuch.
+  - Kachel-Zugangsprobleme (`ZugangBeiKacheln`): Monat zurückstellen, Pause 5, 15 oder 30 min; Abbruch erst beim 4. Monat in Folge.
+  - Der Status zeigt „WARTET“. Regel in ARCHITECTURE.md Abschnitt 5.
+- **2019-05:** Eintrag veraltet. 459 Kacheln, alle richtig ausgerichtet, keine h12v09; der Monat ist in Stufe 1 auf Platz 7. Der Status trennt jetzt Zurückstellungen früherer Läufe.
+- **Sabah** in „Ost-Sabah (von den Philippinen beansprucht)“ umbenannt: C04 = 52 % von Sabah, der Osten. Kennung und Quellen unverändert; die Tabelle auf der SSD ist noch nicht neu gebaut.
+- **Download:**
+  - 14:58 UTC angehalten (2018-11, 64 fertige Kacheln).
+  - 15:14 UTC neu gestartet, Ampel 15:25 UTC OK.
+  - Nach der Nachbesserung (Login-Zeitlimit) 15:25 UTC erneut gestartet (Prozess 82367).
+- **Prüfer:** plausibilitaets-pruefer „plausibel mit Vorbehalt“, alle Punkte eingearbeitet oder als Grenze benannt.
+- **Bericht:** `berichte/2026-09-27_robustheit.md`.

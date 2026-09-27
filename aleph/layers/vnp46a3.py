@@ -113,6 +113,12 @@ NASA - den ganzen Lauf beendet und 6,5 Stunden gekostet hatten):
   Speicherplatz voll (`io.SpeicherZuKnapp`, auch bei ENOSPC) und SSD nicht
   erreichbar (`io.SSDNichtGefunden`) werden aus jeder Kachel-Wiederholung
   durchgereicht.
+- Login-Wiederholung (Änderung 2026-09-27, nach dem Abbruch vom 26.09. 22:01
+  UTC durch einen einzigen fehlgeschlagenen Login): Der Login zu Monatsbeginn
+  wird mit wachsenden Pausen wiederholt (`anmelden`, Regeln in
+  aleph/core/auth.py). Zugangsprobleme bei den Kacheln (401, EULA, gehäuft
+  403) heißen `ZugangBeiKacheln` (Unterklasse von `AnmeldungFehlgeschlagen`);
+  der Lauf stellt den Monat dann zurück und pausiert, statt sofort zu enden.
 - Fehlen nach allen Versuchen einzelne Kacheln, meldet `lade_monat`
   `KachelnFehlen`. Der Monat wird dann NICHT geschrieben und NICHT als fertig
   markiert; die schon geladenen Kacheln bleiben im Rohordner. Beim nächsten
@@ -145,7 +151,7 @@ import earthaccess
 from earthaccess.exceptions import DownloadFailure, EulaNotAccepted, ServiceOutage
 
 from aleph.core import io
-from aleph.core.auth import earthdata_login
+from aleph.core.auth import abbruch_meldung, earthdata_login, login_mit_wiederholung
 
 META = {
     "name": "VNP46A3",
@@ -446,7 +452,41 @@ class LadeStatistik:
 
 
 class AnmeldungFehlgeschlagen(RuntimeError):
-    """Login bei NASA Earthdata fehlgeschlagen oder abgelaufen (echter Blocker: Lauf endet)."""
+    """Login bei NASA Earthdata fehlgeschlagen oder abgelaufen (echter Blocker: Lauf endet).
+
+    Seit 2026-09-27 erst, nachdem `anmelden` die Wiederholungsreihe aus
+    aleph/core/auth.py (`login_mit_wiederholung`) ausgeschöpft hat.
+    """
+
+
+class ZugangBeiKacheln(AnmeldungFehlgeschlagen):
+    """Die Kacheln selbst werden verweigert (HTTP 401, nicht akzeptierte EULA,
+    gehäuft HTTP 403), obwohl der Login zu Monatsbeginn geklappt hat.
+
+    Unterklasse von `AnmeldungFehlgeschlagen`, damit jeder, der nur die
+    Oberklasse kennt, weiter „Blocker“ sieht. Der Lauf (vnp46a3_lauf.py)
+    behandelt sie seit 2026-09-27 gesondert: Monat zurückstellen, Pause, weiter;
+    erst mehrere Monate hintereinander beenden den Lauf.
+    """
+
+
+# Wartefunktion für die Login-Wiederholung; Tests ersetzen sie, damit nicht
+# wirklich gewartet wird.
+_schlafe_login = time.sleep
+
+
+def anmelden(melde=None) -> None:
+    """NASA-Login mit Wiederholung (aleph/core/auth.py, `login_mit_wiederholung`).
+
+    Jeder Fehlschlag kommt über `melde` ins Protokoll („wartet auf NASA-Login,
+    Versuch n …“). Erst wenn die Reihe ausgeschöpft ist, `AnmeldungFehlgeschlagen`
+    mit einer Meldung, die „abgelehnt“ und „nicht erreichbar“ unterscheidet.
+    """
+    ergebnis = login_mit_wiederholung(
+        lambda: earthdata_login(), melde=melde, schlafe=lambda sekunden: _schlafe_login(sekunden)
+    )
+    if not ergebnis:
+        raise AnmeldungFehlgeschlagen(abbruch_meldung(ergebnis))
 
 
 class KachelNichtGeladen(RuntimeError):
@@ -842,7 +882,7 @@ def pruefe_blocker(fehler: BaseException, status: int | None) -> None:
     if isinstance(fehler, (io.SSDNichtGefunden, io.SpeicherZuKnapp, AnmeldungFehlgeschlagen)):
         raise fehler
     if isinstance(fehler, EulaNotAccepted) or status in _HTTP_ANMELDUNG:
-        raise AnmeldungFehlgeschlagen(
+        raise ZugangBeiKacheln(
             f"NASA lehnt die Anmeldung ab ({fehler}). Zugangsdaten in .env prüfen "
             "und bei NASA Earthdata die Nutzungsbedingungen (EULA) für LAADS DAAC akzeptieren."
         ) from fehler
@@ -940,7 +980,7 @@ def _lade_kachel(
         status = _statuscode(fehler)
         pruefe_blocker(fehler, status)
         if status == 403 and ZUGANG.melde_403() > ZUGANG_403_HINTEREINANDER_MAX:
-            raise AnmeldungFehlgeschlagen(
+            raise ZugangBeiKacheln(
                 _zugang_pruefen_meldung(f"mehr als {ZUGANG_403_HINTEREINANDER_MAX} Kacheln hintereinander mit")
             ) from fehler
         if not _ist_vorlaeufig(fehler, status):
@@ -1163,8 +1203,9 @@ def lade_monat(
     """Lädt alle VNP46A3-Kacheln eines Monats global nach `ziel_ordner`.
 
     Meldet sich vorher bei NASA Earthdata an (dieselbe Ladelogik wie alle
-    Layer, aleph/core/auth.py). Bricht mit `AnmeldungFehlgeschlagen` ab, wenn
-    der Login fehlschlägt.
+    Layer, aleph/core/auth.py). Ein fehlgeschlagener Login wird mit wachsenden
+    Pausen wiederholt (`anmelden`, seit 2026-09-27); erst danach
+    `AnmeldungFehlgeschlagen`.
 
     Kachelliste (geändert 2026-09-25, Befund Kachel-Vollständigkeit): alle
     Granulate des Monats über alle Katalogseiten, abgeglichen mit der vom
@@ -1221,8 +1262,7 @@ def lade_monat(
     „Download-Statistik“: neu geladene Kacheln, GB, MB/s, nach Größen-/MD5-
     Prüfung verworfene Kacheln und Wiederholungen.
     """
-    if not earthdata_login():
-        raise AnmeldungFehlgeschlagen("NASA-Earthdata-Login fehlgeschlagen. Zugangsdaten in .env prüfen.")
+    anmelden(melde)
     gemeldet, alle = _katalog_abfrage(jahr, monat)
     # Sicherung: Granulate anderer Monate aussortieren. Das geschieht auf der
     # VOLLSTÄNDIGEN Liste; eine Begrenzung gibt es nicht mehr.
@@ -1361,7 +1401,7 @@ def lade_monat(
         and len(fehlgeschlagen) == len(treffer)
         and all(isinstance(f, KachelNichtGeladen) and f.status == 403 for _, f in fehlgeschlagen)
     ):
-        raise AnmeldungFehlgeschlagen(
+        raise ZugangBeiKacheln(
             _zugang_pruefen_meldung(f"alle {len(treffer)} Kacheln von {jahr:04d}-{monat:02d} mit")
         )
 

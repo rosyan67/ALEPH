@@ -524,7 +524,9 @@ einheiten:
     umriss_hinweis: "Umriss aus Natural Earth (Eintrag B51 „Belize“, Typ „Disputed“, ohne Vermerk); ob er den Anspruch Guatemalas genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."
 
   - id: sabah_north_borneo
-    name: "Sabah / North Borneo (von den Philippinen beansprucht)"
+    # Name geändert 2026-09-27 (vorher „Sabah / North Borneo (…)“): Der Umriss umfasst nur den östlichen
+    # Teil des Bundesstaats Sabah; der alte Name klang nach dem ganzen Bundesstaat. Kennung unverändert.
+    name: "Ost-Sabah (von den Philippinen beansprucht)"
     geometrie: {datei: umstritten, feld: BRK_A3, wert: C04}
     kategorien: [umstritten]
     un_m49: null
@@ -538,4 +540,4 @@ einheiten:
     weltbank_code: MYS
     weltbank_art: unklar
     weltbank_beleg: "keine Gebietsangabe der Weltbank; Code = verwaltender Staat"
-    umriss_hinweis: "Umriss aus Natural Earth (Eintrag C04 „North Borneo“, Typ „Breakaway“, ohne Vermerk); er umfasst nur einen Teil des Bundesstaats Sabah. Welchen Anspruch er genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."
+    umriss_hinweis: "Umriss aus Natural Earth (Eintrag C04 „North Borneo“, Typ „Breakaway“, ohne Vermerk); er umfasst nur den östlichen Teil des Bundesstaats Sabah (gemessen 2026-09-27 gegen die NE-Provinzdatei 5.1.1: 38 571 von 73 842 km², also 52 % der Fläche von Sabah; 116,5–119,3° O, Sabah reicht von 115,4° O; der Umriss liegt praktisch vollständig in Sabah). Welchen Anspruch er genau abbildet, sagt der Anbieter nicht. Nicht selbst nachgezeichnet."

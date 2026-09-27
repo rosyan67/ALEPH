@@ -355,3 +355,16 @@ def test_sabah_und_sued_belize_sind_umstrittene_eigene_einheiten(gebaut, einheit
     assert e.verwaltet_von.startswith(verwaltet)
     assert "Nicht selbst nachgezeichnet" in e.umriss_hinweis
     assert zuordnung[zuordnung.einheit_id == einheit].anteil.sum() > 1
+
+
+def test_sabah_name_passt_zum_umriss():
+    """Auftrag 2026-09-27: Der Umriss (NE C04 „North Borneo“) deckt nur den Osten Sabahs ab; der Name sagt das."""
+    import yaml
+
+    daten = yaml.safe_load(ze.SONDER_DATEI.read_text(encoding="utf-8"))
+    eintraege = daten if isinstance(daten, list) else next(v for v in daten.values() if isinstance(v, list))
+    e = next(x for x in eintraege if x["id"] == "sabah_north_borneo")
+    assert e["name"] == "Ost-Sabah (von den Philippinen beansprucht)"
+    assert "östlichen Teil des Bundesstaats Sabah" in e["umriss_hinweis"]
+    assert e["geometrie"] == {"datei": "umstritten", "feld": "BRK_A3", "wert": "C04"}  # Quelle unverändert
+    assert "RA_5446" in e["beansprucht_von"] and "ICJ_102" in e["un_beleg"]

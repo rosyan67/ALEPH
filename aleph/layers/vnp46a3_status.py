@@ -8,7 +8,10 @@ gerade läuft (Monat, Phase, Kacheln x von y), wann sich zuletzt etwas bewegt
 hat, gemessene Dauer und eine grobe Restzeit. Außerdem: fertige Monate, offene
 Monate und die Liste der Monate, die nachgeholt werden müssen (im Protokoll als
 „ZURÜCKGESTELLT" vermerkt, siehe vnp46a3_lauf.py). Am Ende steht eine Ampel:
-OK / ACHTUNG / HÄNGT / GESTOPPT / FERTIG / FERTIG MIT LÜCKEN.
+OK / WARTET / ACHTUNG / HÄNGT / GESTOPPT / FERTIG / FERTIG MIT LÜCKEN.
+WARTET (seit 2026-09-27): Der Lauf wiederholt gerade den NASA-Login oder
+pausiert nach verweigerten Kacheln (letzte Protokollzeile „wartet auf
+NASA-Login, Versuch n …“). Er versucht es selbst weiter; nichts zu tun.
 """
 
 import re
@@ -51,6 +54,7 @@ _MONAT_GEMELDET = re.compile(r"^(\d{4})-(\d{2}): (\d+) Kacheln bei NASA gemeldet
 _MONAT_DOWNLOAD_FERTIG = re.compile(r"^(\d{4})-(\d{2}): Download fertig")
 _MONAT_WIEDERAUFGENOMMEN = re.compile(r"^(\d{4})-(\d{2}): \d+ Kacheln aus einem früheren Versuch schon vorhanden")
 _MONAT_ZURUECKGESTELLT = re.compile(r"^(\d{4})-(\d{2}): ZURÜCKGESTELLT")
+_LOGIN_WARTET = re.compile(r"^(\d{4})-(\d{2}): wartet auf NASA-Login, Versuch (\d+)")
 _MONAT_STATISTIK = re.compile(
     r"^(\d{4})-(\d{2}): Download-Statistik \(([^)]+)\): (\d+) Kacheln neu geladen \(([\d.]+) GB\) in ([\d.]+) Minuten, "
     r"([\d.]+) MB/s geprüfte Nutzdaten.*?; (\d+) nach Größen-/MD5-Prüfung verworfen \(davon (\d+) nicht mehr neu "
@@ -94,6 +98,14 @@ def lies_protokoll(zeilen: list[str]) -> dict:
       übernommen wurden (nur der Rest wurde geladen). Ihre Dauer ist keine
       Messung eines ganzen Monats und bleibt aus der Restzeit-Schätzung heraus
     - `nachhol`: letzte Protokollzeile „Nachhol-Durchgang ..." (oder None)
+    - `zurueckgestellt_zeit`: dict Monat -> Zeitpunkt der letzten Zeile
+      „ZURÜCKGESTELLT" (seit 2026-09-27). Liegt er vor `lauf_beginn`, stammt der
+      Grund aus einem früheren Lauf; der laufende Lauf hat den Monat beim Start
+      wieder in die normale Reihenfolge aufgenommen (er bildet sie aus dem Würfel)
+    - `login_warten`: None oder dict(monat, versuch, seit, text), wenn die LETZTE
+      Protokollzeile „wartet auf NASA-Login, Versuch n …“ ist (seit 2026-09-27);
+      jede spätere Zeile beendet das Warten. `seit` ist die erste Wartezeile der
+      laufenden Reihe
     - `statistik`: Liste der Zeilen „Download-Statistik" (seit 2026-09-26), je
       dict(monat, zustand, kacheln, gb, minuten, mb_s, verworfen, verworfen_endgueltig, wiederholungen);
       `zustand` ist „vollständig geladen" oder „abgebrochen" (Stillstand, Notbremse,
@@ -111,6 +123,8 @@ def lies_protokoll(zeilen: list[str]) -> dict:
         "wiederaufgenommen": set(),
         "nachhol": None,
         "statistik": [],
+        "login_warten": None,
+        "zurueckgestellt_zeit": {},
     }
     for zeile in zeilen:
         treffer = _ZEIT.match(zeile)
@@ -119,6 +133,16 @@ def lies_protokoll(zeilen: list[str]) -> dict:
         zeitpunkt = datetime.strptime(treffer.group(1), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
         text = treffer.group(2)
         ergebnis["letzte_zeit"] = zeitpunkt
+        if m := _LOGIN_WARTET.match(text):
+            vorher = ergebnis["login_warten"]
+            ergebnis["login_warten"] = {
+                "monat": (int(m.group(1)), int(m.group(2))),
+                "versuch": int(m.group(3)),
+                "seit": vorher["seit"] if vorher else zeitpunkt,
+                "text": text,
+            }
+        else:
+            ergebnis["login_warten"] = None
 
         if text.startswith("Lauf gestartet"):
             ergebnis["lauf_beginn"] = zeitpunkt
@@ -172,6 +196,7 @@ def lies_protokoll(zeilen: list[str]) -> dict:
             # Grund: der Teil nach dem Standardsatz, gekürzt (die volle Meldung steht im Protokoll)
             grund = text.split("Rohdaten bleiben erhalten.", 1)[-1].strip()
             ergebnis["zurueckgestellt"][monat] = grund[:220]
+            ergebnis["zurueckgestellt_zeit"][monat] = zeitpunkt
             ergebnis["aktuell"] = None
         elif m := _MONAT_STUFE_FERTIG.match(text):
             ergebnis["zurueckgestellt"].pop((int(m.group(1)), int(m.group(2))), None)
@@ -322,19 +347,42 @@ def main() -> int:
     # Ein Monat gilt nur dann als nachzuholen, wenn er im Würfel wirklich noch
     # nicht fertig ist (das Protokoll allein könnte veraltet sein).
     nachzuholen = {m: g for m, g in p["zurueckgestellt"].items() if m not in fertig}
-    if nachzuholen:
-        print(f"Nachzuholen (zurückgestellt, später erneut versuchen): {len(nachzuholen)} Monat(e)")
-        for (j, mo), grund in sorted(nachzuholen.items()):
+    # Befund 2026-09-27 (2019-05): Ein Grund aus einem FRÜHEREN Lauf ist nicht mehr
+    # der Stand; der laufende Lauf hat den Monat beim Start wieder in die normale
+    # Reihenfolge aufgenommen. Getrennt anzeigen, mit Datum des alten Grunds.
+    beginn = p["lauf_beginn"]
+    frueher = {
+        m: g for m, g in nachzuholen.items()
+        if beginn is not None and p["zurueckgestellt_zeit"].get(m) is not None and p["zurueckgestellt_zeit"][m] < beginn
+    }
+    in_diesem_lauf = {m: g for m, g in nachzuholen.items() if m not in frueher}
+    if in_diesem_lauf:
+        print(f"Nachzuholen (zurückgestellt, später erneut versuchen): {len(in_diesem_lauf)} Monat(e)")
+        for (j, mo), grund in sorted(in_diesem_lauf.items()):
             print(f"  {j:04d}-{mo:02d}: {grund}")
     else:
         print("Nachzuholen (zurückgestellt): keine")
+    if frueher:
+        print(
+            f"In einem früheren Lauf zurückgestellt, seit dem Neustart wieder in der normalen Reihenfolge: "
+            f"{len(frueher)} Monat(e)"
+        )
+        for (j, mo), grund in sorted(frueher.items()):
+            print(f"  {j:04d}-{mo:02d} (alter Grund vom {p['zurueckgestellt_zeit'][(j, mo)]:%Y-%m-%d %H:%M} UTC): {grund}")
     if p["nachhol"] and prozesse and not p["lauf_fertig"]:
         print(f"Nachholen: {p['nachhol']}")
 
     ampel = "OK"
     grund = ""
     aktuell = p["aktuell"]
-    if aktuell and prozesse:
+    if p["login_warten"] and prozesse:
+        w = p["login_warten"]
+        print(f"Aktuell: {w['text']}")
+        ampel, grund = "WARTET", (
+            f"wartet auf NASA-Login, Versuch {w['versuch']} (Wartereihe seit {_minuten(w['seit'], jetzt):.0f} "
+            "Minuten); der Lauf versucht es selbst weiter, erst nach der ganzen Reihe endet er mit ABBRUCH"
+        )
+    elif aktuell and prozesse:
         monat_text = f"{aktuell['monat'][0]:04d}-{aktuell['monat'][1]:02d}"
         seit = _minuten(aktuell["start"], jetzt)
         if not aktuell["download_fertig"]:

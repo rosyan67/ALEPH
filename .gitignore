@@ -9,6 +9,7 @@ logs/
 
 # Lokale Claude-Code-Einstellungen (nur auf diesem Rechner)
 .claude/settings.local.json
+.claude/settings.local.json.*
 
 # Python-Cache
 __pycache__/
