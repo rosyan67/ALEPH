@@ -97,6 +97,32 @@
     return STUFEN[STUFEN.length - 1][1];
   }
 
+  function zeigeVergleichsLegende(an, monat) {
+    byId("legende-normal").hidden = an;
+    byId("legende-vergleich").hidden = !an;
+    if (an) byId("vgl-monate").textContent = monat + " minus " + vorjahr(monat);
+    byId("vergleich-an").checked = vergleichAn;
+    byId("vergleich-an").disabled = !vergleichMoeglich(monat);
+    byId("vergleich-zeile").title = vergleichMoeglich(monat) ? "" : "Nur für Monate 2019 (Vergleich mit demselben Monat 2018)";
+    document.body.classList.toggle("vergleich-aktiv", an);
+  }
+
+  function baueVergleichsLegende() {
+    var teile = [], n = 40;
+    for (var i = 0; i <= n; i++) {
+      var t = -1 + 2 * i / n, d = (t < 0 ? -1 : 1) * 0.5 * (Math.pow(1 + DIFF_MAX / 0.5, Math.abs(t)) - 1);
+      teile.push("rgb(" + diffFarbe(d).join(",") + ") " + (100 * i / n).toFixed(1) + "%");
+    }
+    byId("vgl-verlauf").style.background = "linear-gradient(to right," + teile.join(",") + ")";
+    var achse = byId("vgl-achse");
+    [-20, -5, -1, 0, 1, 5, 20].forEach(function (d) {
+      var span = document.createElement("span");
+      span.style.left = (50 + 50 * diffT(d)) + "%";
+      span.textContent = (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d);
+      achse.appendChild(span);
+    });
+  }
+
   function baueLegende() {
     var teile = [];
     var n = 40, max = STUFEN[STUFEN.length - 1][0];
@@ -234,6 +260,56 @@
     return url;
   }
 
+  // ---------- Vergleich mit dem Vorjahresmonat (Teil 4, nur 2019 gegen 2018) ----------
+  // Differenz nur in Zellen, die in BEIDEN Monaten einen gezeigten Wert haben (≥ 50 % beobachtet, geladen,
+  // gültiger Pixel). Alle anderen: „kein Vergleich möglich“ (eigenes Karomuster, nie eine Farbe der Skala).
+  // Beobachtete Differenz, nicht auf Signifikanz geprüft.
+  var VERGLEICH_JAHR = "2019";
+  var DIFF_MAX = 20; // nW·cm⁻²·sr⁻¹; darüber gleiche Farbe wie ±20
+  var DIFF_MITTE = [58, 62, 72], DIFF_DUNKLER = [80, 150, 235], DIFF_HELLER = [240, 96, 70];
+  var KEIN_VGL_A = [176, 181, 192], KEIN_VGL_B = [122, 127, 138];
+  var vergleichAn = false;
+  var diffBilder = {};
+
+  function vorjahr(monat) { return (Number(monat.slice(0, 4)) - 1) + monat.slice(4); }
+  function vergleichMoeglich(monat) {
+    return monat && monat.slice(0, 4) === VERGLEICH_JAHR && DS.angezeigt.indexOf(vorjahr(monat)) >= 0;
+  }
+  function vergleichAktiv(monat) { return vergleichAn && vergleichMoeglich(monat); }
+
+  function diffT(d) {
+    var t = Math.log10(1 + Math.abs(d) / 0.5) / Math.log10(1 + DIFF_MAX / 0.5);
+    return Math.min(1, t) * (d < 0 ? -1 : 1);
+  }
+  function diffFarbe(d) {
+    var t = diffT(d), ziel = t < 0 ? DIFF_DUNKLER : DIFF_HELLER, f = Math.abs(t);
+    return [0, 1, 2].map(function (k) { return Math.round(DIFF_MITTE[k] + f * (ziel[k] - DIFF_MITTE[k])); });
+  }
+  function vergleichbar(e, a) { return a <= 100 && a >= e.min_beobachtet_prozent; }
+
+  function baueDiffBild(neu, alt) {
+    var e = neu.meta, spalteVon = new Int32Array(BILD);
+    for (var x = 0; x < BILD; x++) spalteVon[x] = Math.min(e.laenge - 1, Math.floor(((x + 0.5) * 360 / BILD) / 0.25));
+    var leinwand = document.createElement("canvas");
+    leinwand.width = BILD; leinwand.height = BILD;
+    var ctx = leinwand.getContext("2d"), bild = ctx.createImageData(BILD, BILD), px = bild.data;
+    for (var y = 0; y < BILD; y++) {
+      var lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / BILD))) * 180 / Math.PI;
+      var basis = Math.min(e.breite - 1, Math.max(0, Math.floor((90 - lat) / 0.25))) * e.laenge;
+      for (var x2 = 0; x2 < BILD; x2++) {
+        var i = basis + spalteVon[x2], o = 4 * (y * BILD + x2), c;
+        if (vergleichbar(e, neu.anteil[i]) && vergleichbar(alt.meta, alt.anteil[i])) {
+          c = diffFarbe(neu.wert[i] / e.wert_skala - alt.wert[i] / alt.meta.wert_skala);
+        } else {
+          c = ((Math.floor(x2 / 6) + Math.floor(y / 6)) % 2) ? KEIN_VGL_A : KEIN_VGL_B;
+        }
+        px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(bild, 0, 0);
+    return leinwand.toDataURL("image/png");
+  }
+
   function zustandText(monat) {
     var e = (DS.monate || []).filter(function (x) { return x.monat === monat; })[0];
     return e && e.zustand_text ? e.zustand_text : "vollständig";
@@ -246,12 +322,35 @@
     return { zeile: zeile, spalte: spalte };
   }
 
+  function klassenName(meta, a) {
+    if (a === (meta.anteil_nicht_geladen || ANTEIL_NICHT_GELADEN)) return "noch nicht geladen";
+    if (a === meta.anteil_keine_daten) return "keine Daten";
+    if (a < meta.min_beobachtet_prozent) return "zu wenig Messungen";
+    return "Wert";
+  }
+
   function nachtlichtAn(lon, lat) {
     var m = aktiverMonat && geladen[aktiverMonat];
     if (!m || !nachtlichtSichtbar) return null;
     var z = zelleAn(lon, lat), i = z.zeile * m.meta.laenge + z.spalte, a = m.anteil[i];
     var r = { monat: aktiverMonat, zeile: z.zeile, spalte: z.spalte, nord: 90 - 0.25 * z.zeile, west: -180 + 0.25 * z.spalte };
     if (Math.abs(lat) > MERC_MAX) r.ausserhalbBild = true;
+    var alt = vergleichAktiv(aktiverMonat) && geladen[vorjahr(aktiverMonat)];
+    if (alt) {
+      var a0 = alt.anteil[i];
+      r.vorjahr = vorjahr(aktiverMonat);
+      if (vergleichbar(m.meta, a) && vergleichbar(alt.meta, a0)) {
+        var w1 = m.wert[i] / m.meta.wert_skala, w0 = alt.wert[i] / alt.meta.wert_skala, d = w1 - w0;
+        r.klasse = "Differenz"; r.differenz = d; r.wert = w1; r.wertVorjahr = w0;
+        r.wertText = (d > 0 ? "+" : d < 0 ? "−" : "±") + zahl(Math.abs(d));
+        r.text = "Differenz " + r.wertText + " " + DS.einheit + " (" + zahl(w0) + " → " + zahl(w1) + "), beobachtet, nicht auf Signifikanz geprüft";
+      } else {
+        r.klasse = "kein Vergleich"; r.kurz = "kein Vergleich möglich";
+        r.erklaerung = "Nicht in beiden Monaten ein gezeigter Wert (" + r.vorjahr + ": " + klassenName(alt.meta, a0) + "; " + aktiverMonat + ": " + klassenName(m.meta, a) + ").";
+        r.text = "kein Vergleich möglich";
+      }
+      return r;
+    }
     if (a === (m.meta.anteil_nicht_geladen || ANTEIL_NICHT_GELADEN)) {
       r.klasse = "noch nicht geladen"; r.kurz = "noch nicht geladen";
       r.erklaerung = "In diesem Monat ist bisher nur Afrika-Europa-Asien geladen; diese Zelle folgt, der Download läuft.";
@@ -357,12 +456,19 @@
 
   function setzeMonat(monat) {
     return ladeMonat(monat).then(function (m) {
+      if (!vergleichAktiv(monat)) return [m, null];
+      return ladeMonat(vorjahr(monat)).then(function (v) { return [m, v]; });
+    }).then(function (paar) {
+      var m = paar[0], v = paar[1];
       aktiverMonat = monat;
+      var url = m.bildUrl;
+      if (v) url = diffBilder[monat] || (diffBilder[monat] = baueDiffBild(m, v));
+      zeigeVergleichsLegende(!!v, monat);
       var quelle = map.getSource("nachtlicht");
       var ecken = [[-180, MERC_MAX], [180, MERC_MAX], [180, -MERC_MAX], [-180, -MERC_MAX]];
-      if (quelle) quelle.updateImage({ url: m.bildUrl, coordinates: ecken });
+      if (quelle) quelle.updateImage({ url: url, coordinates: ecken });
       else {
-        map.addSource("nachtlicht", { type: "image", url: m.bildUrl, coordinates: ecken });
+        map.addSource("nachtlicht", { type: "image", url: url, coordinates: ecken });
         map.addLayer({ id: "nachtlicht", type: "raster", source: "nachtlicht", paint: { "raster-fade-duration": 0 } },
           // Kein "raster-resampling: nearest": Das ließ die Karte in Chromes Software-Grafik
           // (Prüfumgebung) einfrieren. Folge: An Zellgrenzen werden Farben leicht gemischt.
@@ -488,7 +594,7 @@
     };
   }
 
-  var KLASSEN_FELD = { "keine Daten": "feld--keine", "Datenlage unzureichend": "feld--duenn", "noch nicht geladen": "feld--nicht" };
+  var KLASSEN_FELD = { "keine Daten": "feld--keine", "Datenlage unzureichend": "feld--duenn", "noch nicht geladen": "feld--nicht", "kein Vergleich": "feld--keinvgl" };
 
   function nachtlichtHtml(n) {
     if (!n) {
@@ -499,14 +605,19 @@
     var ort = n.nord.toFixed(2).replace(".", ",") + "° bis " + (n.nord - 0.25).toFixed(2).replace(".", ",") + "° Breite, " +
       n.west.toFixed(2).replace(".", ",") + "° bis " + (n.west + 0.25).toFixed(2).replace(".", ",") + "° Länge";
     var inhalt;
-    if (n.klasse === "Wert") {
+    if (n.klasse === "Differenz") {
+      inhalt = '<div class="inv-messung-wert">' + esc(n.wertText) + ' <span class="einheit">' + esc(DS.einheit) + "</span></div>" +
+        '<div class="inv-messung-note">Differenz ' + esc(n.monat) + " minus " + esc(n.vorjahr) + ": " + esc(zahl(n.wertVorjahr)) + " → " + esc(zahl(n.wert)) +
+        ". Beobachtete Differenz, nicht auf Signifikanz geprüft.</div>";
+    } else if (n.klasse === "Wert") {
       inhalt = '<div class="inv-messung-wert">' + esc(n.wertText) + ' <span class="einheit">' + esc(DS.einheit) + "</span></div>" +
         '<div class="inv-messung-note">' + n.anteil + " % der Pixel im Monat beobachtet · Wert auf zwei gültige Ziffern gerundet</div>";
     } else {
       inhalt = '<div class="inv-messung-klasse"><span class="feld ' + KLASSEN_FELD[n.klasse] + '"></span>' + esc(n.kurz) + "</div>" +
         '<div class="inv-messung-note">' + esc(n.erklaerung) + " Das ist keine Messung von Dunkelheit.</div>";
     }
-    return '<div class="inv-messung"><div class="inv-messung-kopf"><span>Nachtlicht ' + esc(n.monat) + " · " + esc(zustandText(n.monat)) +
+    var kopfText = n.vorjahr ? "Vergleich " + n.monat + " mit " + n.vorjahr : n.monat + " · " + zustandText(n.monat);
+    return '<div class="inv-messung"><div class="inv-messung-kopf"><span>Nachtlicht ' + esc(kopfText) +
       '</span><span class="inv-evidenz">beobachtet</span></div>' + inhalt +
       '<div class="inv-messung-note">Zelle ' + ort + (n.ausserhalbBild ? " (über 85° – auf dem Globus nicht gezeichnet)" : "") + "</div></div>";
   }
@@ -756,6 +867,7 @@
   // ---------- Start ----------
 
   baueLegende();
+  baueVergleichsLegende();
   zeigeDatenstand();
 
   var h = hashWerte();
@@ -786,6 +898,11 @@
     if (i >= 0 && i < DS.angezeigt.length - 1) setzeMonat(DS.angezeigt[i + 1]);
   });
   byId("info-zu").addEventListener("click", schliesseDossier);
+  byId("vergleich-an").addEventListener("change", function (e) {
+    vergleichAn = e.target.checked;
+    if (aktiverMonat) setzeMonat(aktiverMonat);
+  });
+  API.vergleich = function (an) { vergleichAn = !!an; return aktiverMonat ? setzeMonat(aktiverMonat) : Promise.resolve(); };
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape" || e.target.id === "suche-einheit") return;
     if (byId("info").classList.contains("is-open")) schliesseDossier();
@@ -846,6 +963,7 @@
       baueMonatWahl();
       var start = (h.monat && DS.angezeigt.indexOf(h.monat) >= 0) ? h.monat
         : (DS.angezeigt.filter(function (m) { return m.indexOf("2018") === 0; })[0] || DS.angezeigt[0]);
+      if (h.vergleich === "1") vergleichAn = true;
       arbeit.push(setzeMonat(start));
     }
 

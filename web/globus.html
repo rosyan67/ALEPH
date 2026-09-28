@@ -70,6 +70,7 @@
 
   <!-- ---------- Legende: immer sichtbar ---------- -->
   <section id="legende" class="legende-karte" aria-label="Legende">
+    <div id="legende-normal">
     <div class="legende-kopf">
       <span class="legende-titel">Nachtlicht, mittlere Strahldichte</span>
       <span class="legende-einheit" id="einheit">nW·cm⁻²·sr⁻¹</span>
@@ -81,6 +82,19 @@
     <div class="legende-zeile"><span class="feld feld--keine"></span><span><b>keine Daten</b>: keine Kachel, Polarsommer ohne Nacht, Fehlwert</span></div>
     <div class="legende-zeile"><span class="feld feld--duenn"></span><span><b>zu wenig Messungen</b>: unter <span id="min-proz">50</span> % der Pixel im Monat beobachtet</span></div>
     <div class="legende-zeile"><span class="feld feld--nicht"></span><span><b>noch nicht geladen</b>: Monat bisher nur für Afrika-Europa-Asien vollständig, Download läuft</span></div>
+    </div>
+    <div id="legende-vergleich" hidden>
+      <div class="legende-kopf">
+        <span class="legende-titel">Differenz zum Vorjahresmonat</span>
+        <span class="legende-einheit">nW·cm⁻²·sr⁻¹</span>
+      </div>
+      <div class="vgl-richtung"><span>◀ dunkler als im Vorjahresmonat</span><span>heller ▶</span></div>
+      <div class="verlauf" id="vgl-verlauf"></div>
+      <div class="verlauf-achse" id="vgl-achse"></div>
+      <div class="legende-zeile"><span class="feld feld--vglnull"></span><span><b>±0</b> = gleich hell (auch: in beiden Monaten dunkel); über ±20 wie ±20</span></div>
+      <div class="legende-zeile"><span class="feld feld--keinvgl"></span><span><b>kein Vergleich möglich</b>: nicht in beiden Monaten ein Messwert (keine Daten, zu wenig Messungen oder noch nicht geladen)</span></div>
+      <div class="vgl-hinweis"><span id="vgl-monate"></span> · <b>beobachtete Differenz, nicht auf Signifikanz geprüft</b></div>
+    </div>
     <div id="einheiten-legende">
       <div class="legende-trenner">Einheiten – Umrisse, keine Messung</div>
       <div class="linien-raster">
@@ -118,6 +132,7 @@
         <span id="monat-zustand" class="tl-zustand"></span>
       </div>
     </div>
+    <label class="tl-vergleich" id="vergleich-zeile"><input type="checkbox" id="vergleich-an" disabled> Vergleich mit Vorjahresmonat <span class="tl-klein">(nur 2019 gegen 2018)</span></label>
     <div class="tl-quelle" id="quelle-zeile"></div>
   </footer>
 

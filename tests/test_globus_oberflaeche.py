@@ -121,3 +121,18 @@ def test_auswertung_im_export():
         assert not codes & {"GEO", "MDA", "TZA", "MAR", "CYP"}  # Weltbank-Gebiet weicht ab
         assert not codes & {"USA", "BRA", "ATG", "TTO", "PRI"}  # Amerika: nicht in der Region
         assert len(j["groesste_abweichung"]) == 10
+
+
+# ---------------------------------------------------------------- Teil 4: Vergleich mit dem Vorjahresmonat
+
+
+def test_vergleich_nur_2019_gegen_2018_und_beschriftet():
+    js = (WEB / "globus.js").read_text(encoding="utf-8")
+    html = (WEB / "globus.html").read_text(encoding="utf-8")
+    assert 'var VERGLEICH_JAHR = "2019";' in js
+    # Differenz nur, wenn BEIDE Monate einen gezeigten Wert haben
+    assert "if (vergleichbar(e, neu.anteil[i]) && vergleichbar(alt.meta, alt.anteil[i])) {" in js
+    assert "function vergleichbar(e, a) { return a <= 100 && a >= e.min_beobachtet_prozent; }" in js
+    assert "beobachtete Differenz, nicht auf Signifikanz geprüft" in html
+    assert "kein Vergleich möglich" in html and "dunkler als im Vorjahresmonat" in html and "heller" in html
+    assert 'id="vergleich-an" disabled' in html  # erst mit einem 2019-Monat freigegeben

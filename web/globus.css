@@ -431,3 +431,15 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .ad-tabelle th, .ad-tabelle td { border-bottom: 1px solid var(--line-soft); padding: 3px 4px; text-align: right; font-weight: 400; vertical-align: top; }
 .ad-tabelle tbody th { text-align: left; color: var(--text-dim); width: 34%; }
 .ad-tabelle thead th { color: var(--text-dim); }
+
+/* ---------- Vergleich mit dem Vorjahresmonat (Teil 4) ---------- */
+
+.tl-vergleich { display: flex; align-items: center; gap: 7px; font-size: 12px; margin-top: 6px; color: var(--text); cursor: pointer; }
+.tl-vergleich input { accent-color: var(--gold); width: 14px; height: 14px; }
+.tl-vergleich input:disabled + * , .tl-vergleich:has(input:disabled) { color: var(--text-faint); cursor: default; }
+.tl-klein { font-size: 11px; color: var(--text-dim); }
+.vgl-richtung { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text); margin-bottom: 3px; }
+.vgl-hinweis { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.vgl-hinweis b { color: var(--text); font-weight: 600; }
+.feld--vglnull { background: rgb(58, 62, 72); }
+.feld--keinvgl { background: repeating-conic-gradient(rgb(176,181,192) 0% 25%, rgb(122,127,138) 0% 50%) 0 0 / 8px 8px; }
