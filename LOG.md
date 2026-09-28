@@ -466,3 +466,26 @@
 - **Tests:** 700/700, keiner übersprungen.
 - **Nicht angefasst:** Download (Prozess 82367, Ampel OK), `vnp46a3*.py`, Kachellisten, `scripts/`, `.env`. Keine Daten aus 2023–2025.
 - **Bericht:** `berichte/2026-09-27_earth-engine-pruefung.md` (mit Abweichungskarte).
+
+## 2026-09-28 (Agenten-Kopfzeilen, Netzwerkregel, Earth Engine mit Lese-Recht, Kandidat A)
+
+- **Agenten:**
+  - `plausibilitaets-pruefer.md` und `layer-bauer.md` begannen ohne `---` und wurden deshalb nicht erkannt (laut Claude-Code-Doku).
+  - Repariert, dazu `model:` in allen fünf: Prüfer `opus`, übrige `sonnet`. Rollenbeschreibungen unverändert.
+  - Eine frische Sitzung erkennt alle fünf. Diese laufende Sitzung kannte den Plausibilitäts-Prüfer noch nicht; ersatzweise lief ein allgemeiner Agent mit seiner Rollenbeschreibung.
+- **CLAUDE.md:** Regel „Netzwerk“ (Zeitlimit, Wiederholung mit wachsenden Pausen, benannte Konstanten, Protokoll).
+  - Earth-Engine-Start: Zeitlimit 120 s, 4 Versuche; danach Standard-Zeitlimit 300 s je Anfrage.
+  - Unpaywall: 3 Versuche.
+  - Weltbank, Natural Earth, UN M49, Earth-Engine-Blöcke: Meldung je Wiederholung.
+  - Ohne Zeitlimit bleiben, nur als Empfehlung: NASA-Katalogabfrage in `vnp46a3.py` (gesperrt) und GPM IMERG (Modul fehlerhaft, neu bauen).
+- **Earth Engine:** altes Token (u. a. Google Drive, Cloud Storage voll) bei Google widerrufen und gelöscht. Neu angemeldet nur mit `earthengine.readonly`, belegt an der REST-Referenz (reicht für Start, `getInfo`, `computePixels`). Google bestätigt nur dieses Recht; Mini-Test und Block-Download klappen. Zwei Anmeldeversuche liefen vorher ab, weil zu lange niemand bestätigte.
+- **Kandidat A, 2018-10, Afrika-Europa-Asien: „erfüllt“** (K1–K6, Kriterien unverändert, Code vorher committet `b0dca88`).
+  - Laden: 188/188 Blöcke, 37 min, 0 Wiederholungen.
+  - Südlich 55° N praktisch deckungsgleich: Median |q−1| 0,2–0,3 %, r 0,983.
+  - 55–60° N etwa 4 % Versatz. Nördlich etwa 65° N deutliche Abweichung, auch in Städten (Norilsk ×1,7); Ursache offen.
+  - Gleiche Rohdaten, also Ersatz und keine unabhängige Bestätigung.
+  - Neue Funktion `nach_breite`.
+- **Prüfer:** statistik-pruefer „bestanden mit Auflagen“ (zweimal), plausibilitaets-pruefer „plausibel mit Vorbehalt“; alle Auflagen eingearbeitet.
+- **Tests:** 713/713, keiner übersprungen.
+- **Nicht angefasst:** Download (Prozess 82367 lief durch), `vnp46a3*.py`, `auth.py`, Kachellisten, `scripts/`, `.env`. Würfel nur gelesen. Keine Daten aus 2023–2025.
+- **Bericht:** `berichte/2026-09-28_earth-engine-a.md` (mit Karte A).

@@ -241,3 +241,56 @@ def test_lade_block_wiederholt_mit_wachsenden_pausen_und_meldet(monkeypatch, cap
     assert pausen == [m.BLOCK_PAUSE_BASIS_SEKUNDEN, 2 * m.BLOCK_PAUSE_BASIS_SEKUNDEN]
     fehlerausgabe = capsys.readouterr().err
     assert "Versuch 1/4" in fehlerausgabe and "Versuch 2/4" in fehlerausgabe and "TimeoutError" in fehlerausgabe
+
+
+def test_nach_breite_ordnet_zellen_dem_richtigen_band_zu():
+    """Künstlich: eine helle Zelle bei 70° N mit q = 2,5, eine bei 30° N mit q = 1, falsches Licht bei 70° N."""
+    ref = np.zeros((H, W), dtype="float32")
+    kand = np.zeros((H, W), dtype="float32")
+    maske = np.zeros((H, W), dtype=bool)
+    z70, s = m.zelle_von(70.1, 100.1)
+    z30, _ = m.zelle_von(30.1, 100.1)
+    ref[z70, s], kand[z70, s] = 2.0, 5.0
+    ref[z30, s], kand[z30, s] = 10.0, 10.0
+    ref[z70, s + 1], kand[z70, s + 1] = 0.0, 1.5
+    maske[[z70, z30, z70], [s, s, s + 1]] = True
+    hat = np.ones((H, W), dtype=bool)
+    ergebnis = {tuple(e["band"]): e for e in m.nach_breite(ref, hat, kand, hat, maske)}
+    assert ergebnis[(68, 72)]["zellen_ab_0_5"] == 1
+    assert ergebnis[(68, 72)]["median_q"] == pytest.approx(2.5)
+    assert ergebnis[(68, 72)]["anteil_faktor2"] == 1.0
+    assert ergebnis[(68, 72)]["falsches_licht"] == 1
+    assert ergebnis[(20, 40)]["median_q"] == pytest.approx(1.0)
+    assert ergebnis[(20, 40)]["anteil_faktor2"] == 0.0
+    assert sum(e["zellen_ab_0_5"] for e in ergebnis.values()) == 2
+
+
+def test_breitenbaender_ueberlappen_nicht_und_sind_lueckenlos():
+    b = m.BREITENBAENDER
+    assert all(unten < oben for unten, oben in b)
+    assert all(b[i][0] == b[i + 1][1] for i in range(len(b) - 1))
+
+
+def test_nach_breite_beachtet_maske_und_zaehlt_luecken():
+    ref = np.zeros((H, W), dtype="float32")
+    kand = np.zeros((H, W), dtype="float32")
+    maske = np.zeros((H, W), dtype=bool)
+    z, s = m.zelle_von(30.1, 100.1)
+    ref[z, s], kand[z, s] = 10.0, 30.0  # außerhalb der Maske: darf nicht zählen
+    ref[z, s + 1], kand[z, s + 1] = 0.2, 0.8  # dunkel, Kandidat < 1: kein falsches Licht
+    maske[z, s + 1 : s + 4] = True
+    ref_hat = np.ones((H, W), dtype=bool)
+    kand_hat = np.ones((H, W), dtype=bool)
+    kand_hat[z, s + 2] = False  # nur Würfel
+    ref_hat[z, s + 3] = False  # nur Kandidat
+    e = {tuple(x["band"]): x for x in m.nach_breite(ref, ref_hat, kand, kand_hat, maske)}[(20, 40)]
+    assert e["zellen_ab_0_5"] == 0
+    assert e["falsches_licht"] == 0
+    assert e["nur_wuerfel"] == 1 and e["nur_kandidat"] == 1
+
+
+def test_nach_breite_leeres_band_liefert_nan_statt_fehler():
+    leer = np.zeros((H, W), dtype="float32")
+    hat = np.ones((H, W), dtype=bool)
+    e = m.nach_breite(leer, hat, leer, hat, np.zeros((H, W), dtype=bool))[0]
+    assert e["zellen_ab_0_5"] == 0 and np.isnan(e["median_q"])

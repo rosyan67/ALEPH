@@ -584,6 +584,45 @@ def block_bootstrap(ref, ref_hat, kand, kand_hat, maske, wiederholungen: int = 1
     }
 
 
+# Breitenbänder für die nachträgliche Auswertung nach Breite (2026-09-28). Die Grenzen
+# 55/60/65/68/72/76° N wurden NACH Ansicht der Karte für A (2018-10) gewählt; sie sind
+# beschreibend, keine geprüften Schwellen. Ohne Überlappung, Nord nach Süd.
+BREITENBAENDER = (
+    (76, 80), (72, 76), (68, 72), (65, 68), (60, 65), (55, 60), (40, 55),
+    (20, 40), (0, 20), (-20, 0), (-40, -20), (-60, -40),
+)
+
+
+def nach_breite(ref, ref_hat, kand, kand_hat, maske, baender=BREITENBAENDER) -> list[dict]:
+    """Kennzahlen je Breitenband (nachträglich, nicht Teil des Urteils).
+
+    Einteilung wie im Urteil nach dem Würfelwert: „Zellen ≥ 0,5“ = Würfel ≥ KLASSE_DUNKEL_BIS.
+    Je Band: Median q, Median |q-1|, Anteil Faktor 2 (Zellen ≥ 0,5), falsches Licht
+    (Würfel < 0,5, Kandidat ≥ 1,0) und Zellen, in denen nur eine Quelle Daten hat.
+    Untergrenze eingeschlossen, Obergrenze ausgeschlossen (Zellmitte).
+    """
+    breite, _ = vnp46a3._gitter_koordinaten()
+    b = np.broadcast_to(np.asarray(breite, dtype=float)[:, None], ref.shape)
+    beide = _gemeinsam(ref, ref_hat, kand, kand_hat, maske)
+    ergebnis = []
+    for unten, oben in baender:
+        im_band = (b >= unten) & (b < oben)
+        hell = beide & im_band & (ref >= KLASSE_DUNKEL_BIS)
+        q = kand[hell] / ref[hell]
+        dunkel = beide & im_band & (ref < KLASSE_DUNKEL_BIS)
+        ergebnis.append({
+            "band": [unten, oben],
+            "zellen_ab_0_5": int(hell.sum()),
+            "median_q": float(np.median(q)) if len(q) else float("nan"),
+            "median_abw": float(np.median(np.abs(q - 1))) if len(q) else float("nan"),
+            "anteil_faktor2": float(np.mean((q > 2) | (q < 0.5))) if len(q) else float("nan"),
+            "falsches_licht": int((dunkel & (kand >= KRITERIEN["K4_dunkel_falsches_licht_ab"])).sum()),
+            "nur_wuerfel": int((maske & im_band & ref_hat & ~kand_hat).sum()),
+            "nur_kandidat": int((maske & im_band & kand_hat & ~ref_hat).sum()),
+        })
+    return ergebnis
+
+
 def vergleiche_monat(jahr: int, monat: int, kandidat: str, mit_auffuellung: bool = False) -> dict:
     w = lies_wuerfel(jahr, monat)
     kand, anteil, info = lies_ergebnis(jahr, monat, kandidat)
