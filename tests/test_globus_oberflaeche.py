@@ -136,3 +136,15 @@ def test_vergleich_nur_2019_gegen_2018_und_beschriftet():
     assert "beobachtete Differenz, nicht auf Signifikanz geprüft" in html
     assert "kein Vergleich möglich" in html and "dunkler als im Vorjahresmonat" in html and "heller" in html
     assert 'id="vergleich-an" disabled' in html  # erst mit einem 2019-Monat freigegeben
+
+
+# ---------------------------------------------------------------- Teil 5: Über ALEPH
+
+
+def test_ueber_aleph_nennt_stufen_regeln_und_naechste_schritte():
+    js = (WEB / "globus_ueber.js").read_text(encoding="utf-8")
+    for stufe in ("beobachtet", "statistische Assoziation", "Modellprojektion", "hypothetisches Szenario"):
+        assert stufe in js
+    for wort in ("Niederschlag", "Vegetation", "Konfliktereignisse", "2023 bis 2025", "Umstrittene"):
+        assert wort in js
+    assert 'src="globus_ueber.js"' in (WEB / "globus.html").read_text(encoding="utf-8")

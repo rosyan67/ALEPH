@@ -315,7 +315,7 @@ body.ebenen-offen .legende-karte { transform: translateX(340px); }
 
 /* ---------- MapLibre ---------- */
 
-.maplibregl-ctrl-top-right { top: 62px; }
+.maplibregl-ctrl-top-right { top: 164px; }
 .maplibregl-ctrl-group { background: var(--bg-glas) !important; border: 1px solid var(--line); }
 .maplibregl-ctrl-group button + button { border-top-color: var(--line) !important; }
 .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(0.9); }
@@ -443,3 +443,17 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .vgl-hinweis b { color: var(--text); font-weight: 600; }
 .feld--vglnull { background: rgb(58, 62, 72); }
 .feld--keinvgl { background: repeating-conic-gradient(rgb(176,181,192) 0% 25%, rgb(122,127,138) 0% 50%) 0 0 / 8px 8px; }
+
+/* ---------- Über ALEPH (Teil 5) ---------- */
+
+.ueber {
+  position: fixed; top: 160px; right: 60px; z-index: 29; width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 180px); overflow-y: auto; background: var(--bg-panel); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 12px 16px 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.55); font-size: 13px;
+}
+.ueber p { margin: 6px 0 8px; line-height: 1.5; }
+.ueber h3 { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; margin: 12px 0 4px; }
+.ueber ul { margin: 4px 0; padding-left: 18px; line-height: 1.5; }
+.ueber-stufen { margin: 4px 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+.ueber-stufen dt { color: var(--gold-soft); font-weight: 600; }
+.ueber-stufen dd { margin: 0; color: var(--text); }
