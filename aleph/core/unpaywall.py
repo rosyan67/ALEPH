@@ -22,6 +22,8 @@ Befehl).
 
 import logging
 import os
+import sys
+import time
 from urllib.parse import quote
 
 import requests
@@ -31,7 +33,14 @@ from aleph.core.io import ENV_DATEI
 
 ENV_VARIABLE = "UNPAYWALL_EMAIL"
 API = "https://api.unpaywall.org/v2/"
+# Netzwerkregel (CLAUDE.md): Zeitlimit je Anfrage und Wiederholung mit wachsenden Pausen.
+# Unpaywall antwortet normalerweise in unter 2 s; 30 s trennen „langsam" von „hängt".
+# 3 Versuche mit 5 und 15 s Pause überbrücken kurze Störungen oder eine Drosselung (HTTP 429);
+# dauert die Störung länger, bricht die Abfrage mit klarer Meldung ab. Jede
+# Wiederholung wird gemeldet (nur DOI und Fehlerart, nie die Adresse).
 ZEITLIMIT_SEKUNDEN = 30
+MAX_VERSUCHE = 3
+PAUSEN_SEKUNDEN = (5, 15)
 
 
 class UnpaywallFehler(RuntimeError):
@@ -94,13 +103,27 @@ def open_access(doi: str) -> dict:
     """
     adresse = _adresse()
     _filter_anbringen()
-    fehlerart = None
-    try:
-        antwort = requests.get(
-            API + doi.strip(), params={"email": adresse}, timeout=ZEITLIMIT_SEKUNDEN
+    for versuch in range(1, MAX_VERSUCHE + 1):
+        fehlerart = None
+        antwort = None
+        try:
+            antwort = requests.get(
+                API + doi.strip(), params={"email": adresse}, timeout=ZEITLIMIT_SEKUNDEN
+            )
+        except requests.RequestException as fehler:
+            fehlerart = type(fehler).__name__
+        voruebergehend = fehlerart is not None or antwort.status_code == 429 or antwort.status_code >= 500
+        if not voruebergehend or versuch == MAX_VERSUCHE:
+            break
+        pause = PAUSEN_SEKUNDEN[versuch - 1]
+        grund = fehlerart or f"HTTP {antwort.status_code}"
+        print(
+            f"Unpaywall: Versuch {versuch}/{MAX_VERSUCHE} für DOI {doi} gescheitert ({grund}), "
+            f"neuer Versuch in {pause} s",
+            file=sys.stderr,
+            flush=True,
         )
-    except requests.RequestException as fehler:
-        fehlerart = type(fehler).__name__
+        time.sleep(pause)
     if fehlerart is not None:
         # Außerhalb des except-Blocks ausgelöst: So hängt die Originalmeldung (mit
         # ?email=…) auch nicht als __context__ an der neuen Ausnahme.

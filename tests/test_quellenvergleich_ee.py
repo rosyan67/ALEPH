@@ -215,3 +215,29 @@ def test_block_bootstrap_liefert_intervall_um_den_wert():
     b = m.block_bootstrap(ref, hat, kand, hat.copy(), maske, wiederholungen=50)
     assert b["hell_median_q"][0] == pytest.approx(1.05) and b["hell_median_q"][1] == pytest.approx(1.05)
     assert b["bloecke"] > 10
+
+
+def test_lade_block_wiederholt_mit_wachsenden_pausen_und_meldet(monkeypatch, capsys):
+    """Netzwerkregel: Zeitüberschreitung → neuer Versuch nach 5, 10 s; jede Wiederholung gemeldet."""
+    import io as bytes_io
+    from types import SimpleNamespace
+
+    puffer = bytes_io.BytesIO()
+    feld = np.zeros((2, 2), dtype=[("wert", "f4"), ("anteil", "f4")])
+    np.save(puffer, feld)
+    antworten = iter([TimeoutError("x"), TimeoutError("x"), puffer.getvalue()])
+
+    def compute(anfrage):
+        a = next(antworten)
+        if isinstance(a, Exception):
+            raise a
+        return a
+
+    ee = SimpleNamespace(data=SimpleNamespace(computePixels=compute))
+    pausen = []
+    monkeypatch.setattr(m.time, "sleep", pausen.append)
+    wert, anteil, nbytes, sek, wdh = m.lade_block(ee, "bild", 0, 0, 2, 2)
+    assert wdh == 2 and wert.shape == (2, 2)
+    assert pausen == [m.BLOCK_PAUSE_BASIS_SEKUNDEN, 2 * m.BLOCK_PAUSE_BASIS_SEKUNDEN]
+    fehlerausgabe = capsys.readouterr().err
+    assert "Versuch 1/4" in fehlerausgabe and "Versuch 2/4" in fehlerausgabe and "TimeoutError" in fehlerausgabe

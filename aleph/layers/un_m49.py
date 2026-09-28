@@ -17,6 +17,7 @@ import html
 import json
 import re
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,7 +34,10 @@ SEITEN = {
 # Eigene Zählung am 2026-09-25 22:30 UTC (Abruf der Übersicht): 248 Einträge in der englischen Tabelle.
 # Die Seite nennt selbst keine Zahl. Eine andere Zahl bricht ab (Liste geändert, erst prüfen).
 ANZAHL_GEMESSEN = 248
-TIMEOUT_SEKUNDEN = 120
+# Netzwerkregel (CLAUDE.md): Zeitlimit je Anfrage und Wiederholung mit wachsenden Pausen
+# (5, 10, 20 s; zusammen 35 s). Das reicht für kurze Störungen; eine längere Störung soll
+# mit klarer Meldung abbrechen statt still zu warten. Jede Wiederholung wird gemeldet.
+TIMEOUT_SEKUNDEN = 120  # eine HTML-Seite; großzügig, weil der UN-Server langsam sein kann
 MAX_VERSUCHE = 4
 WARTEZEIT_BASIS_SEKUNDEN = 5
 ORDNER_MUSTER = re.compile(r"^\d{8}T\d{6}Z$")
@@ -71,7 +75,10 @@ def _hole(url):
         except requests.RequestException as fehler:
             letzter = fehler
             if versuch < MAX_VERSUCHE:
-                time.sleep(WARTEZEIT_BASIS_SEKUNDEN * 2 ** (versuch - 1))
+                pause = WARTEZEIT_BASIS_SEKUNDEN * 2 ** (versuch - 1)
+                print(f"UN M49: Versuch {versuch}/{MAX_VERSUCHE} gescheitert ({type(fehler).__name__}), "
+                      f"neuer Versuch in {pause} s: {url}", file=sys.stderr, flush=True)
+                time.sleep(pause)
     raise M49Fehler(f"Abruf gescheitert nach {MAX_VERSUCHE} Versuchen: {url} ({letzter})")
 
 

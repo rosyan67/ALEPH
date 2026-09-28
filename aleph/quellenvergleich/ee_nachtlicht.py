@@ -54,6 +54,7 @@ import concurrent.futures
 import io as bytes_io
 import json
 import math
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -81,6 +82,13 @@ MAX_PIXEL_JE_ZELLE = 4096
 # hing mit drei Anfragen ohne Antwort über 40 Minuten (kein Byte in 60 s), weil
 # die Bibliothek ohne Zeitlimit wartet. Ein A-Block brauchte sonst etwa 70 s.
 ANFRAGE_ZEITLIMIT_SEKUNDEN = 600
+# Wiederholung je Block (Netzwerkregel CLAUDE.md): 4 Versuche, Pausen 5, 10, 20 s.
+# Die Bibliothek wiederholt HTTP 429/5xx schon selbst (earth_engine.BIBLIOTHEK_WIEDERHOLUNGEN);
+# diese Schleife fängt zusätzlich Zeitüberschreitungen und Verbindungsabbrüche ab.
+# Im schlimmsten Fall wartet ein Block 4 × 600 s + 35 s, danach fehlt er und der Lauf
+# schreibt kein Ergebnis (siehe lade_region). Jede Wiederholung wird gemeldet.
+BLOCK_VERSUCHE = 4
+BLOCK_PAUSE_BASIS_SEKUNDEN = 5  # verdoppelt sich je Versuch
 
 # --- Kriterien (festgelegt 2026-09-27 16:24 UTC, vor dem Rechnen; nicht ändern) ---
 
@@ -264,7 +272,7 @@ def _block_anfrage(ee, bild, zeile0: int, spalte0: int, hoehe: int, breite: int)
     }
 
 
-def lade_block(ee, bild, zeile0: int, spalte0: int, hoehe: int, breite: int, versuche: int = 4):
+def lade_block(ee, bild, zeile0: int, spalte0: int, hoehe: int, breite: int, versuche: int = BLOCK_VERSUCHE):
     """Lädt einen Block des Rasters. Rückgabe (wert, anteil, bytes, sekunden, wiederholungen)."""
     wiederholungen = 0
     for versuch in range(versuche):
@@ -276,7 +284,14 @@ def lade_block(ee, bild, zeile0: int, spalte0: int, hoehe: int, breite: int, ver
             if versuch == versuche - 1:
                 raise RuntimeError(f"Block Zeile {zeile0} Spalte {spalte0}: {art} nach {versuche} Versuchen") from None
             wiederholungen += 1
-            time.sleep(5 * 2**versuch)
+            pause = BLOCK_PAUSE_BASIS_SEKUNDEN * 2**versuch
+            print(
+                f"Earth Engine: Block Zeile {zeile0} Spalte {spalte0}, Versuch {versuch + 1}/{versuche} "
+                f"gescheitert ({art}), neuer Versuch in {pause} s",
+                file=sys.stderr,
+                flush=True,
+            )
+            time.sleep(pause)
             continue
         sekunden = time.monotonic() - t0
         feld = np.load(bytes_io.BytesIO(roh))

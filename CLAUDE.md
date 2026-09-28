@@ -18,6 +18,7 @@ Ziel: Ein überzeugender, funktionierender Prototyp für die NASA Space Apps Cha
 - Nach jeder Arbeitssitzung einen Eintrag in LOG.md.
 - Der Nutzer programmiert nicht selbst. Jede Änderung in einfachen Worten erklären.
 - **Berichte.** Jeder Agenten- oder Auftragsbericht wird als Datei unter `berichte/JJJJ-MM-TT_thema.md` abgelegt und beginnt mit einer Kurzfassung von höchstens zehn Zeilen. Feste Überschriften: Urteil, Belege, Umfang, Empfehlung, Nicht geprüft.
+- **Netzwerk.** Jeder Zugriff auf einen Server (Download, Anmeldung, API, Earth Engine) hat ein Zeitlimit und eine Wiederholungsregel mit wachsenden Pausen. Kein Zugriff darf endlos warten. Zeitlimits und Wiederholungen stehen als benannte Konstanten mit Begründung im Code und werden protokolliert.
 - **Zeiträume.** 2023–2025 sind Validierungs- und Endtestzeitraum. Keine inhaltliche Auswertung, kein Anpassen von Schwellen oder Modellen an Daten aus diesem Zeitraum. Technische Prüfungen der Datenlieferung (Vollständigkeit, Geometrie, Fehlwerte) sind erlaubt und werden im Bericht ausdrücklich als solche vermerkt.
 
 ## Agenten
