@@ -489,3 +489,29 @@
 - **Tests:** 713/713, keiner übersprungen.
 - **Nicht angefasst:** Download (Prozess 82367 lief durch), `vnp46a3*.py`, `auth.py`, Kachellisten, `scripts/`, `.env`. Würfel nur gelesen. Keine Daten aus 2023–2025.
 - **Bericht:** `berichte/2026-09-28_earth-engine-a.md` (mit Karte A).
+
+## 2026-09-28 abends (Globus für die Präsentation am 30.09., Teile 1–6)
+
+- **Teil 1:**
+  - Einheitentabelle mit dem vorhandenen Bau-Schritt neu gebaut: Ost-Sabah erscheint; Sicherung `zell_einheiten_stand_2026-09-26T1333Z`.
+  - Globus-Export: alle 24 Monate 2018–2019; während der Sitzung kam 2020-01 dazu.
+  - Fehler behoben: Die Oberfläche nannte „2024-01“ als „fertig, aber gesperrt“. Jetzt stehen Monate ab 2023 in keiner Datei der Oberfläche (Test).
+- **Teil 2:** sechs Blickpunkte. Der Monat ist jeweils nach gemessener Abdeckung gewählt. Die Texte beschreiben nur Beobachtungen; jede Zahl ist im Dateikopf belegt.
+- **Teil 3a:** Im Länderfeld stehen Nachtlicht (Verknüpfungsgerüst) und Weltbank nebeneinander, ohne behaupteten Zusammenhang. Weltbank-Werte nie ab 2023.
+- **Teil 3b** (main, `aleph/link/nachtlicht_bip_querschnitt.py`, neu): Querschnitt Nachtlicht × reales BIP, statistische Assoziation.
+  - 2018: n 125, Steigung 0,94 [0,85; 1,03], R² 0,81.
+  - 2019: n 123, Steigung 0,95 [0,86; 1,05].
+  - Gegenrechnungen 0,93–0,98.
+  - Nach dem ersten Lauf behoben: 12 Länder aus Amerika und Ozeanien waren in der Rechnung. Keine Schwelle geändert.
+  - Russland, Norwegen und Island fallen nach Regel 5 heraus.
+  - **Nicht vom statistik-pruefer geprüft** (Nutzeranweisung).
+  - Bericht: `berichte/2026-09-29_nachtlicht-bip-2018.md`.
+- **Teil 4:** Vergleich mit dem Vorjahresmonat (2019 gegen 2018), nur für Zellen mit gültigem Wert in beiden Monaten. Beschriftet mit „nicht auf Signifikanz geprüft“.
+- **Teil 5:** Feld „Über ALEPH“.
+- **Teil 6:**
+  - Ersatzbilder als PDF, Ablauf für 5 Minuten (`~/ALEPH-ui/praesentation/`).
+  - Der Globus läuft ohne Internet und ohne SSD.
+  - plausibilitaets-pruefer: „plausibel mit Vorbehalt“, 7 von 8 Befunden umgesetzt. Offen: alte Beispieldateien in `web/`.
+- **Tests:** worktree 756/756, main 722/722, keiner übersprungen.
+- **Nicht angefasst:** Download (Prozess 82367), `.env`, `vnp46a3*.py`, Kachellisten. Würfel nur gelesen. Keine Auswertung von 2023–2025.
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-29_praesentation.md`.
