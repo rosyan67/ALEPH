@@ -94,3 +94,30 @@ def test_weltbank_werte_ab_2023_werden_verweigert():
     wb = lw.weltbank([2018, 2023, 2024])
     assert wb["jahre"] == [2018]
     assert all(set(v["jahre"]) <= {"2018"} for v in wb["werte"].values())
+
+
+# ---------------------------------------------------------------- Teil 3b: Auswertung Nachtlicht × BIP
+
+
+def test_auswertungsfeld_traegt_evidenzstufe_und_rahmen():
+    js = (WEB / "globus_auswertung.js").read_text(encoding="utf-8")
+    assert "Evidenzstufe: statistische Assoziation" in js
+    assert "Querschnitt, ein Jahr, Afrika-Europa-Asien, kein Beleg für Ursache und Wirkung" in js
+    assert "Liste der ausgeschlossenen Länder" in js
+    html = (WEB / "globus.html").read_text(encoding="utf-8")
+    assert 'src="daten/nachtlicht_bip.js"' in html and 'src="globus_auswertung.js"' in html
+
+
+@pytest.mark.skipif(not (DATEN / "nachtlicht_bip.js").exists(), reason="web/daten nicht erzeugt")
+def test_auswertung_im_export():
+    A = _lies_js(DATEN / "nachtlicht_bip.js")
+    assert A["verfuegbar"] is True and sorted(A["jahre"]) == ["2018", "2019"]
+    assert A["evidenzstufe"] == "statistische Assoziation"
+    for j in A["jahre"].values():
+        r = j["varianten"]["haupt"]
+        assert r["n"] == len(j["punkte"]) >= 30
+        assert r["steigung_unten"] < r["steigung"] < r["steigung_oben"]
+        codes = {p["code"] for p in j["punkte"]}
+        assert not codes & {"GEO", "MDA", "TZA", "MAR", "CYP"}  # Weltbank-Gebiet weicht ab
+        assert not codes & {"USA", "BRA", "ATG", "TTO", "PRI"}  # Amerika: nicht in der Region
+        assert len(j["groesste_abweichung"]) == 10

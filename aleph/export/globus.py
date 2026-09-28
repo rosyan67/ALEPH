@@ -355,6 +355,26 @@ def _region_monat(monat: str):
     return ds, ds["nicht_geladen"].values[0] & geliefert
 
 
+AUSWERTUNG_NACHTLICHT_BIP = ("auswertungen", "nachtlicht_bip_querschnitt", "ergebnis.json")
+
+
+def auswertung_nachtlicht_bip() -> dict:
+    """Liest die fertige Ergebnisdatei der Auswertung Nachtlicht × BIP (gerechnet in ~/ALEPH,
+    aleph/link/nachtlicht_bip_querschnitt.py). Hier wird nichts gerechnet. Jahre ab 2023 werden nie übernommen."""
+    pfad = io.aleph_data_dir().joinpath(*AUSWERTUNG_NACHTLICHT_BIP)
+    if not pfad.exists():
+        return {"verfuegbar": False, "grund": "Ergebnisdatei fehlt (Auswertung in ~/ALEPH noch nicht gerechnet)"}
+    try:
+        e = json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as fehler:
+        return {"verfuegbar": False, "grund": f"Ergebnisdatei nicht lesbar: {fehler}"}
+    e["jahre"] = {j: v for j, v in (e.get("jahre") or {}).items() if int(j) < int(ENDTEST_AB[:4])}
+    e["verfuegbar"] = bool(e["jahre"])
+    if not e["verfuegbar"]:
+        e["grund"] = "keine Jahre vor 2023 in der Ergebnisdatei"
+    return e
+
+
 def _laenderwerte():
     from aleph.export.globus_laender import Laenderwerte
 
@@ -486,6 +506,8 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         "einheiten_grund": einheiten["grund"],
     }
     (ziel / "datenstand.js").write_text(_js("ALEPH_DATENSTAND", None, datenstand), encoding="utf-8")
+    (ziel / "nachtlicht_bip.js").write_text(_js("ALEPH_NACHTLICHT_BIP", None, auswertung_nachtlicht_bip()),
+                                            encoding="utf-8")
     # Nur für die Konsole (nie in eine Datei der Oberfläche):
     return {**datenstand, "monate_gesamt_wuerfel": len(status), "status_zaehlung_wuerfel": zaehlung,
             "fertig_gesperrt_endtest": [m for m, s in status if s in (MONAT_FERTIG, MONAT_REGION) and m >= ENDTEST_AB]}
