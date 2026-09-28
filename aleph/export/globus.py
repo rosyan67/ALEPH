@@ -355,6 +355,12 @@ def _region_monat(monat: str):
     return ds, ds["nicht_geladen"].values[0] & geliefert
 
 
+def _laenderwerte():
+    from aleph.export.globus_laender import Laenderwerte
+
+    return Laenderwerte()
+
+
 def exportiere(ziel: Path, pruefmonate: list[str] | None = None) -> dict:
     """Schreibt alle Dateien nach `ziel` und gibt den Datenstand zurück.
 
@@ -403,22 +409,42 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         monate = list(pruefmonate)
 
     zustand_je_monat = dict(status)
+    ordner = io.aleph_data_dir().joinpath(*EINHEITEN_ORDNER)
+    ok, grund = pruefe_einheiten(ordner)
+    # Länderwerte (Nachtlicht je Land aus dem Verknüpfungsgerüst, Weltbank nebeneinander) nur mit
+    # geprüfter Einheitentabelle und nie in der Prüfansicht.
+    laender, grund_laender = None, (grund if not ok else "Prüfansicht: keine Länderwerte")
+    if ok and not pruefansicht:
+        # Scheitern die Länderwerte, bleibt der Globus nutzbar; der Grund steht sichtbar im Dossier.
+        try:
+            laender = _laenderwerte()
+        except Exception as e:  # noqa: BLE001 – Grund wird ausgegeben, nicht verschluckt
+            grund_laender = f"Länderwerte nicht berechnet: {type(e).__name__}: {e}"
+            print(f"Warnung: {grund_laender}", file=sys.stderr)
     eintraege = []
     for m in monate:
         zustand = zustand_je_monat.get(m)
         if zustand == MONAT_REGION and not pruefansicht:
             region_ds, maske = _region_monat(m)
             eintrag = kodiere_monat(region_ds, m, nicht_geladen=maske)
+            if laender is not None:
+                laender.monat(m, ZUSTAND_TEXT[zustand], region_ds, maske)
         else:
             eintrag = kodiere_monat(ds, m)
+            if laender is not None:
+                laender.monat(m, ZUSTAND_TEXT.get(zustand, f"Zustand {zustand}"), ds, None)
         eintrag["pruefansicht"] = pruefansicht
         eintrag["zustand"] = zustand
         eintrag["zustand_text"] = ZUSTAND_TEXT.get(zustand, f"Zustand {zustand}")
         (ziel / f"nachtlicht_{m}.js").write_text(_js("ALEPH_NACHTLICHT", m, eintrag), encoding="utf-8")
         eintraege.append({k: eintrag[k] for k in ("monat", "statistik", "kontrolle", "zustand", "zustand_text")})
 
-    ordner = io.aleph_data_dir().joinpath(*EINHEITEN_ORDNER)
-    ok, grund = pruefe_einheiten(ordner)
+    if laender is not None:
+        (ziel / "laender.js").write_text(_js("ALEPH_LAENDER", None, {"verfuegbar": True, **laender.ergebnis()}),
+                                         encoding="utf-8")
+    else:
+        (ziel / "laender.js").write_text(_js("ALEPH_LAENDER", None, {"verfuegbar": False, "grund": grund_laender}),
+                                         encoding="utf-8")
     if ok:
         manifest = json.loads((ordner / "manifest.json").read_text(encoding="utf-8"))
         einheiten = {

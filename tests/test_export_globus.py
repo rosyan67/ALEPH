@@ -275,6 +275,9 @@ def test_export_mit_einheiten(fake_ssd, tmp_path):
     g.exportiere(ziel)
     eh = _lies_js(ziel / "einheiten.js")
     assert eh["verfuegbar"] is True and len(eh["geojson"]["features"]) == 3
+    # Die künstliche Tabelle reicht nicht für Länderwerte: sichtbar „nicht verfügbar“ mit Grund, Globus läuft weiter.
+    lw = _lies_js(ziel / "laender.js")
+    assert lw["verfuegbar"] is False and lw["grund"].startswith("Länderwerte nicht berechnet")
 
 
 def test_gesperrte_monate_stehen_in_keiner_datei_der_oberflaeche(fake_ssd, tmp_path):

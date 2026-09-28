@@ -348,7 +348,7 @@
       if (n > 12 && i !== 0 && i !== n - 1 && m.slice(5) !== "01") return;
       var s = document.createElement("span");
       s.style.left = (n > 1 ? 100 * i / (n - 1) : 50) + "%";
-      s.textContent = n > 12 ? m.slice(0, 4) : m;
+      s.textContent = n > 12 && i !== 0 && i !== n - 1 ? m.slice(0, 4) : m;
       s.setAttribute("data-monat", m);
       marken.appendChild(s);
     });

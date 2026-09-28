@@ -370,3 +370,24 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .bp-fuss b { color: var(--gold-soft); font-weight: 600; }
 @media (max-height: 820px) { .bp-text { font-size: 12px; } .legende-karte { padding-top: 8px; padding-bottom: 7px; } }
 @media (max-width: 760px) { .blickpunkte { top: 118px; width: calc(100vw - 32px); } }
+
+/* ---------- Dossier: Nachtlicht und Weltbank nebeneinander (Teil 3a) ---------- */
+
+.lw-box { border: 1px solid var(--paper-line); background: var(--paper-2); border-radius: var(--radius-lg); padding: 10px 12px; margin: 0 0 16px; }
+.lw-titel { font-family: var(--font-display); font-size: 15px; font-weight: 560; }
+.lw-warnung { font-size: 12px; font-weight: 600; color: #7a2b12; background: #f6dcc6; border-left: 3px solid #b3261e; padding: 4px 7px; margin: 6px 0 8px; border-radius: 2px; }
+.lw-spalten { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.lw-spalte { min-width: 0; }
+.lw-kopf { font-size: 11.5px; font-weight: 600; color: var(--paper-ink); border-bottom: 1px solid var(--paper-line); padding-bottom: 3px; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 4px; align-items: center; }
+.lw-zeile { padding: 3px 0; }
+.lw-label { font-size: 10.5px; color: var(--paper-ink-dim); }
+.lw-wert { font-size: 13.5px; font-weight: 500; }
+.lw-fuss { font-size: 10px; color: var(--paper-ink-dim); line-height: 1.3; }
+.lw-fehlt { color: #7a2b12; font-weight: 600; font-size: 12.5px; }
+.lw-klein { font-size: 10.5px; color: var(--paper-ink-dim); font-weight: 400; }
+.lw-quelle { font-size: 10px; color: var(--paper-ink-dim); margin-top: 5px; line-height: 1.3; }
+.lw-marken { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+.lw-marke { font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 2px; background: #f3d58a; color: #3d2c00; }
+.lw-marke--rot { background: #b3261e; color: #fff; }
+.lw-kennzeichen { font-size: 11px; color: var(--paper-ink-dim); margin: 3px 0; line-height: 1.35; }
+.lw-methode { font-size: 10.5px; color: var(--paper-ink-dim); margin-top: 8px; line-height: 1.35; border-top: 1px solid var(--paper-line); padding-top: 5px; }
