@@ -301,6 +301,27 @@
   var gewaehlt = null; // einheit_id
   var einheitenIndex = {};
   var START_BLICK = { center: [15, 30], zoom: 1.4 };
+  var letzteAuswahl = null; // {p: Eigenschaften oder null, punkt: [lon, lat] oder null} – für Monatswechsel
+
+  // Schnittstelle für Zusatzteile (Blickpunkte, Länderwerte, Auswertung, Vergleich). Die Datenlogik
+  // (Laden, Selbsttest, Farben, Klassen) bleibt hier; Zusatzteile lesen nur und zeigen an.
+  var API = window.ALEPH_GLOBUS = {
+    map: map,
+    dossierZusatz: [], // Funktionen (p, n) -> HTML, erscheinen im Dossier unter dem Nachtlicht-Kasten
+    beiMonat: [], // Funktionen (monat) nach jedem Monatswechsel
+    setzeMonat: function (m) { return setzeMonat(m); },
+    aktiverMonat: function () { return aktiverMonat; },
+    monatDaten: function (m) { return geladen[m] || null; },
+    ladeMonat: function (m) { return ladeMonat(m); },
+    zeigeEinheit: function (id, punkt) { return zeigeEinheit(id, punkt); },
+    springeZuEinheit: function (id) { return springeZuEinheit(id); },
+    einheit: function (id) { return einheitenIndex[id] ? einheitenIndex[id].properties : null; },
+    einheiten: function () { return einheitenIndex; },
+    schliesseDossier: function () { schliesseDossier(); },
+    dossierOffen: function () { return byId("info").classList.contains("is-open"); },
+    esc: esc,
+    zahl: zahl
+  };
 
   // ---------- Monat: Regler in der Zeitleiste ----------
 
@@ -360,6 +381,8 @@
         hinweis.hidden = true;
       }
       zeigeDatenstand();
+      aktualisiereDossier();
+      API.beiMonat.forEach(function (f) { try { f(monat); } catch (err) { zeigeFehler("Zusatzteil: " + err.message); } });
       return m;
     }).catch(function (err) {
       zeigeFehler("Nachtlicht " + monat + " wird nicht angezeigt: " + err.message);
@@ -502,18 +525,32 @@
     waehle(null);
   }
 
-  function zeigeInfo(p, n) {
+  function zusatzHtml(p, n) {
+    return API.dossierZusatz.map(function (f) {
+      try { return f(p, n) || ""; } catch (err) { return '<div class="hinweis hinweis--stark">Zusatzfeld fehlerhaft: ' + esc(err.message) + "</div>"; }
+    }).join("");
+  }
+
+  function aktualisiereDossier() {
+    if (!letzteAuswahl || !byId("info").classList.contains("is-open")) return;
+    var q = letzteAuswahl.punkt;
+    zeigeInfo(letzteAuswahl.p, q ? nachtlichtAn(q[0], q[1]) : null, q, true);
+  }
+
+  function zeigeInfo(p, n, punkt, scrollBehalten) {
     var html;
+    letzteAuswahl = { p: p, punkt: punkt || null };
     if (p) {
       var e = einheitHtml(p);
-      html = e.kopf + nachtlichtHtml(n) + e.felder;
+      html = e.kopf + nachtlichtHtml(n) + zusatzHtml(p, n) + e.felder;
     } else {
       html = '<div class="inv-badges"><span class="inv-badge inv-badge--hell">keine Einheit</span></div>' +
         '<h2 class="inv-title">Keine Einheit</h2><p class="inv-sub">An dieser Stelle liegt keine Einheit der Tabelle (z. B. offenes Meer).</p>' +
         nachtlichtHtml(n);
     }
+    var oben = byId("info-inhalt").scrollTop;
     byId("info-inhalt").innerHTML = html;
-    byId("info-inhalt").scrollTop = 0;
+    byId("info-inhalt").scrollTop = scrollBehalten ? oben : 0;
     oeffneDossier();
   }
 
@@ -536,7 +573,7 @@
     var f = einheitenIndex[id];
     if (!f) { zeigeFehler("Einheit „" + id + "“ steht nicht in der Einheitentabelle."); return; }
     waehle(id);
-    zeigeInfo(f.properties, punkt ? nachtlichtAn(punkt[0], punkt[1]) : null);
+    zeigeInfo(f.properties, punkt ? nachtlichtAn(punkt[0], punkt[1]) : null, punkt);
   }
 
   function springeZuEinheit(id) {
@@ -554,7 +591,7 @@
     // Eigenschaften kommen als Text zurück: Wahrheitswerte zurückholen.
     if (p) p = einheitenIndex[p.einheit_id].properties;
     waehle(p ? p.einheit_id : null);
-    zeigeInfo(p, nachtlichtAn(e.lngLat.lng, e.lngLat.lat));
+    zeigeInfo(p, nachtlichtAn(e.lngLat.lng, e.lngLat.lat), [e.lngLat.lng, e.lngLat.lat]);
   }
 
   var zeigerPlan = null;
@@ -826,6 +863,7 @@
           klick({ point: map.project(q), lngLat: { lng: q[0], lat: q[1] } });
         }
         document.body.setAttribute("data-bereit", "1");
+        document.dispatchEvent(new CustomEvent("aleph-bereit", { detail: h }));
       });
     });
   });

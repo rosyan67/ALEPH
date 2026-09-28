@@ -342,3 +342,31 @@ body.ebenen-offen .timeline-dock { left: auto; right: 16px; transform: none; wid
   .timeline-dock { left: 0; right: 0; width: auto; }
   .investigation { width: 100%; max-width: 100%; }
 }
+
+/* ---------- Blickpunkte (Vorführung, Teil 2) ---------- */
+
+.blickpunkte {
+  position: fixed; left: 16px; top: 66px; z-index: 21; width: 322px;
+  transition: transform 0.3s ease;
+}
+body.ebenen-offen .blickpunkte { transform: translateX(340px); }
+.bp-kopf { font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 6px 2px; }
+.bp-knoepfe { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.bp-knopf {
+  background: var(--bg-glas); border: 1px solid var(--line); color: var(--text);
+  font-size: 12.5px; padding: 6px 9px; border-radius: var(--radius); text-align: left;
+}
+.bp-knopf:hover { border-color: var(--text-faint); }
+.bp-knopf.is-aktiv { border-color: var(--gold); color: var(--gold-soft); }
+.bp-karte {
+  margin-top: 8px; background: var(--bg-glas); border: 1px solid var(--line); border-left: 3px solid var(--gold);
+  border-radius: var(--radius-lg); padding: 9px 11px 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+}
+.bp-karte-kopf { display: flex; justify-content: space-between; align-items: center; }
+.bp-titel { font-family: var(--font-display); font-size: 15px; font-weight: 560; }
+.bp-karte .icon-btn { padding: 2px 4px; font-size: 13px; }
+.bp-text { margin: 4px 0 6px; font-size: 12.5px; line-height: 1.45; }
+.bp-fuss { font-size: 10.5px; color: var(--text-dim); }
+.bp-fuss b { color: var(--gold-soft); font-weight: 600; }
+@media (max-height: 820px) { .bp-text { font-size: 12px; } .legende-karte { padding-top: 8px; padding-bottom: 7px; } }
+@media (max-width: 760px) { .blickpunkte { top: 118px; width: calc(100vw - 32px); } }
