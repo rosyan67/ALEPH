@@ -15,7 +15,8 @@
  * Belegwerte (Zelle, Monat wie oben):
  *   Kairo 44, Niltal bei Asyut 11, Westwüste 27° N 28° O 0,0, Ostwüste 26° N 33° O 0,0
  *   Seoul 35, Daegu 21, Busan 21, Pjöngjang 0,6, Nordkorea 40° N 127° O 0,0
- *   Nigerdelta: hellste Zellen 47 (4,4° N 8,4° O) und 33 (5,6° N 6,4° O); Port Harcourt 5,4
+ *   Nigerdelta: hellste Delta-Zelle 33 (5,6° N 6,4° O); Port Harcourt 5,4. (Die Zelle mit 47 bei 4,4° N 8,4° O
+ *   liegt östlich des Deltas an der Küste und wird im Text deshalb nicht genannt.)
  *   Bagdad 78, hellste Zelle südwestlich von Basra 112 (30,3° N 47,4° O), Mossul 9, Westirak 0,0
  *   Delhi 50, Kolkata 23, Mumbai 21, Thar 27° N 71° O 0,4, Tibet 32° N 85° O 0,0
  *   Brüssel 31, Madrid 43, Mailand 22, Oslo 16, Lappland 67° N 25° O 0,02
@@ -44,8 +45,8 @@
     },
     {
       id: "nigerdelta", titel: "Nigerdelta", monat: "2018-11",
-      mitte: [6.4, 5.2], zoom: 6.6, einheit: "land_NGA", punkt: [6.375, 5.625],
-      text: "Im Delta liegen einzelne sehr helle Punkte auch abseits der großen Städte (bis 47; Port Harcourt 5). " +
+      mitte: [6.6, 5.3], zoom: 5.9, einheit: "land_NGA", punkt: [6.375, 5.625],
+      text: "Im Delta liegen einzelne sehr helle Punkte auch abseits der großen Städte (bis 33; Port Harcourt 5). " +
         "Dass es Gasfackeln sind, ist eine naheliegende Deutung, hier aber nicht an einer Fackel-Datenbank geprüft."
     },
     {
