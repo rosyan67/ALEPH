@@ -61,7 +61,7 @@
 
   // ---------- Punktwolke (SVG) ----------
 
-  var B = 600, H = 330, RAND = { l: 58, r: 14, o: 12, u: 40 };
+  var B = 600, H = 330, RAND = { l: 58, r: 32, o: 12, u: 40 };
 
   function streudiagramm(j) {
     var pkt = j.punkte, r = j.varianten.haupt;
@@ -123,7 +123,8 @@
     return "<ul class=\"ad-liste\">" + liste.map(function (l) {
       return "<li><b>" + esc(l.name) + "</b> (" + esc(l.code) + "): " + esc(l.gruende.join("; ")) + "</li>";
     }).join("") + "</ul><p class=\"ad-klein\">Außerdem nicht aufgenommen: " + amerika + " Länder und Gebiete außerhalb der Region oder noch nicht vollständig geladen (Amerika, Ozeanien), und " +
-      ohneBip + " Einträge ohne reales BIP der Weltbank für " + esc(jahr) + ".</p>";
+      ohneBip + " Einträge ohne reales BIP der Weltbank für " + esc(jahr) + ". Gebiete ohne eigene Weltbank-Zahl " +
+      "(z. B. Taiwan, der östliche Teil der Westsahara, Nordzypern, Krim) gehören zu keinem Weltbank-Land und sind nicht Teil der Rechnung.</p>";
   }
 
   function zeichne() {

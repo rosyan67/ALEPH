@@ -24,6 +24,9 @@
  *   (2018-10); Indien 23 % (2018-03), Kasten Gangesebene 24,5–30° N/76–88° O 34 %, Zentralindien
  *   19–24° N/76–84° O 10 %; Belgien 81 %, Niederlande 68 %, Frankreich 24 % (2018-09)
  *   Niltal: Assuan 8,9, Luxor 9,2, Sohag 11, Minya 5,8 (2018-10)
+ *   Euphrat (2018-10): Ramadi 14, Falludscha 12, Hilla 10, Samawa 6,6, Nasiriya 11; Tigris: Kut 3,5, Amara 28
+ *   Indien nur indische Zellen (Flächenanteil ≥ 0,5), ohne Delhi: 24,5–30° N 30 % über 1, 19–24° N/76–84° O 10 %
+ *   (Nachprüfung auf Hinweis des Plausibilitäts-Prüfers, 2026-09-28)
  *
  * Aufruf für Bildschirmfotos: globus.html#blickpunkt=korea
  */
@@ -46,20 +49,20 @@
     {
       id: "nigerdelta", titel: "Nigerdelta", monat: "2018-11",
       mitte: [6.6, 5.3], zoom: 5.9, einheit: "land_NGA", punkt: [6.375, 5.625],
-      text: "Im Delta liegen einzelne sehr helle Punkte auch abseits der großen Städte (bis 33; Port Harcourt 5). " +
-        "Dass es Gasfackeln sind, ist eine naheliegende Deutung, hier aber nicht an einer Fackel-Datenbank geprüft."
+      text: "Im Delta liegen einzelne sehr helle Punkte auch abseits der großen Städte (bis 33; Port Harcourt 5).",
+      vermutung: "Gasfackeln der Öl- und Gasförderung – naheliegend, aber nicht an einer Fackel-Datenbank geprüft."
     },
     {
       id: "irak", titel: "Irak", monat: "2018-10",
       mitte: [44.5, 32.6], zoom: 5.0, einheit: "land_IRQ", punkt: [47.35, 30.3],
-      text: "Das Licht liegt entlang von Euphrat und Tigris (Bagdad 78) und in einer Gruppe sehr heller Punkte südwestlich von Basra (bis 112, heller als Bagdad). " +
+      text: "Das Licht liegt entlang von Euphrat und Tigris (Bagdad 78) und in einer Gruppe sehr heller Punkte südwestlich von Basra (bis rund 110, heller als Bagdad). " +
         "Die Wüste im Westen ist gemessen dunkel."
     },
     {
       id: "indien", titel: "Indien", monat: "2018-03",
       mitte: [80.5, 22.5], zoom: 3.7, einheit: "land_IND", punkt: [77.21, 28.61],
       text: "Viele einzelne helle Städte (Delhi 50, Kolkata 23, Mumbai 21). In der Gangesebene im Norden liegen schwächere Lichter dicht beieinander " +
-        "(ein Drittel der Zellen über 1, in Zentralindien ein Zehntel); die Wüste Thar und Tibet sind fast dunkel."
+        "(zwischen 24,5 und 30° N knapp ein Drittel der indischen Zellen über 1, ohne Delhi; in Zentralindien ein Zehntel); die Wüste Thar und Tibet sind fast dunkel."
     },
     {
       id: "europa", titel: "Europa", monat: "2018-09",
@@ -105,6 +108,7 @@
     var karte = byId("bp-karte");
     karte.innerHTML = '<div class="bp-karte-kopf"><span class="bp-titel">' + esc(b.titel) + '</span><button class="icon-btn bp-zu" aria-label="Schließen">✕</button></div>' +
       '<p class="bp-text">' + esc(b.text) + "</p>" +
+      (b.vermutung ? '<p class="bp-vermutung"><b>Vermutung, nicht geprüft:</b> ' + esc(b.vermutung) + "</p>" : "") +
       '<div class="bp-fuss">Monat ' + esc(b.monat) + ' · Evidenzstufe <b>beobachtet</b> · Zahlen: Zellwerte in nW·cm⁻²·sr⁻¹</div>';
     karte.hidden = false;
     G.setzeMonat(b.monat).then(function () {

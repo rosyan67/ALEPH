@@ -85,6 +85,7 @@
     return s.replace(".", ",");
   }
   function t(v) { return Math.log10(v + 0.1); }
+  function eine(v) { return v.toFixed(1).replace(".", ","); } // eine Nachkommastelle, damit die Differenz nachrechenbar bleibt
   function farbeFuer(v) {
     if (v <= STUFEN[0][0]) return STUFEN[0][1];
     for (var i = 1; i < STUFEN.length; i++) {
@@ -342,8 +343,8 @@
       if (vergleichbar(m.meta, a) && vergleichbar(alt.meta, a0)) {
         var w1 = m.wert[i] / m.meta.wert_skala, w0 = alt.wert[i] / alt.meta.wert_skala, d = w1 - w0;
         r.klasse = "Differenz"; r.differenz = d; r.wert = w1; r.wertVorjahr = w0;
-        r.wertText = (d > 0 ? "+" : d < 0 ? "−" : "±") + zahl(Math.abs(d));
-        r.text = "Differenz " + r.wertText + " " + DS.einheit + " (" + zahl(w0) + " → " + zahl(w1) + "), beobachtet, nicht auf Signifikanz geprüft";
+        r.wertText = (d > 0 ? "+" : d < 0 ? "−" : "±") + eine(Math.abs(d));
+        r.text = "Differenz " + r.wertText + " " + DS.einheit + " (" + eine(w0) + " → " + eine(w1) + "), beobachtet, nicht auf Signifikanz geprüft";
       } else {
         r.klasse = "kein Vergleich"; r.kurz = "kein Vergleich möglich";
         r.erklaerung = "Nicht in beiden Monaten ein gezeigter Wert (" + r.vorjahr + ": " + klassenName(alt.meta, a0) + "; " + aktiverMonat + ": " + klassenName(m.meta, a) + ").";
@@ -607,7 +608,7 @@
     var inhalt;
     if (n.klasse === "Differenz") {
       inhalt = '<div class="inv-messung-wert">' + esc(n.wertText) + ' <span class="einheit">' + esc(DS.einheit) + "</span></div>" +
-        '<div class="inv-messung-note">Differenz ' + esc(n.monat) + " minus " + esc(n.vorjahr) + ": " + esc(zahl(n.wertVorjahr)) + " → " + esc(zahl(n.wert)) +
+        '<div class="inv-messung-note">Differenz ' + esc(n.monat) + " minus " + esc(n.vorjahr) + ": " + esc(eine(n.wertVorjahr)) + " → " + esc(eine(n.wert)) +
         ". Beobachtete Differenz, nicht auf Signifikanz geprüft.</div>";
     } else if (n.klasse === "Wert") {
       inhalt = '<div class="inv-messung-wert">' + esc(n.wertText) + ' <span class="einheit">' + esc(DS.einheit) + "</span></div>" +

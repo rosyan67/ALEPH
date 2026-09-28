@@ -79,6 +79,7 @@ Danach das Häkchen wieder abnehmen.
 - **BIP und Licht stehen im Länderfeld nur nebeneinander.** Ein Monat gegen einen Jahreswert, kein Zusammenhang behauptet.
 - **Gasfackeln sind eine Deutung und nicht geprüft.** Die Abweichungen von Irak, Libyen, Iran und Algerien nicht damit „erklären“.
 - **Die Auswertung ist noch nicht vom Statistik-Prüfer abgenommen.** Wenn gefragt: offen sagen. Als endgültiges Ergebnis darf man sie noch nicht verkaufen.
+- **Keine Juni-/Juli-Werte nördlich von etwa 45° N zeigen.** In kurzen Sommernächten misst das Produkt vermutlich auch in der Dämmerung (Hinweis des Plausibilitäts-Prüfers, im Handbuch noch nicht geprüft). Die Blickpunkte nutzen deshalb März, September, Oktober und November.
 - **Grenzen:** ALEPH trifft keine Souveränitätsentscheidungen. Umstrittene Gebiete sind eigene Einheiten mit Quelle, zum Beispiel die Krim oder Ost-Sabah.
 
 ## Die drei wahrscheinlichsten Fragen

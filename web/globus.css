@@ -367,6 +367,8 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .bp-karte .icon-btn { padding: 2px 4px; font-size: 13px; }
 .bp-text { margin: 4px 0 6px; font-size: 12.5px; line-height: 1.45; }
 .bp-fuss { font-size: 10.5px; color: var(--text-dim); }
+.bp-vermutung { margin: 0 0 6px; font-size: 11.5px; color: var(--text-dim); border-left: 2px dashed var(--text-faint); padding-left: 6px; }
+.bp-vermutung b { color: var(--text); font-weight: 600; }
 .bp-fuss b { color: var(--gold-soft); font-weight: 600; }
 @media (max-height: 820px) { .bp-text { font-size: 12px; } .legende-karte { padding-top: 8px; padding-bottom: 7px; } }
 @media (max-width: 760px) { .blickpunkte { top: 118px; width: calc(100vw - 32px); } }
