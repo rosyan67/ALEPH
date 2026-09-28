@@ -73,6 +73,9 @@
     return;
   }
   if (DS.pruefansicht) byId("pruef-banner").hidden = false;
+  // 2023–2025 ist Validierungs- und Endtestzeitraum: nie auswählbar, auch wenn eine Datei es anböte.
+  var GESPERRT_AB = "2023-01";
+  DS.angezeigt = (DS.angezeigt || []).filter(function (m) { return m < GESPERRT_AB; });
 
   // ---------- Zahlen und Farben ----------
 
@@ -659,9 +662,8 @@
     var stand = aktiverMonat && geladen[aktiverMonat];
     var zeilen = [
       ["Angezeigt", DS.angezeigt.length ? DS.angezeigt.map(function (m) { return m + " (" + zustandText(m) + ")"; }).join(", ") : "kein Monat"],
-      ["Würfel", DS.monate_gesamt + " Monate (2013-01 bis 2025-12): " + status],
-      ["Gesperrt", "2023–2025 (Validierungs- und Endtestzeitraum), nie angezeigt" +
-        (DS.fertig_gesperrt_endtest.length ? "; fertig, aber gesperrt: " + DS.fertig_gesperrt_endtest.join(", ") : "")],
+      ["Würfel", DS.monate_gesamt + " Monate (" + (DS.zeitraum_offen || "vor 2023") + "): " + status],
+      ["Gesperrt", "2023–2025 (Validierungs- und Endtestzeitraum): weder auswählbar noch angezeigt, auch nicht mitgezählt"],
       ["Feld", DS.feld],
       ["Quelle", DS.quelle],
       ["Evidenzstufe", DS.evidenzstufe || "beobachtet"],

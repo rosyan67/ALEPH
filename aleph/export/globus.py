@@ -434,6 +434,11 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         einheiten = {"verfuegbar": False, "grund": grund}
     (ziel / "einheiten.js").write_text(_js("ALEPH_EINHEITEN", None, einheiten), encoding="utf-8")
 
+    # Für die Oberfläche zählt nur der Zeitraum vor 2023-01: Monate ab 2023 werden weder genannt noch
+    # mitgezählt, auch wenn sie im Würfel schon fertig sind (Regel „2023–2025 gesperrt“, Auftrag 2026-09-28:
+    # nicht auswählbar UND nicht sichtbar). Die Konsole bekommt die gesperrten Monate getrennt (Rückgabewert).
+    offen = [(m, s) for m, s in status if m < ENDTEST_AB]
+    zaehlung_offen = {str(k): sum(1 for _, s in offen if s == k) for k in sorted({s for _, s in offen})}
     datenstand = {
         "erstellt_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "pruefansicht": pruefansicht,
@@ -441,13 +446,13 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         "feld": f"{FELD}_mittel_beobachtet (AllAngle, schneefrei, nur beobachtete Pixel)",
         "einheit": EINHEIT,
         "evidenzstufe": "beobachtet",
-        "monate_gesamt": len(status),
-        "status_zaehlung": zaehlung,
+        "monate_gesamt": len(offen),
+        "zeitraum_offen": f"{offen[0][0]} bis {offen[-1][0]}" if offen else "",
+        "status_zaehlung": zaehlung_offen,
         "status_bedeutung": {"0": "leer", "1": "fertig", "2": "unvollständig (wird neu geladen)", "3": "wird geschrieben",
                              "4": "vollständig nur für Afrika-Europa-Asien"},
-        "fertig_alle": [m for m, s in status if s == MONAT_FERTIG],
-        "region_alle": [m for m, s in status if s == MONAT_REGION],
-        "fertig_gesperrt_endtest": [m for m, s in status if s in (MONAT_FERTIG, MONAT_REGION) and m >= ENDTEST_AB],
+        "fertig_alle": [m for m, s in offen if s == MONAT_FERTIG],
+        "region_alle": [m for m, s in offen if s == MONAT_REGION],
         "angezeigt": monate,
         "monate": eintraege,
         "min_beobachtet_prozent": int(MIN_BEOBACHTET_ANTEIL * 100),
@@ -455,7 +460,9 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         "einheiten_grund": einheiten["grund"],
     }
     (ziel / "datenstand.js").write_text(_js("ALEPH_DATENSTAND", None, datenstand), encoding="utf-8")
-    return datenstand
+    # Nur für die Konsole (nie in eine Datei der Oberfläche):
+    return {**datenstand, "monate_gesamt_wuerfel": len(status), "status_zaehlung_wuerfel": zaehlung,
+            "fertig_gesperrt_endtest": [m for m, s in status if s in (MONAT_FERTIG, MONAT_REGION) and m >= ENDTEST_AB]}
 
 
 def main(argv=None) -> int:
@@ -473,7 +480,7 @@ def main(argv=None) -> int:
     except (ExportFehler, io.SSDNichtGefunden) as e:
         print(f"Abbruch: {e}", file=sys.stderr)
         return 1
-    print(f"Monate im Würfel: {d['monate_gesamt']}, Status-Zählung: {d['status_zaehlung']}")
+    print(f"Monate im Würfel: {d['monate_gesamt_wuerfel']}, Status-Zählung: {d['status_zaehlung_wuerfel']}")
     zt = {e["monat"]: e["zustand_text"] for e in d["monate"]}
     print("Angezeigt: " + (", ".join(f"{m} ({zt.get(m, '?')})" for m in d["angezeigt"])
                            or "kein Monat (noch keiner vollständig)"))

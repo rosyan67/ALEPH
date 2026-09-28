@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -276,6 +277,27 @@ def test_export_mit_einheiten(fake_ssd, tmp_path):
     assert eh["verfuegbar"] is True and len(eh["geojson"]["features"]) == 3
 
 
+def test_gesperrte_monate_stehen_in_keiner_datei_der_oberflaeche(fake_ssd, tmp_path):
+    """2023–2025: nicht auswählbar UND nicht sichtbar – auch nicht als Name oder Zählung (Auftrag 2026-09-28)."""
+    ziel = tmp_path / "web_daten"
+    d = g.exportiere(ziel)
+    assert d["fertig_gesperrt_endtest"] == ["2023-01"]  # nur die Konsole erfährt es
+    for datei in ziel.iterdir():
+        text = datei.read_text(encoding="utf-8")
+        for jahr in ("2023-", "2024-", "2025-"):
+            assert jahr not in text, (datei.name, jahr)
+    stand = _lies_js(ziel / "datenstand.js")
+    assert stand["monate_gesamt"] == 2 and stand["status_zaehlung"] == {"1": 1, "2": 1}
+    assert "fertig_gesperrt_endtest" not in stand
+
+
+def test_seite_filtert_gesperrte_monate_zusaetzlich():
+    js = (Path(__file__).resolve().parents[1] / "web" / "globus.js").read_text(encoding="utf-8")
+    assert 'var GESPERRT_AB = "2023-01";' in js
+    assert "DS.angezeigt = (DS.angezeigt || []).filter(function (m) { return m < GESPERRT_AB; });" in js
+    assert "fertig_gesperrt_endtest" not in js
+
+
 def test_pruefansicht_markiert_und_verweigert_endtest(fake_ssd, tmp_path):
     d = g.exportiere(tmp_path / "pruef", ["2018-02"])
     assert d["pruefansicht"] is True and d["angezeigt"] == ["2018-02"]
@@ -314,6 +336,7 @@ def test_echte_einheitentabelle_krim_taiwan_groenland():
     assert sum(1 for p in f.values() if p["sondereinheit"]) == 89
     assert f["sued_belize"]["hauptkategorie"] == "umstritten" and f["sued_belize"]["un_art"] == "unklar"
     assert f["sabah_north_borneo"]["beansprucht_von"].startswith("Philippinen")
+    assert f["sabah_north_borneo"]["name"] == "Ost-Sabah (von den Philippinen beansprucht)"  # Tabelle neu gebaut 2026-09-28
 
 
 # ---------------------------------------------------------------- Zustand 4 (nur Afrika-Europa-Asien)
@@ -389,3 +412,55 @@ def test_polkappen_ohne_nasa_kacheln_sind_keine_daten_statt_nicht_geladen(monkey
     assert not maske[-80:].any()         # v16/v17: 70–90° S
     assert maske[4 * 40 + 20, 10 * 40 + 20]   # h10v04 (Nordamerika) ist geliefert
     assert int(maske.sum()) == 540 * 1600
+
+
+# ---------------------------------------------------------------- Stichproben am echten Export (web/daten)
+
+WEB_DATEN = Path(__file__).resolve().parents[1] / "web" / "daten"
+
+
+def _web_daten_da():
+    return (WEB_DATEN / "datenstand.js").exists() and any(WEB_DATEN.glob("nachtlicht_2019-*.js"))
+
+
+def _monat_aus_web(monat):
+    text = (WEB_DATEN / f"nachtlicht_{monat}.js").read_text(encoding="utf-8")
+    return json.loads(text.split(f'["{monat}"] = ', 1)[1].rstrip().rstrip(";"))
+
+
+@pytest.mark.skipif(not _web_daten_da(), reason="web/daten nicht erzeugt (Globus aktualisieren)")
+def test_echter_export_24_monate_und_2024_gesperrt():
+    stand = _lies_js(WEB_DATEN / "datenstand.js")
+    soll = [f"{j}-{m:02d}" for j in (2018, 2019) for m in range(1, 13)]
+    assert stand["angezeigt"] == soll
+    assert sorted(p.name for p in WEB_DATEN.glob("nachtlicht_*.js")) == [f"nachtlicht_{m}.js" for m in soll]
+    for datei in WEB_DATEN.iterdir():
+        text = datei.read_text(encoding="utf-8")
+        assert "2024-01" not in text and "2023-" not in text and "2025-" not in text, datei.name
+
+
+@pytest.mark.skipif(not _web_daten_da(), reason="web/daten nicht erzeugt (Globus aktualisieren)")
+@pytest.mark.parametrize("monat", ["2018-06", "2019-06"])
+def test_echter_export_stichproben(monat):
+    code, anteil = g.entpacke_monat(_monat_aus_web(monat))
+
+    def an(lat, lon):
+        z, s = g.zelle_von(lat, lon)
+        return code[z, s] / g.WERT_SKALA, int(anteil[z, s])
+
+    for ort, (lat, lon), lo, hi in (("Berlin", (52.52, 13.40), 3, 80), ("Paris", (48.86, 2.35), 20, 200),
+                                    ("Kairo", (30.05, 31.24), 15, 200)):
+        wert, a = an(lat, lon)
+        assert 50 <= a <= 100 and lo <= wert <= hi, (ort, wert, a)
+    wert, a = an(23.0, 12.0)  # Sahara
+    assert 50 <= a <= 100 and wert < 0.5
+    assert an(5.0, -75.0)[1] == g.ANTEIL_NICHT_GELADEN  # Kolumbien: noch nicht geladen
+    assert an(40.0, -100.0)[1] == g.ANTEIL_NICHT_GELADEN  # USA
+    assert an(85.1, 0.1)[1] == g.ANTEIL_KEINE_DATEN  # Arktis: keine Daten, nicht „nicht geladen“
+
+
+@pytest.mark.skipif(not _web_daten_da(), reason="web/daten nicht erzeugt (Globus aktualisieren)")
+def test_echter_export_ost_sabah_auf_dem_globus():
+    eh = _lies_js(WEB_DATEN / "einheiten.js")
+    namen = {f["properties"]["einheit_id"]: f["properties"]["name"] for f in eh["geojson"]["features"]}
+    assert namen["sabah_north_borneo"] == "Ost-Sabah (von den Philippinen beansprucht)"
