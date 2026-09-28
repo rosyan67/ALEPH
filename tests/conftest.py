@@ -53,6 +53,22 @@ def katalog_attrappe(monkeypatch, request):
     monkeypatch.setattr(vnp46a3, "lies_referenz_positionen", _attrappe_referenz)
 
 
+@pytest.fixture(autouse=True)
+def keine_echten_login_pausen(monkeypatch):
+    """Login- und Zugangs-Wiederholung (seit 2026-09-27) warten in Tests nie wirklich.
+
+    Die Pausen landen in `vnp46a3.login_pausen` bzw. `vnp46a3_lauf.zugang_pausen`
+    (Sekunden), damit Tests sie prüfen können.
+    """
+    from aleph.layers import vnp46a3_lauf
+
+    login_pausen, zugang_pausen = [], []
+    monkeypatch.setattr(vnp46a3, "_schlafe_login", login_pausen.append)
+    monkeypatch.setattr(vnp46a3, "login_pausen", login_pausen, raising=False)
+    monkeypatch.setattr(vnp46a3_lauf, "_schlafe_zugang", zugang_pausen.append)
+    monkeypatch.setattr(vnp46a3_lauf, "zugang_pausen", zugang_pausen, raising=False)
+
+
 def pytest_configure(config):
     config.addinivalue_line(
         "markers", "echter_katalog: ohne Katalog-Attrappe (prüft die echten Katalog-Funktionen)"

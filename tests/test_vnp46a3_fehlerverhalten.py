@@ -23,7 +23,7 @@ import h5py
 import numpy as np
 import pytest
 import xarray as xr
-from earthaccess.exceptions import DownloadFailure, EulaNotAccepted
+from earthaccess.exceptions import DownloadFailure, EulaNotAccepted, LoginAttemptFailure
 
 from aleph.core import io
 from aleph.layers import vnp46a3, vnp46a3_lauf, vnp46a3_status
@@ -416,10 +416,12 @@ def test_blocker_in_einer_kachel_beendet_lade_monat_mit_dem_blocker(monkeypatch,
         vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1)
 
 
-def test_login_fehlschlag_ist_ein_blocker(monkeypatch, tmp_path):
+def test_login_fehlschlag_ist_ein_blocker_erst_nach_der_wiederholungsreihe(monkeypatch, tmp_path):
+    # Seit 2026-09-27: erst nach der ganzen Reihe (1, 2, 5, 10, 15, 30 Minuten), nicht beim ersten Fehlschlag.
     monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: False)
-    with pytest.raises(vnp46a3.AnmeldungFehlgeschlagen):
+    with pytest.raises(vnp46a3.AnmeldungFehlgeschlagen, match="weiterhin abgelehnt"):
         vnp46a3.lade_monat(2024, 1, tmp_path)
+    assert vnp46a3.login_pausen == [m * 60 for m in (1, 2, 5, 10, 15, 30)]
 
 
 # --- Der Lauf: zurückstellen, weitermachen, nachholen, nur bei Blockern enden --
@@ -922,3 +924,155 @@ def test_status_zeigt_den_nachhol_durchgang_waehrend_der_pause(monkeypatch, fake
     monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: ["123"])
     vnp46a3_status.main()
     assert "Nachholen: Nachhol-Durchgang 1: 1 Monat(e) dazugekommen" in capsys.readouterr().out
+
+
+# --- Login-Wiederholung im Download (seit 2026-09-27) ------------------------
+#
+# Am 26.09. 22:01 UTC beendete ein einziger fehlgeschlagener Login den Lauf.
+
+from aleph.core import auth as _auth
+
+
+def test_kurzer_login_ausfall_der_monat_laedt_danach_normal(monkeypatch, tmp_path, monat_mit_5_kacheln):
+    ergebnisse = iter([
+        _auth.LoginErgebnis(_auth.NICHT_ERREICHBAR, "ConnectionError"),
+        _auth.LoginErgebnis(_auth.NICHT_ERREICHBAR, "HTTP 503"),
+        _auth.LoginErgebnis(_auth.OK),
+    ])
+    monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: next(ergebnisse))
+    monkeypatch.setattr(vnp46a3, "_lade_kachel", lambda g, z, **k: _schreibe_gueltige_kachel(z, g))
+    zeilen: list[str] = []
+    ladung = vnp46a3.lade_monat(2024, 1, tmp_path, gleichzeitige_downloads=1, melde=zeilen.append)
+    assert len(ladung.dateien) == 5
+    assert vnp46a3.login_pausen == [60, 120]
+    assert zeilen[0].startswith("wartet auf NASA-Login, Versuch 1 fehlgeschlagen (nicht erreichbar: ConnectionError)")
+    assert any(z.startswith("NASA-Login wieder erfolgreich (Versuch 3") for z in zeilen)
+
+
+def test_dauerhaft_falsche_zugangsdaten_klarer_abbruch_ohne_zugangsdaten(monkeypatch, tmp_path):
+    geheim = "SEHR-GEHEIMES-PASSWORT-123"
+    monkeypatch.setattr(_auth, "load_dotenv", lambda *a, **k: None)
+    monkeypatch.setenv("EARTHDATA_USERNAME", "test-nutzer")
+    monkeypatch.setenv("EARTHDATA_PASSWORD", geheim)
+
+    def abgelehnt(**k):
+        raise LoginAttemptFailure(f"Authentication with Earthdata Login failed with: user test-nutzer {geheim}")
+
+    monkeypatch.setattr(_auth.earthaccess, "login", abgelehnt)
+    zeilen: list[str] = []
+    with pytest.raises(vnp46a3.AnmeldungFehlgeschlagen) as info:
+        vnp46a3.lade_monat(2024, 1, tmp_path, melde=zeilen.append)
+    meldung = str(info.value)
+    assert "nach 7 Versuchen in 63 Minuten weiterhin abgelehnt" in meldung
+    assert len([z for z in zeilen if z.startswith("wartet auf NASA-Login")]) == 6
+    alles = meldung + "\n".join(zeilen)
+    assert geheim not in alles and "test-nutzer" not in alles
+
+
+def test_lauf_kurzer_login_ausfall_protokoll_und_weiter_ohne_zugangsdaten(monkeypatch, fake_ssd, monat_mit_5_kacheln):
+    """Ganzer Lauf über zwei Monate: im ersten fällt der Login kurz aus, beide werden fertig."""
+    geheim = "SEHR-GEHEIMES-PASSWORT-123"
+    monkeypatch.setenv("EARTHDATA_PASSWORD", geheim)
+    folge = iter([_auth.LoginErgebnis(_auth.NICHT_ERREICHBAR, "ConnectionError")] + [_auth.LoginErgebnis(_auth.OK)] * 5)
+    monkeypatch.setattr(vnp46a3, "earthdata_login", lambda: next(folge))
+    lauf = LaufAttrappe(monkeypatch, fake_ssd)
+    echte_lade_monat = lauf._lade_monat
+
+    def lade_monat_mit_login(jahr, monat, ziel_ordner, gleichzeitige_downloads=3, melde=None):
+        vnp46a3.anmelden(melde)  # derselbe Weg wie im echten lade_monat
+        return echte_lade_monat(jahr, monat, ziel_ordner, gleichzeitige_downloads, melde)
+
+    monkeypatch.setattr(vnp46a3, "lade_monat", lade_monat_mit_login)
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-02") == 0
+    text = _protokoll(fake_ssd)
+    assert "2018-01: wartet auf NASA-Login, Versuch 1 fehlgeschlagen" in text
+    assert "2018-01: NASA-Login wieder erfolgreich (Versuch 2" in text
+    assert "ABBRUCH" not in text
+    assert vnp46a3.vorhandene_monate() == {(2018, 1), (2018, 2)}
+    assert geheim not in text
+
+
+def test_lauf_zugangsproblem_bei_kacheln_stellt_zurueck_pausiert_und_macht_weiter(monkeypatch, fake_ssd):
+    zugang = vnp46a3.ZugangBeiKacheln("Anmeldung prüfen: mehr als 5 Kacheln hintereinander mit HTTP 403")
+    lauf = LaufAttrappe(monkeypatch, fake_ssd, plan={(2018, 2): [zugang, "ok"]})
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-03") == 0
+    assert lauf.aufrufe == [(2018, 1), (2018, 2), (2018, 3), (2018, 2)]
+    assert vnp46a3_lauf.zugang_pausen == [5 * 60]
+    text = _protokoll(fake_ssd)
+    assert "2018-02: ZURÜCKGESTELLT (später erneut versuchen)" in text
+    assert "2018-02: wartet auf NASA-Login, Versuch 1 (Kacheln verweigert, 1. Monat in Folge); Pause 5 Minuten" in text
+    assert "ABBRUCH" not in text
+    assert vnp46a3.vorhandene_monate() == {(2018, 1), (2018, 2), (2018, 3)}
+
+
+def test_lauf_dauerhaftes_zugangsproblem_bei_kacheln_endet_nach_vier_monaten(monkeypatch, fake_ssd):
+    zugang = vnp46a3.ZugangBeiKacheln("NASA lehnt die Anmeldung ab (EULA). Zugangsdaten in .env prüfen")
+    plan = {(2018, m): zugang for m in range(1, 7)}
+    lauf = LaufAttrappe(monkeypatch, fake_ssd, plan=plan)
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-06") == 1
+    assert lauf.aufrufe == [(2018, 1), (2018, 2), (2018, 3), (2018, 4)]
+    assert vnp46a3_lauf.zugang_pausen == [5 * 60, 15 * 60, 30 * 60]
+    text = _protokoll(fake_ssd)
+    assert "ABBRUCH bei 2018-04: 4 Monate hintereinander verweigert NASA die Kacheln" in text
+    assert "EULA" in text
+
+
+def test_lauf_fertiger_monat_setzt_die_zugangszaehlung_zurueck(monkeypatch, fake_ssd):
+    zugang = vnp46a3.ZugangBeiKacheln("403 gehäuft")
+    plan = {(2018, 1): [zugang, "ok"], (2018, 2): [zugang, "ok"], (2018, 3): [zugang, "ok"],
+            (2018, 5): [zugang, "ok"], (2018, 6): [zugang, "ok"]}
+    LaufAttrappe(monkeypatch, fake_ssd, plan=plan)
+    assert _starte_lauf(monkeypatch, fake_ssd, "2018-01", "2018-06") == 0  # 2018-04 dazwischen fertig
+    assert vnp46a3_lauf.zugang_pausen == [300, 900, 1800, 300, 900]
+
+
+def test_status_zeigt_wartet_auf_nasa_login_statt_haengt(monkeypatch, fake_ssd, capsys):
+    protokoll = fake_ssd / "protokoll"
+    protokoll.mkdir(parents=True)
+    (protokoll / "vnp46a3.log").write_text(
+        "2026-09-27 10:00:00 UTC  Lauf gestartet: Test.\n"
+        "2026-09-27 10:00:01 UTC  2018-11: Start 2026-09-27 10:00:01 UTC (Stufe 1: nur Afrika-Europa-Asien).\n"
+        "2026-09-27 10:00:31 UTC  2018-11: wartet auf NASA-Login, Versuch 1 fehlgeschlagen (nicht erreichbar: "
+        "ConnectionError); nächster Versuch in 1 Minuten, um 10:01 UTC.\n"
+        "2026-09-27 10:01:31 UTC  2018-11: wartet auf NASA-Login, Versuch 2 fehlgeschlagen (nicht erreichbar: "
+        "HTTP 503); nächster Versuch in 2 Minuten, um 10:03 UTC.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vnp46a3, "vorhandene_monate", lambda: set())
+    monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: ["4711"])
+    vnp46a3_status.main()
+    ausgabe = capsys.readouterr().out
+    assert "Aktuell: 2018-11: wartet auf NASA-Login, Versuch 2 fehlgeschlagen" in ausgabe
+    assert "AMPEL: WARTET - wartet auf NASA-Login, Versuch 2" in ausgabe
+    assert "HÄNGT" not in ausgabe and "GESTOPPT" not in ausgabe
+
+
+def test_status_warten_endet_mit_der_naechsten_zeile():
+    zeilen = [
+        "2026-09-27 10:00:31 UTC  2018-11: wartet auf NASA-Login, Versuch 1 fehlgeschlagen (x); nächster Versuch in 1 Minuten.",
+        "2026-09-27 10:01:31 UTC  2018-11: NASA-Login wieder erfolgreich (Versuch 2, nach 1 Minuten Warten).",
+    ]
+    assert vnp46a3_status.lies_protokoll(zeilen)["login_warten"] is None
+    assert vnp46a3_status.lies_protokoll(zeilen[:1])["login_warten"]["versuch"] == 1
+
+
+def test_status_trennt_alten_zurueckstellungsgrund_aus_frueherem_lauf(monkeypatch, fake_ssd, capsys):
+    """Befund 2019-05 (2026-09-27): Grund vom 25.09., Datei längst gelöscht, Monat wieder in der Reihenfolge."""
+    protokoll = fake_ssd / "protokoll"
+    protokoll.mkdir(parents=True)
+    (protokoll / "vnp46a3.log").write_text(
+        "2026-09-25 09:29:53 UTC  Lauf gestartet: alter Lauf.\n"
+        "2026-09-25 09:33:51 UTC  2019-05: ZURÜCKGESTELLT (später erneut versuchen), Verarbeitungsfehler, nicht als "
+        "fertig markiert, Rohdaten bleiben erhalten. KachelAusrichtung: h12v09 unerwartete Ausrichtung\n"
+        "2026-09-27 14:17:07 UTC  Lauf gestartet: neuer Lauf.\n"
+        "2026-09-27 15:00:00 UTC  2018-12: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert, "
+        "Rohdaten bleiben erhalten. 2 von 188 Kacheln fehlen.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vnp46a3, "vorhandene_monate", lambda: set())
+    monkeypatch.setattr(vnp46a3_status, "_prozess_nummern", lambda: [])
+    vnp46a3_status.main()
+    ausgabe = capsys.readouterr().out
+    assert "Nachzuholen (zurückgestellt, später erneut versuchen): 1 Monat(e)\n  2018-12: 2 von 188 Kacheln fehlen." in ausgabe
+    assert "In einem früheren Lauf zurückgestellt, seit dem Neustart wieder in der normalen Reihenfolge: 1 Monat(e)" in ausgabe
+    assert "2019-05 (alter Grund vom 2026-09-25 09:33 UTC): KachelAusrichtung" in ausgabe

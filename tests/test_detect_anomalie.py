@@ -307,9 +307,16 @@ def test_zu_wenige_zellen_fuer_die_gemeinsame_streuung_ist_nicht_bewertbar():
 # --- Zufallsrauschen: nach der Korrektur fast keine Treffer -----------------------
 
 
+# Die künstlichen Würfel liegen bei 60° N mit zufälliger Auffüllung; ohne diese Einstellung nähme die
+# Schnee-Regel (seit 2026-09-26, eigene Tests) Winterzellen heraus. Hier geht es um etwas anderes.
+from aleph.detect.schnee import SchneeRegel  # noqa: E402
+
+OHNE_SCHNEE = SchneeRegel(min_breite_grad=91.0)
+
+
 def _null_lauf(**kw):
     ds = cube(ny=100, nx=200, jahre=(2013, 2021), seed=5, helligkeit_median=5.0, helligkeit_sigma=1.1, **kw)
-    rs = a.erkenne_zeitraum(ds, FELD, von=(2018, 1), bis=(2021, 12))
+    rs = a.erkenne_zeitraum(ds, FELD, von=(2018, 1), bis=(2021, 12), schwellen=a.Schwellen(schnee_regel=OHNE_SCHNEE))
     assert len(rs) == 48 and all(r.status == "bewertet" for r in rs)
     zellen_monate = sum(r.n_getestet for r in rs)
     markiert = sum(int(r.zellen["markiert"].values.sum()) for r in rs)
@@ -711,7 +718,8 @@ def test_fehlende_basismonate_stehen_in_der_ereignistabelle():
 def test_mindestdauer_kette_ueber_den_jahreswechsel():
     e = Ereignis((2020, 12), (10, 16), (20, 26), faktor=0.2, dauer_monate=3)  # Dezember, Januar, Februar
     ds = cube(seed=14, ny=40, nx=80, anteil_dunkel=0.0, ereignisse=(e,))
-    rs = a.erkenne_zeitraum(ds, FELD, von=(2020, 11), bis=(2021, 3), schwellen=a.Schwellen(min_dauer_monate=3))
+    rs = a.erkenne_zeitraum(ds, FELD, von=(2020, 11), bis=(2021, 3),
+                            schwellen=a.Schwellen(min_dauer_monate=3, schnee_regel=OHNE_SCHNEE))
     assert {r.monat: len(r.ereignisse) for r in rs} == {
         (2020, 11): 0, (2020, 12): 0, (2021, 1): 0, (2021, 2): 1, (2021, 3): 0,
     }
@@ -754,3 +762,61 @@ def test_status_steht_als_attribut_in_der_zellkarte():
     assert rs[7].zellen.attrs["status"] == "bewertet"
     assert rs[8].zellen.attrs["status"] == "nicht geladen" and "keine Daten" in rs[8].zellen.attrs["grund"]
     assert erkenne(ds, (2016, 7)).zellen.attrs["status"] == "nicht bewertbar"
+
+
+# --- Grundgerüst 2026-09-26: klassischer z-Wert, Basislinie nur beobachtet, Schnee, Pflichtfelder -------------
+
+
+def test_klassischer_z_parallel_und_uneinig_bei_ausreisser_in_der_basislinie():
+    ziel = (2021, 6)
+    ds = kuenstlicher_wuerfel(ny=20, nx=30, jahre=(2010, 2022), seed=5, anteil_dunkel=0.0, breite_start=10.0, ereignisse=(
+        Ereignis(monat=(2017, 6), zeilen=(5, 8), spalten=(5, 8), faktor=6.0),
+        Ereignis(monat=ziel, zeilen=(5, 8), spalten=(5, 8), faktor=2.0),
+    ))
+    erk = a.erkenne_monat(ds, ziel, "allangle")
+    z = erk.zellen
+    block = (slice(5, 8), slice(5, 8))
+    assert np.nanmedian(z["z"].values[block]) > 5 > np.nanmedian(z["z_klassisch"].values[block])
+    assert z["z_uneinig"].values[block].any()
+    bewertbar = z["datenlage"].values > 0
+    assert np.isfinite(z["z_klassisch"].values[bewertbar]).all()
+    assert (erk.ereignisse["anteil_z_uneinig"] > 0).any()
+
+
+def test_basislinie_nutzt_nur_beobachtete_pixel():
+    ds = kuenstlicher_wuerfel(ny=10, nx=12, jahre=(2010, 2022), seed=2, anteil_dunkel=0.0, breite_start=10.0)
+    ziel = (2021, 6)
+    vorher = a.erkenne_monat(ds, ziel, "allangle").zellen["z"].values
+    ds2 = ds.copy(deep=True)
+    werte = ds2["allangle_mittel"].values
+    werte[:] = 1000.0  # Mittel MIT aufgefüllten Pixeln verfälscht: darf nichts ändern
+    ds2["allangle_mittel"] = (ds2["allangle_mittel"].dims, werte)
+    nachher = a.erkenne_monat(ds2, ziel, "allangle").zellen["z"].values
+    np.testing.assert_allclose(vorher, nachher, equal_nan=True)
+
+
+def test_schnee_verdacht_wird_nicht_bewertet_weder_im_ziel_noch_in_der_basis():
+    ds = kuenstlicher_wuerfel(ny=10, nx=12, jahre=(2010, 2022), seed=4, anteil_dunkel=0.0, breite_start=62.0, aufgefuellt_mittel=0.0,
+                              ereignisse=(Ereignis(monat=(2021, 1), zeilen=(0, 5), spalten=(0, 12), aufgefuellt_anteil=0.2, faktor=3.0),
+                                          Ereignis(monat=(2016, 1), zeilen=(5, 10), spalten=(0, 12), aufgefuellt_anteil=0.2)))
+    erk = a.erkenne_monat(ds, (2021, 1), "allangle")
+    z = erk.zellen
+    verdacht = z["schnee_verdacht"].values
+    assert verdacht[:5].all() and not verdacht[5:].any()
+    assert (z["datenlage"].values[:5] == 0).all() and np.isnan(z["z"].values[:5]).all()  # Verdreifachung, aber nicht bewertet
+    assert not z["gemeldet"].values[:5].any()
+    # Basislinie: 11 frühere Januare (2010-2020); in den Zeilen 5-9 fällt 2016-01 (Verdacht) heraus -> 10
+    assert (z["n_basis"].values[:5] == 11).all() and (z["n_basis"].values[5:] == 10).all()
+
+
+def test_ereigniszeilen_tragen_pflichtfelder():
+    ds = kuenstlicher_wuerfel(ny=20, nx=30, jahre=(2010, 2022), seed=6, anteil_dunkel=0.0, breite_start=10.0,
+                              ereignisse=(Ereignis(monat=(2021, 6), zeilen=(2, 6), spalten=(2, 6), faktor=3.0),))
+    erk = a.erkenne_monat(ds, (2021, 6), "allangle")
+    t = erk.ereignisse
+    assert len(t) >= 1
+    for spalte in ("evidenzstufe", "unsicherheit", "n_zellen", "n_basis_min", "methode", "erkennung_version"):
+        assert t[spalte].notna().all()
+    assert (t["evidenzstufe"] == "beobachtet").all()
+    for k in ("evidenzstufe", "methode", "version", "unsicherheit"):
+        assert erk.zellen.attrs[k]

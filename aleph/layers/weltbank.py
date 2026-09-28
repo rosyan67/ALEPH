@@ -46,6 +46,7 @@ import hashlib
 import json
 import re
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -61,7 +62,10 @@ START_STANDARD = 2013  # Untersuchungszeitraum E3
 ENDE_STANDARD = 2025
 VORLAEUFIG_AB = 2024  # Konvention (Steckbrief Abschnitt 8): die jüngsten Jahre gelten als vorläufig
 
-TIMEOUT_SEKUNDEN = 60
+# Netzwerkregel (CLAUDE.md): Zeitlimit je Anfrage und Wiederholung mit wachsenden Pausen
+# (5, 10, 20 s; zusammen 35 s). Das reicht für kurze Störungen; eine längere Störung soll
+# mit klarer Meldung abbrechen statt still zu warten. Jede Wiederholung wird gemeldet.
+TIMEOUT_SEKUNDEN = 60  # die API antwortet je Seite in wenigen Sekunden
 MAX_VERSUCHE = 4
 WARTEZEIT_BASIS_SEKUNDEN = 5  # verdoppelt sich je Versuch
 
@@ -207,7 +211,10 @@ def _hole_json(pfad, params):
         except (requests.RequestException, ValueError) as fehler:
             letzter_fehler = fehler
             if versuch < MAX_VERSUCHE:
-                time.sleep(WARTEZEIT_BASIS_SEKUNDEN * 2 ** (versuch - 1))
+                pause = WARTEZEIT_BASIS_SEKUNDEN * 2 ** (versuch - 1)
+                print(f"Weltbank: Versuch {versuch}/{MAX_VERSUCHE} gescheitert ({type(fehler).__name__}), "
+                      f"neuer Versuch in {pause} s: {url}", file=sys.stderr, flush=True)
+                time.sleep(pause)
     raise WeltbankFehler(f"Abruf gescheitert nach {MAX_VERSUCHE} Versuchen: {url} {params} ({letzter_fehler})")
 
 

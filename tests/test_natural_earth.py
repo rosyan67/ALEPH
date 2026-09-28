@@ -204,6 +204,17 @@ def test_netzfehler_wird_wiederholt_dann_klarer_abbruch(monkeypatch, tmp_path):
     assert not (tmp_path / "x.zip").exists()
 
 
+def test_wiederholungen_werden_mit_wachsenden_pausen_gemeldet(monkeypatch, tmp_path, capsys):
+    pausen = []
+    monkeypatch.setattr(ne.time, "sleep", pausen.append)
+    monkeypatch.setattr(ne.requests, "get", lambda url, timeout: (_ for _ in ()).throw(requests.Timeout("x")))
+    with pytest.raises(ne.NaturalEarthFehler):
+        ne._hole_datei(ne.URL, tmp_path / "x.zip")
+    assert pausen == [5, 10, 20]
+    fehlerausgabe = capsys.readouterr().err
+    assert "Versuch 1/4" in fehlerausgabe and "Versuch 3/4" in fehlerausgabe and "Timeout" in fehlerausgabe
+
+
 def test_serverfehler_dann_erfolg(monkeypatch, tmp_path):
     antworten = iter([Antwort(503), Antwort(200, b"inhalt")])
     monkeypatch.setattr(ne.requests, "get", lambda url, timeout: next(antworten))

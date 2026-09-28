@@ -447,3 +447,121 @@
 - **Tests:** 605/605.
 - **Hochrechnung:** Afrika-Europa-Asien etwa 08.–10.10., alles etwa 21.–26.10.2026 (bei 2,0 MB/s).
 - **Bericht:** `berichte/2026-09-26_download-umbau.md`. Nicht gepusht.
+
+## 2026-09-26 (Globus mit echten Nachtlichtdaten, ein Globus, Sabah und Süd-Belize)
+
+- **Sabah und Süd-Belize (main, `3991cf2`):** eigene umstrittene Einheiten (326 Einheiten, 89 Sondereinheiten; Tabelle auf der SSD neu gebaut, Sicherung `zell_einheiten_stand_2026-09-25T2310Z`). Belege: IGH-Fall 177 (Guatemala/Belize, anhängig, kein Urteil; letzter Schritt Beschluss 24.6.2022), RA 5446 (1968) und IGH-Fall 102 (2001); abgerufen 26.09.2026, HTML-Seiten (PDFs durch Cloudflare gesperrt, nicht umgangen). Umrisse aus Natural Earth, nicht nachgezeichnet; Sabah-Umriss nur Ost-Sabah – offen.
+- **Worktree ui-geruest (`4e42400`, `21095a0`):** main übernommen; Globus zeigt Monate mit Zustand 1 und 4 vor 2023 (jetzt 2018-01 bis -03, „nur Afrika-Europa-Asien“). Außerhalb der Region „noch nicht geladen“ (blau gestreift, Kennung 254, nie 0). Export tauscht erst am Ende. `web/index.html` (Beispieldaten) → `geruest_beispieldaten.html`, als VERALTET markiert.
+- **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“. Behoben: Polkappen ohne NASA-Kachel hießen „noch nicht geladen“, jetzt „keine Daten“. Offen: Winterschwankung Moskau/Stockholm, Höchstwert 234,9 vor Vietnam, Name Sabah.
+- **Tests:** main 609/609, Worktree 635/635, danach Export 27/27.
+- **Hochladen:** main hochgeladen. ui-geruest nicht: Commit 4d08637 mit dem alten (zurückgezogenen) OpenRouter-Schlüssel gehört zu seinem Verlauf – Entscheidung beim Nutzer.
+- **Nicht angefasst:** Download (Prozess 63920), `vnp46a3*.py`, Kachellisten, `scripts/`.
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-26_globus-echtdaten.md`.
+- **Nachtrag (Entscheidung Nutzer):** ui-geruest am 26.09. 16:30 hochgeladen (`dfa9264..d37cca8`), obwohl Commit 4d08637 mit dem widerrufenen Schlüssel dazu gehört (liegt über main ohnehin auf GitHub; Historie nicht umgeschrieben). Die 7 neuen Commits enthalten keine Zugangsdaten; einzige Datei über 1 MB ist die MapLibre-Bibliothek (1,0 MB).
+
+## 2026-09-26 (Globus-Design nach dem alten Gerüst, nur Worktree ui-geruest)
+
+- **Design (`48143d7`, hochgeladen `d37cca8..48143d7`):** `web/globus.html` im Aufbau und Aussehen von `geruest_beispieldaten.html`: Kopfleiste mit Suche (nur Einheitentabelle), linke Leiste „Ebenen und Quellen“, helles Dossier rechts, Zeitleiste mit Monatsregler, Zustand, Quelle, Datenstand und „beobachtet“. Legende immer sichtbar. Keine Beispielinhalte übernommen. Datenlogik unverändert. Schriften lokal (`web/vendor/fonts/`, OFL).
+- **Stichproben 2018-01:** Berlin 11, Paris 50, Kairo 41, Sahara unter 0,1, Amerika „noch nicht geladen“, Arktis „keine Daten“, Krim eigene Einheit 2,4; Moskau 2018-02 „zu wenig Messungen“ (48 %).
+- **Plausibilitäts-Prüfer:** „plausibel mit Vorbehalt“, alle 7 Punkte umgesetzt, u. a. Streifenrichtung der Legende (war schon vorher vertauscht), Hinweisbalken neutral statt gold, Auswahl-Linie unter der Kategoriefarbe.
+- **Tests:** Worktree 636/636, nach den Korrekturen Export 27/27.
+- **Offen für eine spätere Sitzung (hier in main nicht geändert):** Einheit `sabah_north_borneo` in `sondereinheiten.yaml` umbenennen, z. B. „Ost-Sabah (beanspruchtes Gebiet)“, danach Tabelle neu bauen. Flüssigkeit mit echter Grafikkarte vom Nutzer prüfen lassen.
+- **Nicht angefasst:** Download, Würfel, `.env`, Export, main (außer diesem Eintrag).
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-26_globus-design.md`.
+
+## 2026-09-26/27 (Statistisches Grundgerüst und Verknüpfungsgerüst Nachtlicht × Weltbank)
+
+- **Teil A (nur künstliche Daten):**
+  - `aleph/detect/statistik.py`: Mann-Kendall, Sen mit Band, Hamed-Rao (3 Lags, Faktor ≥ 1 als eigene Festlegung), Yue-Prewhitening, αFDR = 2·αglobal nach Wilks (Autorenmanuskript im Originaltext gelesen, sonst Crossref-Metadaten), Flächengewichte, Moran's I mit `scipy.sparse`, Mindestlängen.
+  - Neu: `trend.py`, `schnee.py`, `synthetische_pruefung.py`.
+  - `anomalie.py` 0.2.0: klassischer z parallel mit `z_uneinig`; **Fehler behoben**: Die Basislinie nutzte das Mittel mit aufgefüllten Pixeln.
+- **Hauptbefund:** Bei Autokorrelation hält keine Korrektur das Niveau.
+  - AR 0,5, kein Trend: 90 % der Würfel mit Meldung (Hamed-Rao); Yue schlechter als gar keine Korrektur.
+  - Mit Mindestgröße 4 Zellen: 0 % (AR 0,8: 10 %). Gilt nur bei räumlich unabhängigem Rauschen.
+  - Unabhängiges Rauschen: 9 % der Würfel (Soll etwa 10 %).
+  - Rechenzeit Trend, volles Raster: etwa 10 min.
+- **Schnee:**
+  - Der Würfel hat nur Snow_Free-Felder und kein Kennzeichen.
+  - Moskau 2018-02 (192 bei 49 % beobachtet) ist vermutlich nicht erkannter Schnee plus Auswahl-Effekt.
+  - „Schnee-Verdacht“ wird bei Anomalie (Ziel und Basis) und Trend ausgeschlossen.
+  - Empfehlung Kern-Umbau: `*_Snow_Covered_Num` speichern.
+- **Teil B (`aleph/link/nachtlicht_einheiten.py`), Technikprobe 2018-01, keine Aussage, kein BIP:**
+  - 146 von 236 Ländern mit Summe, Rest gekennzeichnet.
+  - EGY 0,71 / DEU 1,12 / SAU 1,03 / NGA 0,32 / IND 0,73 nW·cm⁻²·sr⁻¹ je km².
+- **Prüfer:**
+  - statistik-pruefer „bestanden mit Auflagen“; umgesetzt bis auf: r1 an echten Kalibrierdaten, räumlich abhängiges Rauschen, lichtgewichtete Abdeckung, Ausschlüsse vor der Regression.
+  - Plausibilität „plausibel mit Vorbehalt“; Schnee-Deutung berichtigt.
+- **Tests:** 644/644, keiner übersprungen.
+- **Sonstiges:**
+  - `scipy` in `requirements.txt` nachgetragen (war installiert).
+  - Beim Suchen nach Wilks' Volltext wurde versehentlich die E-Mail-Adresse des Nutzers an Unpaywall gesendet (Abfrageparameter); gemeldet, nicht wiederholt.
+- **Nicht angefasst:** Download, `vnp46a3*.py`, Kachellisten, `scripts/`, `.env`. Keine Daten aus 2023–2025.
+- **Bericht:** `berichte/2026-09-26_statistik-geruest.md`.
+
+## 2026-09-27 (Robustheit: E-Mail-Adresse und Datenschutz, Login-Wiederholung, 2019-05, Sabah)
+
+- **Datenschutz (nur geprüft, Historie nicht umgeschrieben):**
+  - Die E-Mail-Adresse steht als Git-Autorangabe in allen 46 Commits; das Repo ist öffentlich (GitHub-API: `visibility: public`).
+  - Ein alter OpenRouter-Schlüssel steht in `4d08637` (Teil von origin/main).
+  - In Dateien, LOG.md, Berichten und Commit-Nachrichten steht die Adresse nicht.
+  - Der Unpaywall-Abruf vom 26.09. nahm die Adresse aus dem Sitzungskontext von Claude Code, nicht aus `.env`.
+  - `.claude/settings.local.json.aus` (enthält einen Schlüssel) war nicht ignoriert; jetzt über `.gitignore` erfasst.
+  - **Regelabweichung:** Das Suchskript hat `.env`-Werte geladen (nicht ausgegeben); ein Variablenname wurde im Chat genannt.
+  - Möglichkeiten für die Historie stehen im Bericht; die Entscheidung liegt beim Nutzer.
+- **Neu:** `aleph/core/unpaywall.py`. Die Adresse kommt nur aus `.env` (`UNPAYWALL_EMAIL`, neu in `.env.example`) und erscheint in keiner Meldung, keinem Protokoll und keinem Traceback. 9 Tests.
+- **Login-Wiederholung** (Ursache des Abbruchs vom 26.09. 22:01 UTC):
+  - earthaccess ruft bei jedem Login `/profile` ohne Zeitlimit ab; jeder Fehler wurde zu „Login fehlgeschlagen“.
+  - `auth.py` ordnet jetzt ein (abgelehnt / nicht erreichbar / fehlt) und wiederholt nach 1, 2, 5, 10, 15, 30 min. „Nicht erreichbar“ wird weiter alle 30 min bis 12 h versucht; Zeitlimit 120 s je Versuch.
+  - Kachel-Zugangsprobleme (`ZugangBeiKacheln`): Monat zurückstellen, Pause 5, 15 oder 30 min; Abbruch erst beim 4. Monat in Folge.
+  - Der Status zeigt „WARTET“. Regel in ARCHITECTURE.md Abschnitt 5.
+- **2019-05:** Eintrag veraltet. 459 Kacheln, alle richtig ausgerichtet, keine h12v09; der Monat ist in Stufe 1 auf Platz 7. Der Status trennt jetzt Zurückstellungen früherer Läufe.
+- **Sabah** in „Ost-Sabah (von den Philippinen beansprucht)“ umbenannt: C04 = 52 % von Sabah, der Osten. Kennung und Quellen unverändert; die Tabelle auf der SSD ist noch nicht neu gebaut.
+- **Download:**
+  - 14:58 UTC angehalten (2018-11, 64 fertige Kacheln).
+  - 15:14 UTC neu gestartet, Ampel 15:25 UTC OK.
+  - Nach der Nachbesserung (Login-Zeitlimit) 15:25 UTC erneut gestartet (Prozess 82367).
+- **Prüfer:** plausibilitaets-pruefer „plausibel mit Vorbehalt“, alle Punkte eingearbeitet oder als Grenze benannt.
+- **Bericht:** `berichte/2026-09-27_robustheit.md`.
+
+## 2026-09-27 (Machbarkeitsprüfung Google Earth Engine für Nachtlicht; nur geprüft, nichts eingebaut)
+
+- **Einrichtung:** `earthengine-api==1.7.45` in `.venv` (uv). Anmeldung im Browser durch den Nutzer; das Token liegt außerhalb des Repos (`~/.config/earthengine/`). Das Projekt steht in `.env` als `EE_PROJECT` und wird nur zur Laufzeit geladen (`aleph/core/earth_engine.py`). `.gitignore` erfasst jetzt Muster für Google-Zugangsdaten. Die Git-Adresse dieses Repos ist fest die noreply-Adresse.
+- **Katalog:** VNP46A3 gibt es in Earth Engine nicht. VNP46A2 v2 ist vorhanden, aber ohne Blickwinkel-Band; die Tabelle zum Qualitätsfeld auf der Katalogseite ist veraltet (gilt NASA-Tabelle 9, an echten Werten bestätigt: Wert 5 kommt vor). VCMCFG ab 2012-04.
+- **Kriterien K1–K6** am 16:24 UTC festgelegt, vor jeder Rechnung; im Code als Konstanten mit Schutztest.
+- **B (VCMCFG), 2018-10, Afrika-Europa-Asien: „teilweise“.**
+  - r 0,955 (Block-Bootstrap 0,933–0,971).
+  - K2 verfehlt: Städte q 0,89, mittlere Zellen 1,17. Der Versatz bleibt auch bei Klassen nach dem geometrischen Mittel.
+  - K5 verfehlt: scharfe Kante, ab etwa 65,5° N keine Daten.
+  - Falsches Licht auf dem Meer (Boote?) und in Brandgebieten.
+  - Aufwand: 92 s und 2,4 MB je Monat für die Region.
+- **A (VNP46A2-Nachbau): offen.** Der Lauf hing nach 185 von 188 Blöcken; drei Anfragen ohne Antwort und ohne Zeitlimit. Eigener Fehler: Ich habe den Lauf zwischendurch fälschlich für beendet gehalten (`ps` kürzt Befehlszeilen) und kurz einen zweiten gestartet, nach 27 s wieder beendet. Behoben: Zeitlimit 600 s, Zwischenspeicherung je Block, kein Ergebnis bei fehlenden Blöcken.
+- **Empfehlung:** B nicht als Ersatz und nicht an der Grenze Amerika/Ozeanien; allenfalls als Gegenprobe südlich 60° N. A nur bei Bedarf neu rechnen (etwa 50 min). IMERG monatlich V07 bis 2025-09, MOD13C2 fehlt in Earth Engine, MOD13A3 vorhanden.
+- **Prüfer:**
+  - statistik-pruefer „bestanden mit Auflagen“, plausibilitaets-pruefer „plausibel mit Vorbehalt“; Auflagen eingearbeitet (u. a. Regionsmaske, Empfindlichkeitsprüfung, Bootstrap, Karte bis 60° S).
+  - `.claude/agents/plausibilitaets-pruefer.md` hat keine `---`-Kopfzeile und wurde nicht als Agent erkannt. Ersatzweise lief ein allgemeiner Agent mit dieser Rollenbeschreibung; die Datei ist nicht geändert.
+- **Tests:** 700/700, keiner übersprungen.
+- **Nicht angefasst:** Download (Prozess 82367, Ampel OK), `vnp46a3*.py`, Kachellisten, `scripts/`, `.env`. Keine Daten aus 2023–2025.
+- **Bericht:** `berichte/2026-09-27_earth-engine-pruefung.md` (mit Abweichungskarte).
+
+## 2026-09-28 (Agenten-Kopfzeilen, Netzwerkregel, Earth Engine mit Lese-Recht, Kandidat A)
+
+- **Agenten:**
+  - `plausibilitaets-pruefer.md` und `layer-bauer.md` begannen ohne `---` und wurden deshalb nicht erkannt (laut Claude-Code-Doku).
+  - Repariert, dazu `model:` in allen fünf: Prüfer `opus`, übrige `sonnet`. Rollenbeschreibungen unverändert.
+  - Eine frische Sitzung erkennt alle fünf. Diese laufende Sitzung kannte den Plausibilitäts-Prüfer noch nicht; ersatzweise lief ein allgemeiner Agent mit seiner Rollenbeschreibung.
+- **CLAUDE.md:** Regel „Netzwerk“ (Zeitlimit, Wiederholung mit wachsenden Pausen, benannte Konstanten, Protokoll).
+  - Earth-Engine-Start: Zeitlimit 120 s, 4 Versuche; danach Standard-Zeitlimit 300 s je Anfrage.
+  - Unpaywall: 3 Versuche.
+  - Weltbank, Natural Earth, UN M49, Earth-Engine-Blöcke: Meldung je Wiederholung.
+  - Ohne Zeitlimit bleiben, nur als Empfehlung: NASA-Katalogabfrage in `vnp46a3.py` (gesperrt) und GPM IMERG (Modul fehlerhaft, neu bauen).
+- **Earth Engine:** altes Token (u. a. Google Drive, Cloud Storage voll) bei Google widerrufen und gelöscht. Neu angemeldet nur mit `earthengine.readonly`, belegt an der REST-Referenz (reicht für Start, `getInfo`, `computePixels`). Google bestätigt nur dieses Recht; Mini-Test und Block-Download klappen. Zwei Anmeldeversuche liefen vorher ab, weil zu lange niemand bestätigte.
+- **Kandidat A, 2018-10, Afrika-Europa-Asien: „erfüllt“** (K1–K6, Kriterien unverändert, Code vorher committet `b0dca88`).
+  - Laden: 188/188 Blöcke, 37 min, 0 Wiederholungen.
+  - Südlich 55° N praktisch deckungsgleich: Median |q−1| 0,2–0,3 %, r 0,983.
+  - 55–60° N etwa 4 % Versatz. Nördlich etwa 65° N deutliche Abweichung, auch in Städten (Norilsk ×1,7); Ursache offen.
+  - Gleiche Rohdaten, also Ersatz und keine unabhängige Bestätigung.
+  - Neue Funktion `nach_breite`.
+- **Prüfer:** statistik-pruefer „bestanden mit Auflagen“ (zweimal), plausibilitaets-pruefer „plausibel mit Vorbehalt“; alle Auflagen eingearbeitet.
+- **Tests:** 713/713, keiner übersprungen.
+- **Nicht angefasst:** Download (Prozess 82367 lief durch), `vnp46a3*.py`, `auth.py`, Kachellisten, `scripts/`, `.env`. Würfel nur gelesen. Keine Daten aus 2023–2025.
+- **Bericht:** `berichte/2026-09-28_earth-engine-a.md` (mit Karte A).

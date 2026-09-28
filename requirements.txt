@@ -20,3 +20,9 @@ geopandas==1.1.4
 shapely==2.1.2
 pyogrio==0.13.0
 requests==2.34.2
+# Statistisches Grundgerüst (aleph/detect/statistik.py: dünn besetzte Nachbarschaftsmatrix für Moran's I;
+# Tests gleichen gegen scipy.stats ab). War schon installiert, stand hier nicht (nachgetragen 2026-09-26).
+scipy==1.18.1
+# Machbarkeitsprüfung Google Earth Engine (aleph/core/earth_engine.py, 2026-09-27). Noch keine Datenquelle.
+# Zieht google-api-python-client, google-auth, google-cloud-storage u. a. mit (19 Pakete).
+earthengine-api==1.7.45

@@ -30,6 +30,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import sys
 import time
 import zipfile
 from datetime import datetime, timezone
@@ -49,7 +50,10 @@ URL = f"https://naciscdn.org/naturalearth/10m/cultural/{DATEI}"
 # Der Satz steht wortgleich auch bei 1:50m (242 Einträge) und 1:110m (177); er passt nur zu 1:10m.
 ANZAHL_LAUT_QUELLE = 258
 
-TIMEOUT_SEKUNDEN = 120
+# Netzwerkregel (CLAUDE.md): Zeitlimit je Anfrage und Wiederholung mit wachsenden Pausen
+# (5, 10, 20 s; zusammen 35 s). Das reicht für kurze Störungen; eine längere Störung soll
+# mit klarer Meldung abbrechen statt still zu warten. Jede Wiederholung wird gemeldet.
+TIMEOUT_SEKUNDEN = 120  # eine Datei von etwa 5 MB, auch bei langsamer Leitung
 MAX_VERSUCHE = 4
 WARTEZEIT_BASIS_SEKUNDEN = 5  # verdoppelt sich je Versuch
 
@@ -127,7 +131,10 @@ def _hole_datei(url, ziel):
         except requests.RequestException as fehler:
             letzter_fehler = fehler
             if versuch < MAX_VERSUCHE:
-                time.sleep(WARTEZEIT_BASIS_SEKUNDEN * 2 ** (versuch - 1))
+                pause = WARTEZEIT_BASIS_SEKUNDEN * 2 ** (versuch - 1)
+                print(f"Natural Earth: Versuch {versuch}/{MAX_VERSUCHE} gescheitert ({type(fehler).__name__}), "
+                      f"neuer Versuch in {pause} s: {url}", file=sys.stderr, flush=True)
+                time.sleep(pause)
     raise NaturalEarthFehler(
         f"Download gescheitert nach {MAX_VERSUCHE} Versuchen: {url} ({letzter_fehler}). "
         "Es wird kein Ersatz verwendet; Netz und Adresse prüfen."

@@ -72,8 +72,21 @@ Kacheln mit HTTP 502):
   Lauf mit Rückgabewert 2 und der Meldung „Lauf beendet mit offenen Monaten";
   ein Neustart versucht sie erneut.
 - Häufen sich HTTP-403-Antworten (mehr als 5 hintereinander oder alle Kacheln
-  eines Monats), endet der Lauf als Blocker „Anmeldung prüfen"
-  (aleph.layers.vnp46a3, `ZUGANG`); einzelne 403 sind ein Kachelfehler.
+  eines Monats), gilt das als Zugangsproblem bei den Kacheln
+  (aleph.layers.vnp46a3, `ZUGANG`, `ZugangBeiKacheln`); einzelne 403 sind ein
+  Kachelfehler.
+- Login-Wiederholung (seit 2026-09-27, nach dem Abbruch vom 26.09. 22:01 UTC
+  durch einen einzigen fehlgeschlagenen Login, 16 Stunden verloren):
+  - Der Login zu Monatsbeginn wird mit wachsenden Pausen wiederholt
+    (vnp46a3.anmelden, Regeln in aleph/core/auth.py). Jeder Versuch steht im
+    Protokoll als „wartet auf NASA-Login, Versuch n …“. Erst wenn die Reihe
+    ausgeschöpft ist, endet der Lauf („ABBRUCH“, mit Unterscheidung
+    „abgelehnt“ / „nicht erreichbar“).
+  - Ein Zugangsproblem bei den Kacheln (`ZugangBeiKacheln`: 401, EULA,
+    gehäuft 403) stellt den Monat zurück, pausiert nach
+    `ZUGANG_KACHELN_PAUSEN_MINUTEN` und macht mit dem nächsten Monat weiter
+    (dessen Login läuft wieder mit Wiederholung). Erst ein weiterer Monat in
+    Folge nach der letzten Pause beendet den Lauf.
 - Beim Start werden vorhandene Rohordner früherer Läufe NICHT mehr gelöscht,
   sondern wiederverwendet.
 
@@ -89,7 +102,7 @@ import shutil
 import sys
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from aleph.core import io
 from aleph.layers import vnp46a3, vnp46a3_regionen
@@ -102,6 +115,20 @@ BLOCKER = (io.SSDNichtGefunden, io.SpeicherZuKnapp, vnp46a3.AnmeldungFehlgeschla
 # einen Programm- oder Datenträgerfehler, und jeder weitere Monat würde eine
 # Stunde Download für nichts kosten.
 MAX_VERARBEITUNGSFEHLER_HINTEREINANDER = 3
+
+# Zugangsproblem bei den Kacheln (vnp46a3.ZugangBeiKacheln: HTTP 401, nicht
+# akzeptierte EULA, gehäuft 403), obwohl der Login zu Monatsbeginn geklappt hat
+# (seit 2026-09-27; vorher endete der Lauf sofort). Pause nach dem 1., 2. und 3.
+# betroffenen Monat in Folge; ein 4. Monat in Folge beendet den Lauf. Zusammen
+# 50 Minuten Pause plus die Ladeversuche selbst, also wie die Login-Wiederholung
+# (aleph/core/auth.py) etwa eine Stunde: Eine kurze Störung beim Dateiserver
+# wird überbrückt. Ein dauerhaftes Zugangsproblem (z. B. EULA nicht akzeptiert)
+# beendet den Lauf mit klarer Meldung, statt alle offenen Monate in schneller
+# Folge zurückzustellen. Ein fertiger Monat setzt die Zählung zurück.
+ZUGANG_KACHELN_PAUSEN_MINUTEN = (5, 15, 30)
+
+# Wartefunktion für diese Pausen; Tests ersetzen sie.
+_schlafe_zugang = time.sleep
 
 # Nachhol-Durchgänge am Ende des Laufs: solange im vorigen Durchgang mindestens
 # ein Monat dazukam, mit Pause dazwischen; insgesamt höchstens so viele.
@@ -499,7 +526,7 @@ def main() -> int:
             f"{', '.join(alte_rohordner)} (gültige Kacheln werden wiederverwendet, nicht neu geladen)."
         )
 
-    zustand = {"verarbeitungsfehler_in_folge": 0}
+    zustand = {"verarbeitungsfehler_in_folge": 0, "zugang_in_folge": 0}
 
     def stufe_mit_nachholen(monate: list[tuple[int, int]], stufe_fuer, titel: str) -> tuple[int | None, dict]:
         """Bearbeitet `monate` (Stufe je Monat aus `stufe_fuer(monat)`), dann bis zu
@@ -518,12 +545,40 @@ def main() -> int:
                         ergebnis, grund = _bearbeite_monat(
                             jahr, monat, protokoll, args.gleichzeitig, stufe=stufe, region=args.region_zuerst
                         )
+                except vnp46a3.ZugangBeiKacheln as fehler:
+                    zustand["zugang_in_folge"] += 1
+                    n = zustand["zugang_in_folge"]
+                    if n > len(ZUGANG_KACHELN_PAUSEN_MINUTEN):
+                        protokoll.schreibe(
+                            f"ABBRUCH bei {name}: {n} Monate hintereinander verweigert NASA die Kacheln, obwohl "
+                            "der Login zu Monatsbeginn jeweils klappte (mit Pausen von "
+                            f"{', '.join(str(m) for m in ZUGANG_KACHELN_PAUSEN_MINUTEN)} Minuten dazwischen). "
+                            "Das ist keine kurze Störung mehr: im Browser bei Earthdata anmelden und die "
+                            "Nutzungsbedingungen (EULA) für LAADS DAAC prüfen. Fertige Monate und Rohdaten "
+                            f"bleiben erhalten; scripts/vnp46a3_start.sh setzt fort. Letzter Grund: {fehler}"
+                        )
+                        return 1
+                    pause = ZUGANG_KACHELN_PAUSEN_MINUTEN[n - 1]
+                    grund = f"Zugangsproblem bei den Kacheln: {fehler}"
+                    protokoll.schreibe(
+                        f"{name}: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert, "
+                        f"Rohdaten bleiben erhalten. {grund}"
+                    )
+                    weiter_um = datetime.now(timezone.utc) + timedelta(minutes=pause)
+                    protokoll.schreibe(
+                        f"{name}: wartet auf NASA-Login, Versuch {n} (Kacheln verweigert, {n}. Monat in Folge); "
+                        f"Pause {pause} Minuten, weiter um {weiter_um:%H:%M} UTC mit dem nächsten Monat."
+                    )
+                    zurueckgestellt[(jahr, monat)] = grund
+                    _schlafe_zugang(pause * 60)
+                    continue
                 except BLOCKER as fehler:
                     protokoll.schreibe(f"ABBRUCH bei {name}: {fehler}")
                     return 1
                 if ergebnis == FERTIG:
                     zurueckgestellt.pop((jahr, monat), None)
                     zustand["verarbeitungsfehler_in_folge"] = 0
+                    zustand["zugang_in_folge"] = 0
                     continue
                 zurueckgestellt[(jahr, monat)] = grund
                 zustand["verarbeitungsfehler_in_folge"] = (

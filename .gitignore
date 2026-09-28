@@ -9,6 +9,7 @@ logs/
 
 # Lokale Claude-Code-Einstellungen (nur auf diesem Rechner)
 .claude/settings.local.json
+.claude/settings.local.json.*
 
 # Python-Cache
 __pycache__/
@@ -35,3 +36,12 @@ dist/
 
 # Vom Export erzeugte Daten für den Globus (aleph/export/globus.py)
 web/daten/
+
+# Google-Zugangsdaten (Earth Engine legt sein Token unter ~/.config/earthengine/ ab,
+# also außerhalb des Repos; diese Muster fangen versehentliche Kopien ins Repo ab)
+credentials
+**/earthengine/
+*service-account*.json
+*-key.json
+client_secret*.json
+application_default_credentials.json
