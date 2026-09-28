@@ -506,7 +506,7 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         "einheiten_grund": einheiten["grund"],
     }
     (ziel / "datenstand.js").write_text(_js("ALEPH_DATENSTAND", None, datenstand), encoding="utf-8")
-    (ziel / "nachtlicht_bip.js").write_text(_js("ALEPH_NACHTLICHT_BIP", None, auswertung_nachtlicht_bip()),
+    (ziel / "auswertung_nachtlicht_bip.js").write_text(_js("ALEPH_NACHTLICHT_BIP", None, auswertung_nachtlicht_bip()),
                                             encoding="utf-8")
     # Nur für die Konsole (nie in eine Datei der Oberfläche):
     return {**datenstand, "monate_gesamt_wuerfel": len(status), "status_zaehlung_wuerfel": zaehlung,

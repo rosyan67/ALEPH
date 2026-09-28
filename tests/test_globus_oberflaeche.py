@@ -63,9 +63,11 @@ def test_laenderfeld_sagt_kein_zusammenhang_und_sperrt_2023():
 def test_laenderwerte_im_export():
     L = _lies_js(DATEN / "laender.js")
     assert L["verfuegbar"] is True
-    assert L["weltbank"]["jahre"] == [2018, 2019]
+    stand0 = _lies_js(DATEN / "datenstand.js")
+    jahre = sorted({int(m[:4]) for m in stand0["angezeigt"]})
+    assert L["weltbank"]["jahre"] == jahre and {2018, 2019} <= set(jahre) and max(jahre) < 2023
     for land in L["weltbank"]["werte"].values():
-        assert set(land["jahre"]) <= {"2018", "2019"}
+        assert set(land["jahre"]) <= {str(j) for j in jahre}
     text = (DATEN / "laender.js").read_text(encoding="utf-8")
     for jahr in ("2023-", "2024-", "2025-", '"2023"', '"2024"', '"2025"'):
         assert jahr not in text
@@ -105,12 +107,12 @@ def test_auswertungsfeld_traegt_evidenzstufe_und_rahmen():
     assert "Querschnitt, ein Jahr, Afrika-Europa-Asien, kein Beleg für Ursache und Wirkung" in js
     assert "Liste der ausgeschlossenen Länder" in js
     html = (WEB / "globus.html").read_text(encoding="utf-8")
-    assert 'src="daten/nachtlicht_bip.js"' in html and 'src="globus_auswertung.js"' in html
+    assert 'src="daten/auswertung_nachtlicht_bip.js"' in html and 'src="globus_auswertung.js"' in html
 
 
-@pytest.mark.skipif(not (DATEN / "nachtlicht_bip.js").exists(), reason="web/daten nicht erzeugt")
+@pytest.mark.skipif(not (DATEN / "auswertung_nachtlicht_bip.js").exists(), reason="web/daten nicht erzeugt")
 def test_auswertung_im_export():
-    A = _lies_js(DATEN / "nachtlicht_bip.js")
+    A = _lies_js(DATEN / "auswertung_nachtlicht_bip.js")
     assert A["verfuegbar"] is True and sorted(A["jahre"]) == ["2018", "2019"]
     assert A["evidenzstufe"] == "statistische Assoziation"
     for j in A["jahre"].values():

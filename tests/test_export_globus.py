@@ -435,8 +435,9 @@ def _monat_aus_web(monat):
 def test_echter_export_24_monate_und_2024_gesperrt():
     stand = _lies_js(WEB_DATEN / "datenstand.js")
     soll = [f"{j}-{m:02d}" for j in (2018, 2019) for m in range(1, 13)]
-    assert stand["angezeigt"] == soll
-    assert sorted(p.name for p in WEB_DATEN.glob("nachtlicht_*.js")) == [f"nachtlicht_{m}.js" for m in soll]
+    # Alle 24 Monate 2018–2019 müssen da sein; später fertige Monate vor 2023 dürfen dazukommen.
+    assert set(soll) <= set(stand["angezeigt"]) and all(m < "2023-01" for m in stand["angezeigt"])
+    assert sorted(p.name for p in WEB_DATEN.glob("nachtlicht_*.js")) == [f"nachtlicht_{m}.js" for m in stand["angezeigt"]]
     for datei in WEB_DATEN.iterdir():
         text = datei.read_text(encoding="utf-8")
         assert "2024-01" not in text and "2023-" not in text and "2025-" not in text, datei.name

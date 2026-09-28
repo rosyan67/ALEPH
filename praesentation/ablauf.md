@@ -13,7 +13,7 @@
 **Zeigen:** Ganze Erde. Oben rechts kurz „Über ALEPH“ aufklappen, dann wieder zu.
 
 **Sagen:**
-> „ALEPH legt frei verfügbare Satellitendaten und Statistiken auf ein gemeinsames Raster. Heute zeige ich eine Ebene: das Nachtlicht der NASA, Monatswerte 2018 und 2019, bisher für Afrika, Europa und Asien. Jede Aussage trägt eine Evidenzstufe: ‚beobachtet‘ heißt gemessen, ‚statistische Assoziation‘ heißt gerechnet, aber keine Ursache.“
+> „ALEPH legt frei verfügbare Satellitendaten und Statistiken auf ein gemeinsames Raster. Heute zeige ich eine Ebene: das Nachtlicht der NASA, Monatswerte ab 2018, bisher für Afrika, Europa und Asien. Jede Aussage trägt eine Evidenzstufe: ‚beobachtet‘ heißt gemessen, ‚statistische Assoziation‘ heißt gerechnet, aber keine Ursache.“
 
 **Auf die Legende zeigen:**
 > „Gestreift heißt: keine Messung. Blau gestreift ist noch nicht geladen, das ist zum Beispiel Amerika. Nichts davon bedeutet ‚dunkel‘.“

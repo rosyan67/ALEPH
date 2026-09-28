@@ -1,7 +1,7 @@
 /*
  * ALEPH – Feld „Nachtlicht und Wirtschaftsleistung“ (Teil 3b, 2026-09-28)
  *
- * Liest nur daten/nachtlicht_bip.js: die Ergebnisdatei der Auswertung aus ~/ALEPH
+ * Liest nur daten/auswertung_nachtlicht_bip.js: die Ergebnisdatei der Auswertung aus ~/ALEPH
  * (aleph/link/nachtlicht_bip_querschnitt.py). Hier wird NICHTS gerechnet außer der Lage
  * der Punkte auf dem Bildschirm und der Linie aus Steigung und Achsenabschnitt der Datei.
  * Evidenzstufe: statistische Assoziation. Querschnitt, ein Jahr, Afrika-Europa-Asien,
@@ -130,7 +130,7 @@
   function zeichne() {
     if (!A || !A.verfuegbar) {
       feld.innerHTML = '<div class="ad-kopf"><h2>Nachtlicht und Wirtschaftsleistung</h2><button class="icon-btn ad-zu" aria-label="Schließen">✕</button></div>' +
-        '<div class="hinweis hinweis--stark">Nicht verfügbar: ' + esc(A ? A.grund : "Datei daten/nachtlicht_bip.js fehlt") + "</div>";
+        '<div class="hinweis hinweis--stark">Nicht verfügbar: ' + esc(A ? A.grund : "Datei daten/auswertung_nachtlicht_bip.js fehlt") + "</div>";
       return;
     }
     var j = A.jahre[jahr], r = j.varianten.haupt;
