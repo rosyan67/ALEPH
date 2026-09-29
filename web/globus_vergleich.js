@@ -17,6 +17,7 @@
  */
 (function () {
   "use strict";
+  function monate(n) { return n + (n === 1 ? " Monat" : " Monaten"); }
 
   var G = window.ALEPH_GLOBUS, ZR = window.ALEPH_ZR;
   if (!G || !ZR) return;
@@ -97,7 +98,11 @@
     if (!q || !Z || !Z.verfuegbar) return [];
     return Object.keys(Z.laender).filter(function (c) {
       return normal(ZR.landName(c)).indexOf(q) >= 0 || normal(Z.laender[c].name).indexOf(q) >= 0 || normal(c) === q;
-    }).sort(function (a, b) { return ZR.landName(a).localeCompare(ZR.landName(b), "de"); }).slice(0, 8);
+    }).sort(function (a, b) {
+      // genauer Name zuerst, dann Namen, die mit der Eingabe beginnen, dann alphabetisch
+      function rang(c) { var n = normal(ZR.landName(c)); return n === q ? 0 : n.indexOf(q) === 0 ? 1 : 2; }
+      return rang(a) - rang(b) || ZR.landName(a).localeCompare(ZR.landName(b), "de");
+    }).slice(0, 8);
   }
 
   // ---------- Grafiken ----------
@@ -186,9 +191,9 @@
       var k = Z.laender[a.code].kennzeichen, t = [];
       if (k.gebiet_weltbank === "abweichend") t.push("Gebiet der Weltbank-Zahl weicht ab");
       else if (k.gebiet_weltbank === "unklar") t.push("Gebiet der Weltbank-Zahl unklar");
-      if (k.monate_nicht_geladen) t.push("in " + k.monate_nicht_geladen + " Monaten noch nicht geladen");
-      if (k.monate_gering) t.push("geringe Abdeckung in " + k.monate_gering + " Monaten");
-      if (k.monate_schnee) t.push("Schnee-Verdacht in " + k.monate_schnee + " Monaten");
+      if (k.monate_nicht_geladen) t.push("in " + monate(k.monate_nicht_geladen) + " noch nicht geladen");
+      if (k.monate_gering) t.push("geringe Abdeckung in " + monate(k.monate_gering) + "");
+      if (k.monate_schnee) t.push("Schnee-Verdacht in " + monate(k.monate_schnee) + "");
       if (k.nord65_prozent) t.push(k.nord65_prozent + " % des Lichts nördlich von 65° N");
       if (!k.pro_kopf_erlaubt) t.push("kein Pro-Kopf-Wert");
       return "<li>" + symbol(PLAETZE[a.platz], 10) + " <b>" + esc(ZR.landName(a.code)) + "</b>: " + (t.length ? esc(t.join("; ")) : "keine Kennzeichen") + "</li>";

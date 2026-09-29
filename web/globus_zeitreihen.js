@@ -13,6 +13,7 @@
  */
 (function () {
   "use strict";
+  function monate(n) { return n + (n === 1 ? " Monat" : " Monaten"); }
 
   var G = window.ALEPH_GLOBUS, Z = window.ALEPH_ZEITREIHEN;
   if (!G) return;
@@ -218,15 +219,15 @@
     var k = l.kennzeichen, b = [];
     if (k.gebiet_weltbank === "abweichend") b.push('<span class="lw-marke lw-marke--rot">Gebiet der Weltbank-Zahl weicht ab</span>');
     else if (k.gebiet_weltbank === "unklar") b.push('<span class="lw-marke">Gebiet der Weltbank-Zahl unklar</span>');
-    if (k.monate_nicht_geladen) b.push('<span class="lw-marke lw-marke--rot">in ' + k.monate_nicht_geladen + " Monaten noch nicht geladen</span>");
-    if (k.monate_gering) b.push('<span class="lw-marke lw-marke--rot">geringe Abdeckung in ' + k.monate_gering + " Monaten</span>");
+    if (k.monate_nicht_geladen) b.push('<span class="lw-marke lw-marke--rot">in ' + monate(k.monate_nicht_geladen) + " noch nicht geladen</span>");
+    if (k.monate_gering) b.push('<span class="lw-marke lw-marke--rot">geringe Abdeckung in ' + monate(k.monate_gering) + "</span>");
     var ungueltig = Object.keys(l.jahre).filter(function (j) { var e = l.jahre[j]; return e.licht_berechnet && !e.licht_gueltig; });
     if (ungueltig.length) b.push('<span class="lw-marke lw-marke--rot">kein gültiger Jahreswert ' + ungueltig.join(", ") + "</span>");
     Object.keys(l.jahre).forEach(function (j) {
       var w = l.jahre[j].anteil_wenige_monate;
       if (l.jahre[j].licht_gueltig && w != null && w > 33) b.push('<span class="lw-marke">' + j + ": " + w + " % des Lichts aus Zellen mit nur 6–8 guten Monaten</span>");
     });
-    if (k.monate_schnee) b.push('<span class="lw-marke">Schnee-Verdacht in ' + k.monate_schnee + " Monaten</span>");
+    if (k.monate_schnee) b.push('<span class="lw-marke">Schnee-Verdacht in ' + monate(k.monate_schnee) + "</span>");
     if (k.nord65_prozent) b.push('<span class="lw-marke">' + k.nord65_prozent + " % des Lichts nördlich von 65° N (2018)</span>");
     if (k.reinheit_unter_50) b.push('<span class="lw-marke">Licht überwiegend aus Grenzzellen (Reinheit unter 50 %)</span>');
     if (!k.pro_kopf_erlaubt) b.push('<span class="lw-marke">kein Pro-Kopf-Wert: Bevölkerungszahl passt nicht zum Gebiet</span>');
