@@ -96,9 +96,9 @@
    * maxAbstand, beschriftung, punkte: [{x, y, art: "voll"|"hohl"|"blass", tip}]}]}
    * Linien verbinden nur aufeinanderfolgende VOLLE Punkte mit höchstens maxAbstand (Lücken bleiben Lücken).
    */
-  var B = 760, RAND = { l: 70, r: 60, o: 8, u: 20 };
+  var B_STANDARD = 760, RAND = { l: 70, r: 60, o: 8, u: 20 };
   function grafik(o) {
-    var H = o.hoehe || 132, a = o.achse;
+    var B = o.breite || B_STANDARD, H = o.hoehe || 132, a = o.achse;
     function sx(x) { return RAND.l + (x - a.x0) / (a.x1 - a.x0) * (B - RAND.l - RAND.r); }
     function sy(y) { return H - RAND.u - (y - o.y0) / (o.y1 - o.y0) * (H - RAND.o - RAND.u); }
     var t = [];

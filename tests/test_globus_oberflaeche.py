@@ -209,3 +209,23 @@ def test_zeitreihen_echter_export_ohne_2023_und_zum_laenderfeld_passend():
                 assert p["summe"] == pytest.approx(lf["licht_summe"], rel=0.051)
             geprueft += 1
     assert geprueft >= 4 * 24
+
+
+# ---------------------------------------------------------------- Ländervergleich (2026-09-29)
+
+
+def test_vergleich_eingebunden_hoechstens_vier_und_farben_getrennt():
+    html = (WEB / "globus.html").read_text(encoding="utf-8")
+    assert html.index('src="globus_auswertung.js"') < html.index('src="globus_vergleich.js"')
+    assert html.index('src="globus_zeitreihen.js"') < html.index('src="globus_vergleich.js"')
+    js = (WEB / "globus_vergleich.js").read_text(encoding="utf-8")
+    assert "MAX = 4" in js
+    farben = re.findall(r'farbe: "(#[0-9a-f]{6})"', js)
+    assert len(farben) == 4 and len(set(farben)) == 4
+    css = (WEB / "globus.css").read_text(encoding="utf-8").lower()
+    belegt = set(re.findall(r"--(?:keine|duenn|nicht)-[ab]: (#[0-9a-f]{6})", css))
+    belegt |= set(re.findall(r"--(?:umstritten|besetzt|sonder|fehler|gold|gold-soft): (#[0-9a-f]{6})", css))
+    belegt |= {"#b3261e", "#8fb4e8"}  # rote Kennzeichen, Punkte der Punktwolke
+    assert len(belegt) >= 10 and not (set(farben) & belegt)
+    formen = re.findall(r'form: "(kreis|quadrat|dreieck|raute)"', js)
+    assert len(set(formen)) == 4

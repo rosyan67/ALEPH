@@ -488,3 +488,26 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .zr-auf--vgl { background: none; color: var(--paper-ink); border: 1px solid var(--paper-ink-dim); }
 .zr-einstieg .lw-fuss { flex-basis: 100%; }
 .zr-zumvgl { padding: 5px 10px; font-size: 12px; }
+
+/* ---------- Ländervergleich (2026-09-29) ---------- */
+
+.vg { width: min(900px, calc(100vw - 32px)); }
+.vg-raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; }
+.vg-raster .zr-gtitel { display: inline-flex; align-items: center; gap: 5px; }
+.vg-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0 2px; }
+.vg-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 9px; }
+.vg-weg { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px; padding: 0 5px; }
+.vg-weg:hover { color: var(--text); }
+.vg-suchzeile { position: relative; flex: 1; min-width: 200px; }
+.vg-suchzeile input { width: 100%; box-sizing: border-box; background: var(--bg-panel-2); border: 1px solid var(--line); color: var(--text); border-radius: var(--radius); padding: 5px 8px; font: 12.5px var(--font-ui); }
+.vg-treffer { position: absolute; left: 0; right: 0; top: 100%; z-index: 5; background: var(--bg-panel-2); border: 1px solid var(--line); border-top: none; max-height: 240px; overflow-y: auto; }
+.vg-treffer:empty { display: none; }
+.vg-kennz { margin: 4px 0 8px; }
+.vg-kennz li { list-style: none; margin-left: -14px; }
+.vg-tabwrap { overflow-x: auto; }
+.vg-sym { vertical-align: middle; flex: none; }
+.vg-pw-zeile { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 11.5px; color: var(--text-dim); margin: -4px 0 8px; }
+.vg-pw-schalter { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; color: var(--text); }
+.vg-pw-schalter input { accent-color: var(--gold); }
+.vg-pw-liste a { color: var(--text); }
+@media (max-width: 700px) { .vg-raster { grid-template-columns: 1fr; } }
