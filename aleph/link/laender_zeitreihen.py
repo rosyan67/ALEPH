@@ -69,7 +69,7 @@ import pandas as pd
 from aleph.core import io
 from aleph.detect.statistik import Mindestlaengen
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"  # 0.2.0: Texte nach Auflagen statistik-pruefer 2026-09-29, Rechnung unverändert
 FELD = "allangle"
 REGION = "afrika_europa_asien"
 GESPERRT_AB = (2023, 1)
@@ -87,17 +87,24 @@ WB_INDIKATOREN = {"NY.GDP.MKTP.KD": "bip_real", "NY.GDP.PCAP.KD": "bip_pro_kopf"
 WB_QUELLE = "The World Bank: World Development Indicators (CC BY 4.0); Bevölkerung: UN World Population Prospects"
 
 REGELN_TEXT = {
-    "status": "voll: Landessumme (≥ 90 % der Fläche gemessen) ohne Schnee-Verdacht; hohl: Schnee-Verdacht auf ≥ 5 % "
-              "der Fläche; hohl und blass: unter 90 % der Fläche gemessen, gezeigt ist nur die Teilsumme (Untergrenze); "
-              "keine Punkte: keine Messung oder Teile des Landes noch nicht geladen",
+    "status": "voll: Summe über die gemessene Fläche (mindestens 90 % des Landes) ohne Schnee-Verdacht; hohl: "
+              "Schnee-Verdacht auf ≥ 5 % der Fläche (nach Fläche, nicht nach Licht gezählt); hohl und blass: unter 90 % "
+              "der Fläche gemessen, gezeigt ist nur die Teilsumme (Untergrenze); keine Punkte: keine Messung oder Teile des "
+              "Landes noch nicht geladen. Unterschiede von Monat zu Monat können aus der wechselnden Abdeckung kommen; der "
+              "Schnee-Verdacht erfasst nicht alle verschneiten Monate (z. B. Helsinki 2019-01)",
     "gleitend": "nachlaufender 12-Monats-Durchschnitt, nur wenn alle 12 Monate des Fensters voll gültig sind; "
                 "sonst Lücke (ein fehlender Monat würde den Durchschnitt jahreszeitlich verschieben)",
     "saison": "Abweichung vom Median derselben Kalendermonate (Statistik-Gerüst, trend.py); nur wenn jeder "
-              "Kalendermonat mindestens 3 gültige Werte hat, also ab 3 vollen Jahren",
+              "Kalendermonat mindestens 3 gültige Werte hat, also ab 3 vollen Jahren. Der Median stammt aus denselben "
+              "Jahren, der Wert selbst eingeschlossen: beschreibende Zerlegung, kein Vergleich mit früheren Jahren, "
+              "keine Anomalie-Bewertung",
     "jahr": "Regeln der Auswertung 2018: je Zelle Mittel der guten Monate (≥ 50 % beobachtet, kein Schnee-Verdacht), "
-            "ab 6 guten Monaten; Landessumme nur bei ≥ 90 % des Lichts mit Jahreswert und vollständig geladenem Land",
+            "ab 6 guten Monaten; Landessumme nur bei ≥ 90 % des Lichts mit Jahreswert und vollständig geladenem Land. "
+            "Welche Monate gut sind, wechselt von Jahr zu Jahr; deshalb sind Jahreswerte zwischen den Jahren nur bedingt "
+            "vergleichbar (Anteil des Lichts aus Zellen mit nur 6–8 guten Monaten steht in der Tabelle)",
     "pro_kopf": "Licht geteilt durch die Bevölkerung desselben Jahres (Weltbank SP.POP.TOTL); nicht für Länder, deren "
-                "Bevölkerungszahl laut Weltbank-Tabelle nicht zum Gebiet passt",
+                "Bevölkerungszahl laut Weltbank-Tabelle nicht zum Gebiet passt. Monatswerte teilen durch die "
+                "Jahresbevölkerung; zum Jahreswechsel entsteht dadurch eine kleine Stufe in Höhe des Bevölkerungswachstums",
     "je_km2": "Licht geteilt durch die Landesfläche (Weltbank-Sicht); eher Siedlungsdichte als Wirtschaftskraft",
     "index": "Jahreswert geteilt durch den Jahreswert 2018, mal 100; ohne gültigen Wert 2018 kein Index",
 }
