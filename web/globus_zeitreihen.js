@@ -146,7 +146,7 @@
   // ---------- Werte aus der Datei holen ----------
   var STATUS_ART = { gueltig: "voll", schnee: "hohl", gering: "blass" };
   function statusText(p) {
-    if (p.status === "gueltig") return "Landessumme (" + p.abdeckung + " % der Fläche gemessen)";
+    if (p.status === "gueltig") return "Summe über die gemessene Fläche (" + p.abdeckung + " % des Landes)";
     if (p.status === "schnee") return "Schnee-Verdacht auf " + p.schnee + " % der Fläche – Wert kann durch Schnee erhöht sein";
     if (p.status === "gering") return "nur " + p.abdeckung + " % der Fläche gemessen – Teilsumme, Untergrenze, keine Landessumme";
     if (p.status === "nicht_geladen") return p.nicht_geladen + " % der Fläche noch nicht geladen – kein Wert";
@@ -178,7 +178,8 @@
   function indexPunkte(l, feld, name, bezeichnung) {
     var idx = l.index[feld] || {};
     return Object.keys(idx).map(function (j) {
-      return { x: jahrX(j), y: idx[j], art: "voll", tip: (name ? name + " · " : "") + bezeichnung + " " + j + ": " + idx[j] + " (2018 = 100)" };
+      var vl = l.jahre[j] && l.jahre[j][feld + "_vorlaeufig"];
+      return { x: jahrX(j), y: idx[j], art: "voll", tip: (name ? name + " · " : "") + bezeichnung + " " + j + ": " + idx[j] + " (2018 = 100)" + (vl ? " (vorläufig)" : "") };
     });
   }
   function bereich(punkteListen, nullBasis) {
@@ -221,6 +222,10 @@
     if (k.monate_gering) b.push('<span class="lw-marke lw-marke--rot">geringe Abdeckung in ' + k.monate_gering + " Monaten</span>");
     var ungueltig = Object.keys(l.jahre).filter(function (j) { var e = l.jahre[j]; return e.licht_berechnet && !e.licht_gueltig; });
     if (ungueltig.length) b.push('<span class="lw-marke lw-marke--rot">kein gültiger Jahreswert ' + ungueltig.join(", ") + "</span>");
+    Object.keys(l.jahre).forEach(function (j) {
+      var w = l.jahre[j].anteil_wenige_monate;
+      if (l.jahre[j].licht_gueltig && w != null && w > 33) b.push('<span class="lw-marke">' + j + ": " + w + " % des Lichts aus Zellen mit nur 6–8 guten Monaten</span>");
+    });
     if (k.monate_schnee) b.push('<span class="lw-marke">Schnee-Verdacht in ' + k.monate_schnee + " Monaten</span>");
     if (k.nord65_prozent) b.push('<span class="lw-marke">' + k.nord65_prozent + " % des Lichts nördlich von 65° N (2018)</span>");
     if (k.reinheit_unter_50) b.push('<span class="lw-marke">Licht überwiegend aus Grenzzellen (Reinheit unter 50 %)</span>');
@@ -231,7 +236,9 @@
   function rahmen() {
     return '<div class="lw-warnung zr-warnung">Nebeneinander gestellt, kein Zusammenhang behauptet.</div>' +
       '<div class="ad-rahmen"><div><b>Evidenzstufe: beobachtet</b> – gemessenes Nachtlicht und amtliche Weltbank-Zahlen, jede für sich.</div>' +
-      "<div>Kein Modell, keine Ursache-Wirkungs-Aussage. Ein gemeinsamer Verlauf im Index heißt nicht, dass das eine das andere erklärt.</div></div>";
+      "<div>Kein Modell, keine Ursache-Wirkungs-Aussage. Ein gemeinsamer Verlauf im Index heißt nicht, dass das eine das andere erklärt.</div>" +
+      "<div><b>Unsicherheit:</b> Die Werte schwanken auch ohne wirtschaftliche Änderung (Wolken, Schnee, Abdeckung, Auswahl der guten Monate). " +
+      "Wie groß diese Schwankung ist, ist noch nicht bestimmt; Unterschiede von wenigen Indexpunkten sind nicht deutbar.</div></div>";
   }
   function datenstand() {
     return '<div class="zr-quelle">Quellen: ' + esc(Z.quelle_licht) + " · " + esc(Z.quelle_weltbank) + " (Abruf " + esc(String(Z.weltbank_abruf).slice(0, 10)) +
@@ -249,10 +256,12 @@
   function punktLegende() {
     function sym(stil) { return '<svg width="12" height="12"><circle cx="6" cy="6" r="3.6" ' + stil + "/></svg>"; }
     return '<div class="ad-legende">' +
-      "<span>" + sym('fill="' + FARBE_LICHT + '"') + " Landessumme</span>" +
+      "<span>" + sym('fill="' + FARBE_LICHT + '"') + " Summe über die gemessene Fläche (mind. 90 %)</span>" +
       "<span>" + sym('fill="var(--bg-panel)" stroke="' + FARBE_LICHT + '" stroke-width="1.6"') + " Schnee-Verdacht (≥ 5 % der Fläche)</span>" +
       "<span>" + sym('fill="var(--bg-panel)" stroke="' + FARBE_LICHT + '" stroke-width="1.3" stroke-opacity="0.5" stroke-dasharray="2 1.5"') +
-      " unter 90 % gemessen: nur Teilsumme</span><span>Lücke = kein Wert (nie 0)</span></div>";
+      " unter 90 % gemessen: nur Teilsumme</span><span>Lücke = kein Wert (nie 0)</span></div>" +
+      '<div class="zr-klein">Unterschiede von Monat zu Monat können aus der wechselnden Abdeckung kommen. Der Schnee-Verdacht zählt nach Fläche, nicht nach Licht, ' +
+      "und erfasst nicht alle verschneiten Monate (z. B. Helsinki 2019-01).</div>";
   }
 
   // ---------- Einzelansicht ----------
@@ -275,21 +284,27 @@
     return '<div class="zr-schalter">' + modus + bez + "</div>";
   }
 
+  function wenige(e) {
+    if (!e.licht_gueltig || e.anteil_wenige_monate == null) return "–";
+    return e.anteil_wenige_monate > 33 ? "<b>" + e.anteil_wenige_monate + " %</b>" : e.anteil_wenige_monate + " %";
+  }
   function jahresTabelle(l, bz) {
     var jahre = Object.keys(l.jahre).sort();
     var kopf, zeilen;
     if (zustand.index) {
-      kopf = "<tr><th>Jahr</th><th>" + esc(bz.lichtName) + " (Jahreswert), Index</th>" + (bz.bip ? "<th>" + esc(bz.bipName) + ", Index</th>" : "") + "</tr>";
+      kopf = "<tr><th>Jahr</th><th>" + esc(bz.lichtName) + " (Jahreswert), Index</th><th>Licht aus Zellen mit 6–8 guten Monaten</th>" + (bz.bip ? "<th>" + esc(bz.bipName) + ", Index</th>" : "") + "</tr>";
       zeilen = jahre.map(function (j) {
         var li = (l.index[bz.jahr] || {})[j], bi = bz.bip ? (l.index[bz.bip] || {})[j] : null;
         return "<tr><th>" + j + "</th><td>" + (li != null ? li : '<span class="zr-fehlt">' + esc(l.jahre[j].licht_grund || "kein Index") + "</span>") + "</td>" +
-          (bz.bip ? "<td>" + (bi != null ? bi : "–") + "</td>" : "") + "</tr>";
+          "<td>" + wenige(l.jahre[j]) + "</td>" +
+          (bz.bip ? "<td>" + (bi != null ? bi + (l.jahre[j][bz.bip + "_vorlaeufig"] ? " (vorl.)" : "") : "–") + "</td>" : "") + "</tr>";
       }).join("");
     } else {
-      kopf = "<tr><th>Jahr</th><th>" + esc(bz.lichtName) + " (Jahreswert)</th>" + (bz.bip ? "<th>" + esc(bz.bipName) + "</th>" : "") + "<th>Bevölkerung</th></tr>";
+      kopf = "<tr><th>Jahr</th><th>" + esc(bz.lichtName) + " (Jahreswert)</th><th>Licht aus Zellen mit 6–8 guten Monaten</th>" + (bz.bip ? "<th>" + esc(bz.bipName) + "</th>" : "") + "<th>Bevölkerung</th></tr>";
       zeilen = jahre.map(function (j) {
         var e = l.jahre[j], lw = e[bz.jahr];
         return "<tr><th>" + j + "</th><td>" + (lw != null ? sig2(lw) : '<span class="zr-fehlt">' + esc(e.licht_grund || (bz.licht === "pro_kopf" ? "kein Pro-Kopf-Wert" : "kein Wert")) + "</span>") + "</td>" +
+          "<td>" + wenige(e) + "</td>" +
           (bz.bip ? "<td>" + (e[bz.bip] != null ? sig2(e[bz.bip]) + (e[bz.bip + "_vorlaeufig"] ? " (vorl.)" : "") : e[bz.bip + "_nicht_verwenden"] ? "nicht verwendet" : "–") + "</td>" : "") +
           "<td>" + (e.bevoelkerung != null ? sig2(e.bevoelkerung) : "–") + "</td></tr>";
       }).join("");
@@ -311,6 +326,13 @@
       zeilen + "</tbody></table></details>";
   }
 
+  function saisonText(s) {
+    var n = Math.min.apply(null, Object.keys(s.anzahl_je_kalendermonat).map(function (k) { return s.anzahl_je_kalendermonat[k]; }));
+    return "Median aus denselben Jahren, der Wert selbst eingeschlossen: beschreibende Zerlegung, kein Vergleich mit früheren Jahren, keine Anomalie-Bewertung. " +
+      "Mindestens " + n + " Werte je Kalendermonat: Das Jahreszeitenmuster ist nur grob geschätzt." +
+      (n % 2 === 1 && n <= 5 ? " Bei einer ungeraden Zahl von Werten ist je Kalendermonat (mit dieser Zahl) eine Abweichung genau 0 (Eigenschaft des Medians)." : "");
+  }
+
   function grafikenAbsolut(l, bz, achse) {
     var mp = monatsPunkte(l, bz), gp = gleitPunkte(l, bz);
     var reihe = function (p, extra) { var r = { name: bz.lichtName, farbe: FARBE_LICHT, form: "kreis", maxAbstand: 1, punkte: p }; for (var k in extra) r[k] = extra[k]; return r; };
@@ -325,9 +347,9 @@
     }
     if (gp.length) {
       var b2 = bereich([gp], true);
-      teile.push(grafik({ achse: achse, y0: b2.y0, y1: b2.y1, titel: "b) Gleitender 12-Monats-Durchschnitt (ohne Modell)", einheit: bz.einheit, reihen: [reihe(gp, { klein: true })] }));
+      teile.push(grafik({ achse: achse, y0: b2.y0, y1: b2.y1, titel: "b) Gleitender 12-Monats-Durchschnitt (nachlaufend, ohne Modell)", einheit: bz.einheit, reihen: [reihe(gp, { klein: true })] }));
     } else {
-      teile.push(leereGrafik("b) Gleitender 12-Monats-Durchschnitt (ohne Modell)",
+      teile.push(leereGrafik("b) Gleitender 12-Monats-Durchschnitt (nachlaufend, ohne Modell)",
         "Kein Wert: Es gibt noch keine 12 aufeinanderfolgenden Monate mit voller Landessumme ohne Schnee-Verdacht. Lücken werden nicht aufgefüllt."));
     }
     var s = l.saison[bz.licht];
@@ -335,8 +357,7 @@
       var sp = saisonPunkte(l, bz), m = Math.max.apply(null, sp.map(function (p) { return Math.abs(p.y); })) * 1.1 || 1;
       teile.push(grafik({ achse: achse, y0: -m, y1: m, nullLinie: true, titel: "c) Saisonbereinigt: Abweichung vom Median desselben Kalendermonats",
         einheit: bz.einheit, reihen: [reihe(sp, { klein: true })] }) +
-        '<div class="zr-klein">Nur ' + Math.min.apply(null, Object.keys(s.anzahl_je_kalendermonat).map(function (k) { return s.anzahl_je_kalendermonat[k]; })) +
-        " Werte je Kalendermonat: Das Jahreszeitenmuster ist nur grob geschätzt. Beim Median aus 3 Werten ist je Kalendermonat eine Abweichung genau 0 (Eigenschaft des Verfahrens).</div>");
+        '<div class="zr-klein">' + saisonText(s) + "</div>");
     } else {
       teile.push(leereGrafik("c) Saisonbereinigt", esc(s.grund || "noch nicht bestimmbar")));
     }
@@ -386,7 +407,8 @@
     }
     var bz = BEZUG[zustand.bezug], achse = zeitachse(), name = landName(zustand.code);
     var inhalt = zustand.index
-      ? grafikIndex(l, bz, achse, null) + '<div class="zr-klein">Licht als Jahreswert nach den Regeln der Auswertung 2018 (nur volle Jahre mit gültigem Wert), ' +
+      ? grafikIndex(l, bz, achse, null) + '<div class="zr-klein">Die Jahreswerte beruhen je Jahr auf unterschiedlichen guten Monaten; kleine Indexunterschiede können daher aus der Messung stammen. ' +
+        "Licht als Jahreswert nach den Regeln der Auswertung 2018 (nur volle Jahre mit gültigem Wert), " +
         "BIP als Weltbank-Jahreswert. Monatswerte, 12-Monats-Durchschnitt und Saisonbereinigung gibt es nur im Modus „absolut“." + (bz.hinweis ? " " + esc(bz.hinweis) : "") + "</div>"
       : punktLegende() + grafikenAbsolut(l, bz, achse);
     feld.innerHTML =
