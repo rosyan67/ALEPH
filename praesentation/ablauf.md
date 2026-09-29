@@ -4,6 +4,9 @@
 - `~/ALEPH-ui/web/globus.html` in Chrome öffnen, per Doppelklick auf **„Globus öffnen.command“**.
 - Internet und SSD sind nicht nötig.
 - Einmal auf „Europa“ klicken, damit alles geladen ist. Danach auf „Ganze Erde“.
+- **Zweiter Tab für den Vergleich** (spart das Tippen in der Präsentation): Im geöffneten Globus die Adresse aus der Adresszeile kopieren, einen neuen Tab öffnen, die Adresse einfügen und hinten anhängen:
+  `#laendervergleich=EGY,DEU,IND,NGA&index=1` – Enter, dann zurück zum ersten Tab.
+  Er zeigt den Vergleich Ägypten, Deutschland, Indien, Nigeria gleich im Index-Modus. Nach einem Neuladen ist ein Vergleich immer leer; im ersten Tab also nichts vorher hinzufügen.
 - **Falls der Laptop streikt:** `praesentation/globus_ersatzbilder.pdf` zeigen. Sie hat 15 Seiten, in derselben Reihenfolge wie unten (Seiten 9–15: Länderansicht und Vergleich).
 
 ---
@@ -64,14 +67,13 @@ Danach das Häkchen wieder abnehmen.
 
 ## 4:30 – 5:30 · Länderansicht und Vergleich
 
-**Zeigen:**
+**Zeigen** (realistisch 60–80 Sekunden):
 1. Oben „Land oder Gebiet suchen“: **Egypt** eingeben (Namen sind englisch, wie in der Grenzdatei), Enter. Rechts im Länderfeld **„Zeitreihen ansehen (EGY)“**.
-2. Kurz über die vier Grafiken fahren: Nachtlicht monatlich, 12-Monats-Durchschnitt, saisonbereinigt, reales BIP. Auf den Kasten „Nebeneinander gestellt, kein Zusammenhang behauptet“ zeigen.
-3. Oben **„Zum Vergleich“**. Im Suchfeld nacheinander **Germany**, **India**, **Nigeria** eingeben, jeweils Enter.
-4. **„Index (2018 = 100)“** anklicken.
+2. Auf die oberste Grafik (Nachtlicht monatlich) und den Kasten „Nebeneinander gestellt, kein Zusammenhang behauptet“ zeigen. Nicht scrollen, nicht auf einzelne Punkte zeigen.
+3. Zum **zweiten Tab** wechseln (vorbereitet, siehe oben): Vergleich der vier Länder im Index-Modus.
 
 **Sagen:**
-> „Für jedes Land stehen Nachtlicht und Weltbank-Zahlen auf derselben Zeitachse, jede in ihrer eigenen Grafik. Hohle oder blasse Punkte heißen: Schnee-Verdacht oder zu wenig gemessene Fläche – wir lassen sie nicht weg, wir markieren sie. Im Vergleich haben alle Länder dieselben Achsen. Im Index-Modus ist 2018 gleich 100, für Licht und BIP. Das stellt beides nebeneinander; es sagt nicht, dass das eine das andere erklärt. Unterschiede von wenigen Punkten sind nicht deutbar.“
+> „Für jedes Land stehen Nachtlicht und Weltbank-Zahlen auf derselben Zeitachse, jede in ihrer eigenen Grafik. Unsichere Monate lassen wir nicht weg, wir markieren sie. Im Vergleich hat jedes Land dieselben Achsen; im Index ist 2018 gleich 100. Das stellt Licht und BIP nebeneinander – es sagt nicht, dass das eine das andere erklärt.“
 
 **Nicht vorlesen, nur wissen:** Die Saisonbereinigung ist nur für Länder mit drei lückenlosen Jahren bestimmbar (Ägypten ja; Deutschland, Indien, Nigeria noch nicht). Ohne Nachfrage nicht darauf eingehen.
 
@@ -100,6 +102,13 @@ Danach das Häkchen wieder abnehmen.
 - **„Pro km²“ ist keine Wirtschaftskennzahl**, sondern eher Siedlungsdichte.
 - **Der 12-Monats-Durchschnitt ist nachlaufend** (Wert im Dezember = Mittel Januar bis Dezember) und fehlt, sobald ein Monat im Fenster unsicher ist.
 - **Die Länderansicht ist vom Statistik-Prüfer „bestanden mit Auflagen“ geprüft; die Auflagen sind umgesetzt.** Die Punktwolke (Auswertung 2018) bleibt ungeprüft, siehe oben.
+- **Juni-Spitzen in Europa nicht deuten.** Deutschland hat jedes Jahr im Juni den höchsten Monatswert. Vermutlich ein Messeffekt der hellen Sommernächte (nicht geprüft), keine Sommeraktivität.
+- **Indiens jährlicher Einbruch Juli bis September** (etwa 30–40 % weniger) ist vermutlich der Monsun (Wolken, nicht geprüft). Nicht wirtschaftlich deuten. Er ist viel größer als die Indexunterschiede.
+- **Ägyptens saisonbereinigte Kurve: den Ausschlag 2020 nicht deuten.** Wandernde Feiertage wie der Ramadan verschieben sich durch die Kalendermonate; das Verfahren fängt das nicht ab.
+- **Nigeria: Gasfackel-Hinweis** (auch in der Länderansicht angezeigt, nicht geprüft). Welcher Teil des Lichts aus Fackeln kommt, ist unbekannt. Hintergrund, nur wenn gefragt und ausdrücklich als ungeprüft: Nigeria hat seine BIP-Berechnung 2025 umgestellt; die Weltbank-Werte können deshalb von früher bekannten Wachstumszahlen abweichen (nur über Sekundärquellen abgeglichen).
+- **Nordländer (Finnland, Schweden) nicht öffnen.** Ihre Jahreswerte schwanken durch nicht erkannten Schnee stark (Finnland 2019: Index 130). Nicht zeigen, nicht deuten.
+- **Nicht sagen „2020 wurden viele Länder dunkler“.** Das Muster ist gemischt (China und Südkorea heller), und der schneearme Winter 2019/20 in Nordeuropa kann Werte senken.
+- **Im Vergleich „absolut“ bestimmt das größte Land die Achse** (z. B. Indien); die anderen wirken flach. Deshalb im Index-Modus zeigen.
 - **Grenzen:** ALEPH trifft keine Souveränitätsentscheidungen. Umstrittene Gebiete sind eigene Einheiten mit Quelle, zum Beispiel die Krim oder Ost-Sabah.
 
 ## Die drei wahrscheinlichsten Fragen

@@ -196,6 +196,8 @@
       if (k.monate_schnee) t.push("Schnee-Verdacht in " + monate(k.monate_schnee) + "");
       if (k.nord65_prozent) t.push(k.nord65_prozent + " % des Lichts nördlich von 65° N");
       if (!k.pro_kopf_erlaubt) t.push("kein Pro-Kopf-Wert");
+      var gas = window.ALEPH_NACHTLICHT_BIP && window.ALEPH_NACHTLICHT_BIP.gasfackel_hinweis;
+      if (gas && gas.laender && gas.laender[a.code]) t.push("Gasfackel-Hinweis (nicht geprüft, nicht herausgerechnet)");
       return "<li>" + symbol(PLAETZE[a.platz], 10) + " <b>" + esc(ZR.landName(a.code)) + "</b>: " + (t.length ? esc(t.join("; ")) : "keine Kennzeichen") + "</li>";
     }).join("");
     return '<ul class="ad-liste vg-kennz">' + z + "</ul>";

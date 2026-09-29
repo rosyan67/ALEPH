@@ -149,7 +149,8 @@
   function statusText(p) {
     if (p.status === "gueltig") return "Summe über die gemessene Fläche (" + p.abdeckung + " % des Landes)";
     if (p.status === "schnee") return "Schnee-Verdacht auf " + p.schnee + " % der Fläche – Wert kann durch Schnee erhöht sein";
-    if (p.status === "gering") return "nur " + p.abdeckung + " % der Fläche gemessen – Teilsumme, Untergrenze, keine Landessumme";
+    if (p.status === "gering") return "nur " + p.abdeckung + " % der Fläche gemessen – Teilsumme, keine Landessumme" +
+      (p.schnee >= 5 ? "; Schnee-Verdacht auf " + p.schnee + " % der Fläche, Teilsumme kann dadurch erhöht sein" : ", Untergrenze");
     if (p.status === "nicht_geladen") return p.nicht_geladen + " % der Fläche noch nicht geladen – kein Wert";
     return "keine Messung – kein Wert";
   }
@@ -232,6 +233,8 @@
     if (k.reinheit_unter_50) b.push('<span class="lw-marke">Licht überwiegend aus Grenzzellen (Reinheit unter 50 %)</span>');
     if (!k.pro_kopf_erlaubt) b.push('<span class="lw-marke">kein Pro-Kopf-Wert: Bevölkerungszahl passt nicht zum Gebiet</span>');
     if (k.tansania) b.push('<span class="lw-marke">Tansania: BIP nur Festland</span>');
+    var gas = window.ALEPH_NACHTLICHT_BIP && window.ALEPH_NACHTLICHT_BIP.gasfackel_hinweis;
+    if (gas && gas.laender && gas.laender[l.code]) b.push('<span class="lw-marke">Gasfackel-Hinweis: Licht aus Fördergebieten möglich (nicht geprüft, nicht herausgerechnet)</span>');
     return b.length ? '<div class="lw-marken">' + b.join("") + "</div>" : '<div class="zr-klein">Keine Kennzeichen.</div>';
   }
   function rahmen() {
@@ -262,7 +265,7 @@
       "<span>" + sym('fill="var(--bg-panel)" stroke="' + FARBE_LICHT + '" stroke-width="1.3" stroke-opacity="0.5" stroke-dasharray="2 1.5"') +
       " unter 90 % gemessen: nur Teilsumme</span><span>Lücke = kein Wert (nie 0)</span></div>" +
       '<div class="zr-klein">Unterschiede von Monat zu Monat können aus der wechselnden Abdeckung kommen. Der Schnee-Verdacht zählt nach Fläche, nicht nach Licht, ' +
-      "und erfasst nicht alle verschneiten Monate (z. B. Helsinki 2019-01).</div>";
+      "und erfasst nicht alle verschneiten Monate (z. B. Helsinki 2019-01). Juni- und Juli-Werte nördlich von etwa 45° N können durch Dämmerung in kurzen Sommernächten erhöht sein (Vermutung, im Handbuch nicht geprüft).</div>";
   }
 
   // ---------- Einzelansicht ----------
