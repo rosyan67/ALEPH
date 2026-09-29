@@ -229,3 +229,9 @@ def test_vergleich_eingebunden_hoechstens_vier_und_farben_getrennt():
     assert len(belegt) >= 10 and not (set(farben) & belegt)
     formen = re.findall(r'form: "(kreis|quadrat|dreieck|raute)"', js)
     assert len(set(formen)) == 4
+
+
+def test_laendervergleich_nutzt_nicht_den_adressschluessel_des_vorjahresvergleichs():
+    js = (WEB / "globus_vergleich.js").read_text(encoding="utf-8")
+    assert "h.laendervergleich" in js and "h.vergleich" not in js
+    assert 'h.vergleich === "1"' in (WEB / "globus.js").read_text(encoding="utf-8")

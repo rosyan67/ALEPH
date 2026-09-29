@@ -12,7 +12,8 @@
  * normales Sehen ΔE ≥ 17,8). Zusätzlich hat jedes Land eine eigene Form und sein Kürzel steht daneben, damit
  * nichts nur an der Farbe hängt.
  * Einstieg: Suche im Feld, Knopf „Zum Vergleich hinzufügen“ im Länderfeld (Klick auf dem Globus),
- * Klick in der Punktwolke (Schalter „Klick fügt zum Vergleich hinzu“). Adresse: #vergleich=DEU,EGY&index=1
+ * Klick in der Punktwolke (Schalter „Klick fügt zum Vergleich hinzu“). Adresse: #laendervergleich=DEU,EGY&index=1
+ * (NICHT #vergleich=…: das ist der Schlüssel des Vorjahresvergleichs auf dem Globus).
  */
 (function () {
   "use strict";
@@ -307,13 +308,13 @@
     }, true);
   }
 
-  // ---------- Adresse: #vergleich=DEU,EGY,IND,NGA&index=1&bezug=pro_kopf ----------
+  // ---------- Adresse: #laendervergleich=DEU,EGY,IND,NGA&index=1&bezug=pro_kopf ----------
   document.addEventListener("aleph-bereit", function (e) {
     var h = e.detail || {};
     if (h.bezug && ZR.BEZUG[h.bezug]) zustand.bezug = h.bezug;
     if (h.index === "1") zustand.index = true;
-    if (h.vergleich) {
-      h.vergleich.split(",").slice(0, MAX).forEach(function (c) { if (c) hinzu(c.trim().toUpperCase()); });
+    if (h.laendervergleich) {
+      h.laendervergleich.split(",").slice(0, MAX).forEach(function (c) { if (c) hinzu(c.trim().toUpperCase()); });
       if (!h.auswertung) oeffne();
     }
   });
