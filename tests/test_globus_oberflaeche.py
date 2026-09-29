@@ -150,3 +150,62 @@ def test_ueber_aleph_nennt_stufen_regeln_und_naechste_schritte():
     for wort in ("Niederschlag", "Vegetation", "Konfliktereignisse", "2023 bis 2025", "Umstrittene"):
         assert wort in js
     assert 'src="globus_ueber.js"' in (WEB / "globus.html").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------- Länderansicht mit Zeitreihen (2026-09-29)
+
+
+def test_zeitreihen_seite_eingebunden_mit_hinweis_und_sperre():
+    html = (WEB / "globus.html").read_text(encoding="utf-8")
+    assert 'src="daten/laender_zeitreihen.js"' in html
+    assert html.index('src="globus_laender.js"') < html.index('src="globus_zeitreihen.js"')
+    js = (WEB / "globus_zeitreihen.js").read_text(encoding="utf-8")
+    assert "Nebeneinander gestellt, kein Zusammenhang behauptet." in js
+    assert 'GESPERRT_AB = "2023-01", GESPERRT_AB_JAHR = 2023' in js
+    assert "Evidenzstufe: beobachtet" in js
+    # keine Grafik mit zwei y-Achsen: jede Grafik hat genau eine Achsenbeschriftung links
+    assert "RAND.l - 6" in js and "B - RAND.r + " not in js
+
+
+def test_zeitreihen_export_filtert_2023(tmp_path, monkeypatch):
+    from aleph.core import io
+    from aleph.export import globus
+
+    ordner = tmp_path / "auswertungen" / "laender_zeitreihen"
+    ordner.mkdir(parents=True)
+    land = {"monate": [{"monat": "2022-12"}, {"monat": "2023-01"}],
+            "gleitend": {"summe": [{"monat": "2022-12", "wert": 1}, {"monat": "2024-01", "wert": 1}]},
+            "saison": {"summe": {"werte": [{"monat": "2025-03", "wert": 1}]}},
+            "jahre": {"2022": {}, "2023": {}}, "index": {"bip_real": {"2018": 100, "2024": 110}}}
+    (ordner / "ergebnis.json").write_text(json.dumps({"monate": ["2022-12", "2023-01"], "volle_jahre": [2022, 2023],
+                                                      "weltbank_jahre": [2022, 2024], "laender": {"XXX": land}}))
+    monkeypatch.setattr(io, "aleph_data_dir", lambda: tmp_path)
+    e = globus.laender_zeitreihen()
+    text = json.dumps(e)
+    for verboten in ("2023", "2024", "2025"):
+        assert verboten not in text
+    assert e["verfuegbar"] and e["monate"] == ["2022-12"]
+
+
+@pytest.mark.skipif(not (DATEN / "laender_zeitreihen.js").exists(), reason="web/daten nicht erzeugt")
+def test_zeitreihen_echter_export_ohne_2023_und_zum_laenderfeld_passend():
+    Z = _lies_js(DATEN / "laender_zeitreihen.js")
+    text = (DATEN / "laender_zeitreihen.js").read_text(encoding="utf-8")
+    for verboten in ('"2023', '"2024', '"2025'):
+        assert verboten not in text
+    assert Z["verfuegbar"] and all(m < "2023-01" for m in Z["monate"])
+    # Monatliche Landessumme = Wert im Länderfeld (gleiches Gerüst, dort auf 2 Ziffern gerundet)
+    L = _lies_js(DATEN / "laender.js")
+    geprueft = 0
+    for code in ("EGY", "DEU", "IND", "NGA"):
+        for p in Z["laender"][code]["monate"]:
+            lf = L["monate"].get(p["monat"], {}).get("land", {}).get(code)
+            if lf is None:
+                continue
+            if lf["licht_summe"] is None:
+                assert p["status"] in ("gering", "keine", "nicht_geladen")
+            else:
+                assert p["status"] in ("gueltig", "schnee")
+                assert p["summe"] == pytest.approx(lf["licht_summe"], rel=0.051)
+            geprueft += 1
+    assert geprueft >= 4 * 24

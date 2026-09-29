@@ -375,6 +375,41 @@ def auswertung_nachtlicht_bip() -> dict:
     return e
 
 
+LAENDER_ZEITREIHEN = ("auswertungen", "laender_zeitreihen", "ergebnis.json")
+
+
+def laender_zeitreihen() -> dict:
+    """Liest die Zeitreihen je Land (gerechnet in ~/ALEPH, aleph/link/laender_zeitreihen.py). Hier wird nichts
+    gerechnet. Zweite Sperre: Monate ab 2023-01 und Jahre ab 2023 werden entfernt, auch wenn sie in der Datei stünden."""
+    pfad = io.aleph_data_dir().joinpath(*LAENDER_ZEITREIHEN)
+    if not pfad.exists():
+        return {"verfuegbar": False, "grund": "Ergebnisdatei fehlt (Zeitreihen in ~/ALEPH noch nicht gerechnet)"}
+    try:
+        e = json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as fehler:
+        return {"verfuegbar": False, "grund": f"Ergebnisdatei nicht lesbar: {fehler}"}
+    sperre_jahr = int(ENDTEST_AB[:4])
+
+    def offen_jahr(j):
+        return int(str(j)[:4]) < sperre_jahr
+
+    e["monate"] = [m for m in e.get("monate", []) if m < ENDTEST_AB]
+    e["volle_jahre"] = [j for j in e.get("volle_jahre", []) if offen_jahr(j)]
+    e["weltbank_jahre"] = [j for j in e.get("weltbank_jahre", []) if offen_jahr(j)]
+    for land in (e.get("laender") or {}).values():
+        land["monate"] = [p for p in land.get("monate", []) if p["monat"] < ENDTEST_AB]
+        for art in ("gleitend", "saison"):
+            for k, v in (land.get(art) or {}).items():
+                liste = v if art == "gleitend" else v.get("werte", [])
+                liste[:] = [p for p in liste if p["monat"] < ENDTEST_AB]
+        land["jahre"] = {j: v for j, v in (land.get("jahre") or {}).items() if offen_jahr(j)}
+        land["index"] = {k: {j: w for j, w in v.items() if offen_jahr(j)} for k, v in (land.get("index") or {}).items()}
+    e["verfuegbar"] = bool(e["monate"])
+    if not e["verfuegbar"]:
+        e["grund"] = "keine Monate vor 2023 in der Ergebnisdatei"
+    return e
+
+
 def _laenderwerte():
     from aleph.export.globus_laender import Laenderwerte
 
@@ -508,6 +543,7 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
     (ziel / "datenstand.js").write_text(_js("ALEPH_DATENSTAND", None, datenstand), encoding="utf-8")
     (ziel / "auswertung_nachtlicht_bip.js").write_text(_js("ALEPH_NACHTLICHT_BIP", None, auswertung_nachtlicht_bip()),
                                             encoding="utf-8")
+    (ziel / "laender_zeitreihen.js").write_text(_js("ALEPH_ZEITREIHEN", None, laender_zeitreihen()), encoding="utf-8")
     # Nur für die Konsole (nie in eine Datei der Oberfläche):
     return {**datenstand, "monate_gesamt_wuerfel": len(status), "status_zaehlung_wuerfel": zaehlung,
             "fertig_gesperrt_endtest": [m for m, s in status if s in (MONAT_FERTIG, MONAT_REGION) and m >= ENDTEST_AB]}

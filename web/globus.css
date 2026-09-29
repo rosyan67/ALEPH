@@ -459,3 +459,32 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .ueber-stufen { margin: 4px 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
 .ueber-stufen dt { color: var(--gold-soft); font-weight: 600; }
 .ueber-stufen dd { margin: 0; color: var(--text); }
+
+/* ---------- Länderansicht mit Zeitreihen (2026-09-29) ---------- */
+
+.zr { width: min(820px, calc(100vw - 32px)); z-index: 30; }
+.zr-code { font-family: var(--font-ui); font-size: 12px; color: var(--text-dim); font-weight: 400; margin-left: 4px; }
+.zr-schalter { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 6px; }
+.zr-warnung { margin: 6px 0; }
+.zr-grafik { margin: 6px 0 2px; }
+.zr-gkopf { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text); }
+.zr-gtitel { font-weight: 600; }
+.zr-geinheit { color: var(--text-dim); font-size: 10.5px; }
+.zr-gitter { stroke: var(--line-soft); stroke-width: 1; }
+.zr-null { stroke: var(--text-faint); stroke-width: 1; }
+.zr-jahr { stroke: var(--line); stroke-width: 1; }
+.zr-linie { stroke-width: 2; fill: none; }
+.zr-direkt { fill: var(--text); font-size: 10.5px; font-family: var(--font-ui); }
+.zr-leer, .zr-hinweis { font-size: 12px; color: var(--text-dim); border: 1px dashed var(--line); border-radius: var(--radius); padding: 10px 12px; margin: 4px 0; }
+.zr-hinweis { color: var(--text); }
+.zr-klein { font-size: 11px; color: var(--text-dim); line-height: 1.4; margin: 3px 0 6px; }
+.zr-tkopf { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin: 12px 0 0; }
+.zr-tabelle td, .zr-tabelle th { white-space: nowrap; }
+.zr-tabelle .zr-links { text-align: left; white-space: normal; color: var(--text-dim); }
+.zr-fehlt { color: var(--text-dim); font-size: 10.5px; white-space: normal; }
+.zr-quelle { font-size: 10.5px; color: var(--text-dim); line-height: 1.4; margin-top: 8px; border-top: 1px solid var(--line-soft); padding-top: 6px; }
+.zr-einstieg { margin: 8px 0 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.zr-auf { font: 600 12px var(--font-ui); background: var(--paper-ink); color: var(--paper-2); border: none; border-radius: var(--radius); padding: 6px 10px; cursor: pointer; }
+.zr-auf--vgl { background: none; color: var(--paper-ink); border: 1px solid var(--paper-ink-dim); }
+.zr-einstieg .lw-fuss { flex-basis: 100%; }
+.zr-zumvgl { padding: 5px 10px; font-size: 12px; }
