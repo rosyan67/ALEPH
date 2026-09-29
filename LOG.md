@@ -515,3 +515,26 @@
 - **Tests:** worktree 756/756, main 722/722, keiner übersprungen.
 - **Nicht angefasst:** Download (Prozess 82367), `.env`, `vnp46a3*.py`, Kachellisten. Würfel nur gelesen. Keine Auswertung von 2023–2025.
 - **Bericht:** `~/ALEPH-ui/berichte/2026-09-29_praesentation.md`.
+
+## 2026-09-29 (Länderansicht mit Zeitreihen und Ländervergleich für die Präsentation am 30.09.)
+
+- **Teil 0:** Tag `praesentation-stabil` im worktree (Stand `f0c7663`), gepusht. Alte Beispieldateien mit erfundenen Daten entfernt (`geruest_beispieldaten.html`, `app.js`, `style.css`, `beispieldaten/`).
+- **Teil 1:**
+  - main, neu: `aleph/link/laender_zeitreihen.py`. Nachtlicht je Land monatlich (Verknüpfungsgerüst) und jährlich (Regeln der Auswertung 2018) neben Weltbank-Werten. Regeln F1–F9 vor dem ersten Lauf festgelegt.
+  - worktree: Länderansicht `web/globus_zeitreihen.js`.
+  - Datenstand: 37 Monate (2018-01 bis 2021-01), volle Jahre 2018–2020.
+- **Teil 2:**
+  - Nachrechnung EGY, DEU, IND, NGA auf eigenem Weg: stimmt bis auf Rundung. Alle 170 gültigen Jahreswerte 2018/2019 weichen höchstens 0,4 % von der Auswertung 2018 ab.
+  - statistik-pruefer „bestanden mit Auflagen“, Auflagen umgesetzt (nur Texte, Version 0.2.0).
+  - Bericht: `berichte/2026-09-29_pruefung-laender-zeitreihen.md`.
+- **Teil 3:** Ländervergleich (bis zu 4 Länder, gleiche Achsen, Farben geprüft und mit Formen), Markierung in der Punktwolke.
+  - Fehler beim Durchklicken gefunden: Der Adressschlüssel kollidierte mit dem Vorjahresvergleich. Behoben, mit Test.
+- **Teil 4:**
+  - 17 Fotos.
+  - Ersatzbilder-PDF mit 15 Seiten.
+  - Ablauf mit 6 Minuten und neuen „Nicht behaupten“-Punkten.
+  - plausibilitaets-pruefer „plausibel mit Vorbehalt“: kein Rechenfehler, aber Messeffekte (Juni-Spitzen, Monsun, Schnee im Norden, Ramadan). Hinweise ergänzt.
+- **Saisonbereinigung:** nach der Gerüst-Regel (3 Werte je Kalendermonat) für Ägypten bestimmbar, für DEU, IND, NGA noch nicht.
+- **Tests:** worktree 761/761, main 738/738, keiner übersprungen.
+- **Nicht angefasst:** Download, `.env`, `vnp46a3*.py`, Kachellisten. Würfel nur gelesen. Nichts aus 2023–2025 gelesen oder angezeigt.
+- **Bericht:** `~/ALEPH-ui/berichte/2026-09-29_laenderansicht.md`.
