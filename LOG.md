@@ -538,3 +538,17 @@
 - **Tests:** worktree 761/761, main 738/738, keiner übersprungen.
 - **Nicht angefasst:** Download, `.env`, `vnp46a3*.py`, Kachellisten. Würfel nur gelesen. Nichts aus 2023–2025 gelesen oder angezeigt.
 - **Bericht:** `~/ALEPH-ui/berichte/2026-09-29_laenderansicht.md`.
+
+## 2026-10-02 (Niederschlag GPM IMERG neu bauen – Zwischenstand, wartet auf GES-DISC-Freigabe)
+
+- **Teil 1:** Steckbrief `docs/sources/imerg.md`, an NASA-Quellen belegt (CMR als Rohtext, Technical Documentation als PDF-Text, GPM-Mitteilungen; Abruf 2026-10-02). Alter Steckbrief als ersetzt markiert.
+  - V07 Final endet mit 2025-09 (NASA-Umstellung auf V08, V08 Final „more likely … fall of 2026“). 2025-10 bis -12 gibt es nicht.
+  - 153 Dateien 2013-01 bis 2025-09, 2 734 MB; Katalog ohne Prüfsumme, Größe aber bytegenau.
+  - Einheit mm/h als mittlere Rate über den Kalendermonat; Gitter in der Datei Süd → Nord.
+- **Teil 2/3:** `aleph/layers/imerg.py` neu (layer-bauer), alter `gpm_imerg.py` gelöscht. Exakt flächengewichtet 0,1° → 0,25° auf das Nachtlicht-Gitter, Zeitlimits und Wiederholungen, höchstens 2 Downloads, Manifest mit sha256, Zustand 5 „beim Anbieter nicht vorhanden“. Katalogabgleich echt: 153 + 3, 0 Fehler.
+- **statistik-pruefer:** „bestanden mit Auflagen“ (10 Befunde); alle umgesetzt (u. a. Attribute im Würfel, `probability_liquid` niederschlagsgewichtet, `quality_index_min`, Mindestanteil 0,5 vor Datenansicht, Bruch TRMM/GPM als Variable, Tests). Erkennung (`aleph/detect/wuerfel.py`, `anomalie.py`): nur Meldungstexte für Zustand 5.
+- **Teil 4:** Erwartungen (Mumbai, Sahara, Kairo, Singapur, Berlin, Erde 2,69 mm/Tag nach GPCP, Volltext gelesen) vor dem Laden committet (1592891).
+- **Teil 5:** IMERG ab 1998 (verlässlich ab Juni 2000) → etwa 25 Jahre, nicht 30. NASA-Alternative GPCP V3.3 ab 1983 (Katalog widersprüchlich zum Ende).
+- **Blockiert:** GES DISC liefert HTTP 403 „EULA Acceptance Failure“. Nutzer muss „NASA GESDISC DATA ARCHIVE“ freigeben (https://urs.earthdata.nasa.gov/approve_app?client_id=e2WVk8Pw6weeLUKZYOxvTQ). Noch keine Datei geladen, Teil 4 an Daten offen, plausibilitaets-pruefer offen, nicht gepusht.
+- **Tests:** ganze Suite 798/798 (Lauf von layer-bauer), IMERG + Erkennung 146/146 selbst nachgeprüft.
+- **Nicht angefasst:** Nachtlicht-Download (Prozess 82367), `vnp46a3*.py`, `auth.py`, Kachellisten, `scripts/vnp46a3_*`, `.env`. Keine Daten aus 2023–2025.
