@@ -14,14 +14,26 @@ layers:
       - near_nadir
     erstellt: 2026-09-22
 
-  - id: gpm_imerg
-    name: GPM IMERG Precipitation
-    status: in Arbeit
-    datei: aleph/layers/gpm_imerg.py
-    raster: 0.25° (von 0.1° aggregiert)
-    zeitraum: 2013-2025
+  - id: imerg
+    name: GPM IMERG V07 Precipitation (GPM_3IMERGM, Final Run)
+    status: gebaut, noch nicht geladen
+    datei: aleph/layers/imerg.py
+    raster: 0.25° (exakt flächengewichtet aus 0,1°; Verhältnis 2,5, keine ganze Zahl)
+    zeitraum: 2013-01 bis 2025-09 (2025-10..12 beim Anbieter nicht vorhanden, V07 Final endet 2025-09)
     felder:
-      - precipitation
-    erstellt: 2026-09-25
+      - precipitation_mm_monat
+      - precipitation_gueltig_anteil
+      - precipitation_gueltige_pixel
+      - random_error_mm_monat
+      - gauge_relative_weighting
+      - quality_index
+      - probability_liquid
+    erstellt: 2026-10-02
+    ersetzt: gpm_imerg (gelöscht, Datei hatte u. a. keine Zeitlimits, falsches
+      Enddatum, falsche Stundenzahl, bilineare statt flächengewichtete Interpolation)
     hinweis: >-
-      Flächengewichtete Aggregation 0.1° → 0.5° → 0.25°
+      Exakte flächengewichtete (konservative) Aggregation 0,1° -> 0,25°
+      (Begründung im Modulkopf von aleph/layers/imerg.py); je Zielzelle genau
+      3x3=9 überlappende Quellpixel bei voller Gültigkeit. Steckbrief
+      docs/sources/imerg.md. Download noch nicht ausgeführt (GES-DISC-Freigabe
+      für das Konto steht noch aus, HTTP 403 EULA Acceptance Failure).
