@@ -1,5 +1,8 @@
 # Steckbrief: GPM IMERG, monatlicher Niederschlag, global
 
+> **Ersetzt am 2026-10-02 durch `docs/sources/imerg.md`.** Wichtigste Korrekturen: V07 Final endet mit 2025-09 (NASA-Umstellung auf V08), der Katalog nennt keine MD5-Prüfsumme, das Gitter läuft von Süd nach Nord, und GES DISC verlangt eine einmalige Freigabe im Earthdata-Profil. Dieser Steckbrief bleibt nur zur Nachvollziehbarkeit liegen.
+
+
 Stand der Recherche: 2026-09-23. Erstellt vom Agenten „datenquellen-scout". Für diesen Steckbrief wurden **keine Daten heruntergeladen**; alle Angaben stammen aus Web-Recherche (Anbieterseiten, CMR-Metadatenabfrage, Suchergebnisse).
 
 Kennzeichnung in diesem Dokument (wie in `docs/sources/vnp46a3.md`):
