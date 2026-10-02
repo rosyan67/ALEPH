@@ -63,6 +63,30 @@ Achsen werden NICHT aus der Dokumentation angenommen, sondern aus den
 Mittelpunkte (-89,95..89,95 bzw. -179,95..179,95, Schritt 0,1°) geprüft; passt
 das nicht, bricht die Verarbeitung mit einer klaren Meldung ab
 (`AchsenFehler`), statt eine falsche Ausrichtung zu raten.
+
+Nachträge (Auflagen statistik-pruefer, 2026-10-02, Prüfung "bestanden mit
+Auflagen" der Rechnung oben - die Rechnung selbst war korrekt):
+- Variablen- und Dataset-Attribute werden nur bei der Erstanlage der leeren
+  Variable geschrieben (`_lege_wuerfel_an`, voller Array-Write), NICHT beim
+  monatlichen Beschreiben (`schreibe_in_wuerfel`, `mode="r+", region=...`):
+  xarray/Zarr verwerfen Attribute bei einem Region-Write kommentarlos.
+- `probability_liquid` wird niederschlagsgewichtet gemittelt (Gewicht =
+  Fläche x Niederschlag, wie im Anbieterprodukt), nicht mehr flächengemittelt;
+  eine trockene Zelle (Nenner 0) ergibt NaN, weil der Wert dort nicht
+  definiert ist (siehe `_regrid_niederschlagsgewichtet`).
+- Das Qualitätsfeld heißt jetzt `quality_index_min` und ist das MINIMUM über
+  die gültigen überlappenden 0,1°-Pixel (nicht das Flächenmittel): die Ampel
+  des Anbieters bewertet die schwächste Stelle einer Box, ein Mittel würde
+  das verschleiern (siehe `_regrid_minimum`).
+- `MINDEST_GUELTIG_ANTEIL` und `nutzbar_maske()`: eine VOR dem Ansehen echter
+  Daten festgelegte Schwelle für den gültigen Flächenanteil von
+  `precipitation_mm_monat`/`random_error_mm_monat`; der Würfel behält das
+  Teilmittel trotzdem, die Funktion markiert nur, welche Zellen die Schwelle
+  erreichen.
+- `kalibrierung_trmm` (Zeitachsen-Variable): kennzeichnet maschinenlesbar den
+  Kalibrierungswechsel TRMM->GPM (`KALIBRIERUNG_GPM_AB`).
+- `to_cube()` verarbeitet nur Rohdateien, deren Monat im Manifest als
+  "geladen" mit passendem Namen/Größe/sha256 steht (`_pruefe_gegen_manifest`).
 """
 
 import argparse
@@ -127,8 +151,9 @@ META = {
     ),
     "einheit": (
         "mm/Monat (precipitation_mm_monat, random_error_mm_monat); Prozent "
-        "(gauge_relative_weighting, probability_liquid); äquivalente "
-        "Messstationen je 2,5°-Box (quality_index)"
+        "(gauge_relative_weighting, niederschlagsgewichtet: probability_liquid); "
+        "äquivalente Messstationen je 2,5°-Box, Minimum der überlappenden "
+        "0,1°-Pixel (quality_index_min)"
     ),
     "herkunftseinheit": "mm/hr (mittlere Rate über den Kalendermonat), siehe docs/sources/imerg.md Abschnitt 2",
     "zeitraum": (
@@ -151,6 +176,17 @@ META = {
     "anzeige": "Rohwerte mit Quellenangabe zulässig (siehe 'quelle' oben, 'freely available').",
     "details": "docs/sources/imerg.md",
 }
+
+# Zitierform für ALEPH, wörtlich aus docs/sources/imerg.md Abschnitt 6
+# (aus den NASA-Katalogangaben zusammengesetzt). Wird als Dataset-Attribut im
+# Würfel mitgeführt, damit die Quellenangabe auch ohne den Steckbrief
+# nachvollziehbar bleibt.
+ZITIERWEISE = (
+    "Huffman, G.J., E.F. Stocker, D.T. Bolvin, E.J. Nelkin, J. Tan (2023): GPM IMERG Final "
+    "Precipitation L3 1 month 0.1 degree x 0.1 degree V07, Greenbelt, MD, Goddard Earth Sciences "
+    "Data and Information Services Center (GES DISC), abgerufen am [Datum], "
+    "doi:10.5067/GPM/IMERG/3B-MONTH/07."
+)
 
 # --- NASA-Produkt -----------------------------------------------------------
 KURZNAME = "GPM_3IMERGM"
@@ -182,9 +218,33 @@ FELD_EINHEITEN = {
     "precipitation": "mm/hr (mittlere Rate über den Kalendermonat)",
     "randomError": "mm/hr (Zufallsfehler; als Zellwert eine Obergrenze - siehe Attribut im Würfel)",
     "gaugeRelativeWeighting": "%",
-    "probabilityLiquidPrecipitation": "%",
-    "precipitationQualityIndex": "äquivalente Messstationen je 2,5°-Box",
+    "probabilityLiquidPrecipitation": "% (im Würfel niederschlagsgewichtet gemittelt, nicht flächengemittelt)",
+    "precipitationQualityIndex": (
+        "äquivalente Messstationen je 2,5°-Box (im Würfel das Minimum über die "
+        "überlappenden gültigen 0,1°-Pixel, nicht das Flächenmittel)"
+    ),
 }
+
+# Mindestschwelle für den gültigen Flächenanteil, FESTGELEGT VOR dem Ansehen
+# echter IMERG-Daten (Auflage statistik-pruefer, 2026-10-02): mehr als die
+# Hälfte der Zellfläche muss aus gültigen Quellpixeln stammen, damit das
+# Teilmittel nicht von einer kleinen, womöglich unrepräsentativen Restfläche
+# bestimmt wird. Fehlwerte liegen laut Steckbrief (Abschnitt 3/9) gehäuft an
+# den Polen und über gefrorenen Flächen - dort kann ein Teilmittel verzerrt
+# sein. Der Würfel LÖSCHT nichts: `precipitation_mm_monat` und
+# `random_error_mm_monat` behalten ihr Teilmittel, `precipitation_gueltig_anteil`
+# bleibt daneben erhalten; `nutzbar_maske()` wendet die Schwelle nur zur
+# Auswertung an.
+MINDEST_GUELTIG_ANTEIL = 0.5
+
+# Kalibrierungswechsel TRMM -> GPM (Beleg: Technical Documentation S. 19,
+# "V07 nutzt TRMM-Kalibrierung bis Mai 2014", und S. 22, "Thereafter IMERG
+# has GPM-based calibration" - docs/sources/imerg.md Abschnitt 4). Ab diesem
+# Monat (einschließlich) gilt die GPM-Kalibrierung; 2013-01 bis 2014-05
+# (einschließlich) sind TRMM-kalibriert - ein möglicher Bruch innerhalb des
+# ALEPH-Zeitraums 2013-2025, maschinenlesbar in der Würfelvariable
+# `kalibrierung_trmm`.
+KALIBRIERUNG_GPM_AB = (2014, 6)
 
 # Dateiname laut Steckbrief Abschnitt 7/14: das zweite Feld vor '.V07BHDF5'
 # ist (gemessen an der GPM-Namenskonvention) der Monat erneut, nicht ein
@@ -839,6 +899,34 @@ def _gewichte():
     return w_lat, b_lat, w_lon, b_lon, a_lat_voll
 
 
+@lru_cache(maxsize=1)
+def _ueberlappungsindizes() -> tuple[np.ndarray, np.ndarray]:
+    """Quellindizes je Zielzeile/-spalte, als feste (720,3)- bzw. (1440,3)-Tabellen.
+
+    Jede Zielzelle berührt in jeder Richtung GENAU 3 Quellpixel (Modulkopf,
+    nachgerechnet und per Test geprüft: `np.diff(w_lat.indptr)` ist überall
+    3). Deshalb lässt sich das Minimum (für `quality_index_min`) ohne
+    Python-Schleife je Zelle berechnen (`_regrid_minimum`).
+    """
+    lat_segmente = _eindimensionale_ueberlappung(GITTER_BREITE, ZIEL_SCHRITT_TICKS, QUELL_BREITE, QUELLE_SCHRITT_TICKS)
+    lon_segmente = _eindimensionale_ueberlappung(GITTER_LAENGE, ZIEL_SCHRITT_TICKS, QUELL_LAENGE, QUELLE_SCHRITT_TICKS)
+    lat_idx = np.array([[i for i, _, _ in segmente] for segmente in lat_segmente], dtype="int64")
+    lon_idx = np.array([[j for j, _, _ in segmente] for segmente in lon_segmente], dtype="int64")
+    if lat_idx.shape != (GITTER_BREITE, 3) or lon_idx.shape != (GITTER_LAENGE, 3):
+        raise AchsenFehler(
+            f"Unerwartete Überlappungsstruktur (lat {lat_idx.shape}, lon {lon_idx.shape}; erwartet "
+            f"je 3 Quellpixel je Zielzelle). _regrid_minimum setzt das voraus."
+        )
+    return lat_idx, lon_idx
+
+
+def _flaechensumme(feld: np.ndarray, w_lat, w_lon) -> np.ndarray:
+    """Flächengewichtete Summe eines (1800,3600)-Feldes über die Quellpixel je Zielzelle
+    (720,1440), ohne Division - der gemeinsame Rechenschritt von `_regrid_feld` und
+    `_regrid_niederschlagsgewichtet` (Modulkopf: Zähler = W_lat @ Feld @ W_lonᵗ)."""
+    return w_lon.dot(w_lat.dot(feld).T).T
+
+
 def _regrid_feld(
     werte: np.ndarray, gueltig: np.ndarray, w_lat, b_lat, w_lon, b_lon, a_lat_voll: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -851,14 +939,58 @@ def _regrid_feld(
     v = gueltig.astype("float64")
     x = np.where(gueltig, werte, 0.0).astype("float64")
 
-    zaehler = w_lon.dot(w_lat.dot(x * v).T).T
-    nenner = w_lon.dot(w_lat.dot(v).T).T
-    pixel = b_lon.dot(b_lat.dot(v).T).T
+    zaehler = _flaechensumme(x * v, w_lat, w_lon)
+    nenner = _flaechensumme(v, w_lat, w_lon)
+    pixel = _flaechensumme(v, b_lat, b_lon)
 
     with np.errstate(invalid="ignore", divide="ignore"):
         zellwert = np.where(nenner > 0, zaehler / nenner, np.nan)
     anteil = np.clip(nenner / (a_lat_voll[:, None] * A_LON_VOLL_TICKS), 0.0, 1.0)
     return zellwert.astype("float32"), anteil.astype("float32"), np.round(pixel).astype("int16")
+
+
+def _regrid_niederschlagsgewichtet(
+    werte: np.ndarray,
+    gueltig: np.ndarray,
+    niederschlag: np.ndarray,
+    niederschlag_gueltig: np.ndarray,
+    w_lat,
+    w_lon,
+) -> np.ndarray:
+    """Niederschlagsgewichtetes Flächenmittel (Auflage statistik-pruefer 2026-10-02):
+
+    Gewicht je Quellpixel = Fläche x Niederschlag (wie im Anbieterprodukt,
+    docs/sources/imerg.md Abschnitt 2 - `probabilityLiquidPrecipitation` ist
+    "niederschlagsgewichtete Wahrscheinlichkeit"). Nur Pixel, die in BEIDEN
+    Feldern gültig sind, zählen. Ist der gewichtete Nenner 0 (alle
+    überlappenden, gültigen Pixel trocken oder keine gültigen Pixel - eine
+    "trockene Zelle"), ist der Wert NICHT DEFINIERT und wird NaN, nicht 0.
+    """
+    beide_gueltig = gueltig & niederschlag_gueltig
+    gewicht = np.where(beide_gueltig, niederschlag, 0.0).astype("float64")
+    x = np.where(beide_gueltig, werte, 0.0).astype("float64")
+
+    zaehler = _flaechensumme(x * gewicht, w_lat, w_lon)
+    nenner = _flaechensumme(gewicht, w_lat, w_lon)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        zellwert = np.where(nenner > 0, zaehler / nenner, np.nan)
+    return zellwert.astype("float32")
+
+
+def _regrid_minimum(werte: np.ndarray, gueltig: np.ndarray) -> np.ndarray:
+    """Minimum über die gültigen, überlappenden Quellpixel je Zielzelle (720,1440).
+
+    Für `precipitationQualityIndex` statt des Flächenmittels (Auflage
+    statistik-pruefer 2026-10-02): die Ampel des Anbieters (0-2 rot, 2-10
+    gelb, >=10 grün) bewertet die SCHWÄCHSTE Stelle einer 2,5°-Box; ein
+    Flächenmittel würde eine schlechte Ecke verschleiern. Zelle ganz ohne
+    gültigen überlappenden Pixel -> NaN.
+    """
+    lat_idx, lon_idx = _ueberlappungsindizes()
+    maskiert = np.where(gueltig, werte, np.inf).astype("float64")
+    zwischenschritt = maskiert[lat_idx, :].min(axis=1)  # (720, 3600)
+    ergebnis = zwischenschritt[:, lon_idx].min(axis=2)  # (720, 1440)
+    return np.where(np.isfinite(ergebnis), ergebnis, np.nan).astype("float32")
 
 
 def _flip_sn(arr: np.ndarray) -> np.ndarray:
@@ -873,22 +1005,53 @@ def verminderte_guete_maske() -> np.ndarray:
     return np.abs(breite) > VERMINDERTE_GUETE_BREITENGRENZE
 
 
+def nutzbar_maske(ds, mindest_anteil: float = MINDEST_GUELTIG_ANTEIL):
+    """True, wo der gültige Flächenanteil von `precipitation_mm_monat`/
+    `random_error_mm_monat` mindestens `mindest_anteil` beträgt (siehe
+    MINDEST_GUELTIG_ANTEIL). Löscht nichts, markiert nur.
+
+    Gilt NUR für diese beiden Felder: `ds["precipitation_gueltig_anteil"]` ist
+    die einzige Gültigkeits-Flächenangabe im Würfel. `gauge_relative_weighting`,
+    `quality_index_min` und `probability_liquid` haben KEINE eigene
+    gueltig_anteil-Variable und können eine andere, hier nicht erfasste
+    Gültigkeit haben (siehe deren Attribut `hinweis_gueltigkeit`).
+    """
+    return ds["precipitation_gueltig_anteil"] >= mindest_anteil
+
+
+def _kalibrierung_trmm_werte() -> np.ndarray:
+    """1 für Monate mit TRMM-, 0 für Monate mit GPM-Kalibrierung (KALIBRIERUNG_GPM_AB)."""
+    werte = []
+    for z in zeitachse():
+        datum = np.datetime64(z, "M").astype(object)
+        werte.append(1 if (datum.year, datum.month) < KALIBRIERUNG_GPM_AB else 0)
+    return np.array(werte, dtype="int8")
+
+
 # --- Verarbeitung eines Monats -------------------------------------------------
 def _verarbeite_monat(pfad: Path, jahr: int, monat: int) -> xr.Dataset:
     felder = _lies_monatsdatei(pfad)
     w_lat, b_lat, w_lon, b_lon, a_lat_voll = _gewichte()
     tage = monthrange(jahr, monat)[1]
 
-    niederschlag, anteil, pixel = _regrid_feld(*felder["precipitation"], w_lat, b_lat, w_lon, b_lon, a_lat_voll)
+    niederschlag_werte, niederschlag_gueltig = felder["precipitation"]
+    niederschlag, anteil, pixel = _regrid_feld(
+        niederschlag_werte, niederschlag_gueltig, w_lat, b_lat, w_lon, b_lon, a_lat_voll
+    )
     niederschlag = niederschlag * (24 * tage)  # mm/h -> mm/Monat (Doku: mittlere Rate über den Kalendermonat)
 
     fehler, _, _ = _regrid_feld(*felder["randomError"], w_lat, b_lat, w_lon, b_lon, a_lat_voll)
     fehler = fehler * (24 * tage)
 
     gewichtung, _, _ = _regrid_feld(*felder["gaugeRelativeWeighting"], w_lat, b_lat, w_lon, b_lon, a_lat_voll)
-    guete, _, _ = _regrid_feld(*felder["precipitationQualityIndex"], w_lat, b_lat, w_lon, b_lon, a_lat_voll)
-    fluessig, _, _ = _regrid_feld(
-        *felder["probabilityLiquidPrecipitation"], w_lat, b_lat, w_lon, b_lon, a_lat_voll
+    # Qualitätsfeld: Minimum statt Flächenmittel (Auflage statistik-pruefer 2026-10-02).
+    guete_min = _regrid_minimum(*felder["precipitationQualityIndex"])
+    # probability_liquid: niederschlagsgewichtet, mit den UNSKALIERTEN (mm/h)
+    # Werten/Gültigkeit - der gemeinsame Monatsfaktor (24 x Tage) kürzt sich in
+    # Zähler/Nenner exakt heraus, ein Umrechnen vorher ist nicht nötig.
+    fluessig_werte, fluessig_gueltig = felder["probabilityLiquidPrecipitation"]
+    fluessig = _regrid_niederschlagsgewichtet(
+        fluessig_werte, fluessig_gueltig, niederschlag_werte, niederschlag_gueltig, w_lat, w_lon
     )
 
     breite, laenge = _gitter_koordinaten()
@@ -899,30 +1062,14 @@ def _verarbeite_monat(pfad: Path, jahr: int, monat: int) -> xr.Dataset:
         "precipitation_gueltige_pixel": _flip_sn(pixel).astype("int16"),
         "random_error_mm_monat": _flip_sn(fehler).astype("float32"),
         "gauge_relative_weighting": _flip_sn(gewichtung).astype("float32"),
-        "quality_index": _flip_sn(guete).astype("float32"),
+        "quality_index_min": _flip_sn(guete_min).astype("float32"),
         "probability_liquid": _flip_sn(fluessig).astype("float32"),
     }
     data_vars = {k: (WUERFEL_DIMS, w[np.newaxis, :, :]) for k, w in daten.items()}
     return xr.Dataset(
         data_vars,
         coords={"zeit": zeit, "breite": breite, "laenge": laenge},
-        attrs={
-            "quelle": META["quelle"],
-            "einheit_precipitation_mm_monat": "mm/Monat (umgerechnet aus mm/h x 24 x Tage des Kalendermonats)",
-            "einheit_random_error_mm_monat": (
-                "mm/Monat; flächengewichteter Mittelwert der Pixelfehler = Obergrenze bei voll "
-                "korrelierten Fehlern, KEIN exakter Zellfehler (docs/sources/imerg.md Abschnitt 8)"
-            ),
-            "herkunftseinheit_precipitation": FELD_EINHEITEN["precipitation"],
-            "herkunftseinheit_random_error": FELD_EINHEITEN["randomError"],
-            "herkunftseinheit_gauge_relative_weighting": FELD_EINHEITEN["gaugeRelativeWeighting"],
-            "herkunftseinheit_quality_index": FELD_EINHEITEN["precipitationQualityIndex"],
-            "herkunftseinheit_probability_liquid": FELD_EINHEITEN["probabilityLiquidPrecipitation"],
-            "aggregation": (
-                "exakte flächengewichtete (konservative) Mittelung 0,1°->0,25° "
-                "(Verhältnis 2,5, keine ganze Zahl; Begründung im Modulkopf von aleph/layers/imerg.py)"
-            ),
-        },
+        attrs={"quelle": META["quelle"]},
     )
 
 
@@ -938,8 +1085,110 @@ def _wuerfel_variablen() -> dict[str, str]:
         "precipitation_gueltige_pixel": "int16",
         "random_error_mm_monat": "float32",
         "gauge_relative_weighting": "float32",
-        "quality_index": "float32",
+        "quality_index_min": "float32",
         "probability_liquid": "float32",
+    }
+
+
+# Zeitachsen-Variablen (nur Dimension "zeit", nicht "breite"/"laenge"): FERTIG_VARIABLE
+# UND kalibrierung_trmm (Auflage 7). Getrennt von _wuerfel_variablen(), weil deren Form
+# und Chunking (WUERFEL_DIMS, WUERFEL_CHUNKS) nicht passen.
+ZEIT_VARIABLEN = (FERTIG_VARIABLE, "kalibrierung_trmm")
+
+EVIDENZSTUFE_BEOBACHTET = "beobachtet (Satelliten-Regenmesser-Schätzung, docs/sources/imerg.md)"
+
+_AGGREGATION_FLAECHENGEWICHTET = (
+    "exakte flächengewichtete (konservative) Mittelung 0,1°->0,25° "
+    "(Verhältnis 2,5, keine ganze Zahl; Begründung im Modulkopf von aleph/layers/imerg.py)"
+)
+_HINWEIS_EIGENE_GUELTIGKEIT = (
+    "keine eigene gueltig_anteil-Variable in diesem Würfel; die tatsächliche Gültigkeit "
+    "dieses Feldes kann von precipitation_gueltig_anteil abweichen (siehe nutzbar_maske())."
+)
+_HINWEIS_MINDESTANTEIL = (
+    f"nutzbar_maske() markiert Zellen mit precipitation_gueltig_anteil >= {MINDEST_GUELTIG_ANTEIL} "
+    "als nutzbar; das Teilmittel bleibt auch unterhalb dieser Schwelle im Würfel erhalten."
+)
+
+
+def _variablen_attribute() -> dict[str, dict]:
+    """Attribute je Datenvariable (Auflage statistik-pruefer 2026-10-02, Punkt 1).
+
+    Werden NUR bei der Erstanlage der Variable geschrieben (`_lege_wuerfel_an`,
+    voller Array-Write) - ein monatlicher Region-Write (`schreibe_in_wuerfel`,
+    `mode="r+"`) kann sie nicht ändern, xarray/Zarr verwerfen Attribute dort
+    kommentarlos. Ein Test liest sie aus der Zarr-Datei zurück.
+    """
+    return {
+        "precipitation_mm_monat": {
+            "einheit": "mm/Monat",
+            "herkunftseinheit": FELD_EINHEITEN["precipitation"],
+            "aggregation": _AGGREGATION_FLAECHENGEWICHTET,
+            "evidenzstufe": EVIDENZSTUFE_BEOBACHTET,
+            "mindest_gueltig_anteil_hinweis": _HINWEIS_MINDESTANTEIL,
+        },
+        "precipitation_gueltig_anteil": {
+            "einheit": "1 (Anteil 0..1)",
+            "beschreibung": (
+                "gültige Fläche / Zellfläche; gilt für precipitation_mm_monat UND "
+                "random_error_mm_monat (dieselbe Flächengewichtung, dieselben gültigen Pixel)"
+            ),
+            "evidenzstufe": "beobachtet (Datenlage-Kennzahl)",
+        },
+        "precipitation_gueltige_pixel": {
+            "einheit": "1 (Pixelzahl 0..9)",
+            "beschreibung": "Zahl der überlappenden 0,1°-Quellpixel mit gültigem Wert (voll = 9, Modulkopf)",
+            "evidenzstufe": "beobachtet (Datenlage-Kennzahl)",
+        },
+        "random_error_mm_monat": {
+            "einheit": "mm/Monat",
+            "herkunftseinheit": FELD_EINHEITEN["randomError"],
+            "aggregation": _AGGREGATION_FLAECHENGEWICHTET,
+            "genauigkeit": (
+                "exakt bei voll korrelierten Pixelfehlern, sonst Obergrenze - KEIN exakter "
+                "Zellfehler (docs/sources/imerg.md Abschnitt 8)"
+            ),
+            "evidenzstufe": EVIDENZSTUFE_BEOBACHTET,
+            "mindest_gueltig_anteil_hinweis": _HINWEIS_MINDESTANTEIL,
+        },
+        "gauge_relative_weighting": {
+            "einheit": "%",
+            "herkunftseinheit": FELD_EINHEITEN["gaugeRelativeWeighting"],
+            "aggregation": _AGGREGATION_FLAECHENGEWICHTET,
+            "hinweis_gueltigkeit": _HINWEIS_EIGENE_GUELTIGKEIT,
+            "evidenzstufe": EVIDENZSTUFE_BEOBACHTET,
+        },
+        "quality_index_min": {
+            "einheit": "äquivalente Messstationen je 2,5°-Box (Anbieterskala)",
+            "herkunftseinheit": FELD_EINHEITEN["precipitationQualityIndex"],
+            "beschreibung": (
+                "äquivalente Messstationen je 2,5°-Box (Anbieterskala), nur Zufallsfehler, über "
+                "gefrorenen Flächen nicht angepasst; Minimum der überlappenden 0,1°-Pixel "
+                "(NICHT Flächenmittel); Ampel des Anbieters: 0-2 rot, 2-10 gelb, >=10 grün "
+                "(docs/sources/imerg.md Abschnitt 8)"
+            ),
+            "hinweis_gueltigkeit": _HINWEIS_EIGENE_GUELTIGKEIT,
+            "evidenzstufe": EVIDENZSTUFE_BEOBACHTET,
+        },
+        "probability_liquid": {
+            "einheit": "%",
+            "herkunftseinheit": FELD_EINHEITEN["probabilityLiquidPrecipitation"],
+            "aggregation": (
+                "niederschlagsgewichtetes Mittel (Gewicht = Fläche x precipitation, wie im "
+                "Anbieterprodukt); Nenner 0 (trockene Zelle) -> NaN, weil der Wert dort nicht "
+                "definiert ist"
+            ),
+            "hinweis_gueltigkeit": _HINWEIS_EIGENE_GUELTIGKEIT,
+            "evidenzstufe": EVIDENZSTUFE_BEOBACHTET,
+        },
+        "kalibrierung_trmm": {
+            "einheit": "1 (1 = TRMM-, 0 = GPM-kalibriert)",
+            "beschreibung": (
+                f"1 für Monate vor {KALIBRIERUNG_GPM_AB[0]:04d}-{KALIBRIERUNG_GPM_AB[1]:02d} "
+                "(TRMM-Kalibrierung), sonst 0 (GPM-Kalibrierung); Beleg: Technical Documentation "
+                "S. 19 und S. 22 (docs/sources/imerg.md Abschnitt 4)"
+            ),
+        },
     }
 
 
@@ -968,23 +1217,35 @@ def _lege_wuerfel_an(pfad: Path) -> None:
         shutil.rmtree(hilfspfad)
     pfad.parent.mkdir(parents=True, exist_ok=True)
 
-    xr.Dataset(
-        coords={"zeit": achse, "breite": breite, "laenge": laenge},
-        attrs={"quelle": META["quelle"]},
-    ).to_zarr(hilfspfad, mode="w")
+    dataset_attribute = {
+        "quelle": META["quelle"],
+        "doi": "10.5067/GPM/IMERG/3B-MONTH/07",
+        "version": DATEI_VERSION_TEXT,
+        "zitierweise": ZITIERWEISE,
+    }
+    xr.Dataset(coords={"zeit": achse, "breite": breite, "laenge": laenge}).to_zarr(hilfspfad, mode="w")
+    attribute = _variablen_attribute()
     form = (len(achse), GITTER_BREITE, GITTER_LAENGE)
     for name, dtyp in _wuerfel_variablen().items():
         leerwert = np.float32(np.nan) if dtyp == "float32" else np.int16(0)
-        xr.Dataset({name: (WUERFEL_DIMS, np.broadcast_to(leerwert, form))}).to_zarr(
+        xr.Dataset({name: (WUERFEL_DIMS, np.broadcast_to(leerwert, form), attribute.get(name, {}))}).to_zarr(
             hilfspfad, mode="a", encoding={name: {"chunks": WUERFEL_CHUNKS}}
         )
     xr.Dataset({FERTIG_VARIABLE: (("zeit",), np.zeros(len(achse), dtype="int8"))}).to_zarr(hilfspfad, mode="a")
+    xr.Dataset(
+        {"kalibrierung_trmm": (("zeit",), _kalibrierung_trmm_werte(), attribute.get("kalibrierung_trmm", {}))}
+    ).to_zarr(hilfspfad, mode="a")
+    # Dataset-(Wurzel-)Attribute werden ZULETZT geschrieben: ein `to_zarr(mode="a")`,
+    # der eine neue Variable anlegt, löscht die Wurzel-Attribute kommentarlos mit
+    # (gemessen 2026-10-02, zusätzlich zum bekannten Problem bei Region-Writes) -
+    # Variablen-Attribute bleiben davon unberührt.
+    xr.Dataset(attrs=dataset_attribute).to_zarr(hilfspfad, mode="a")
     os.replace(hilfspfad, pfad)
 
 
 def _pruefe_wuerfel_format(pfad: Path) -> None:
     with xr.open_zarr(pfad, chunks=None) as ds:
-        fehlend = [v for v in [*_wuerfel_variablen(), FERTIG_VARIABLE] if v not in ds]
+        fehlend = [v for v in [*_wuerfel_variablen(), *ZEIT_VARIABLEN] if v not in ds]
         achse_ok = ds.sizes.get("zeit") == len(zeitachse()) and np.array_equal(ds["zeit"].values, zeitachse())
     if fehlend or not achse_ok:
         raise WuerfelFormat(
@@ -1295,12 +1556,45 @@ def download(start: str, ende: str, gleichzeitige_downloads: int = GLEICHZEITIGE
     return pfade
 
 
-def to_cube() -> list[tuple[int, int]]:
-    """Verarbeitet alle vorhandenen, geprüften Rohdateien unter raw/imerg/V07B/ in den Würfel.
+def _pruefe_gegen_manifest(pfad: Path, eintrag: ManifestZeile | None) -> str | None:
+    """None, wenn die Rohdatei zum Manifest passt (Zustand 'geladen', Name/Größe/sha256 gleich).
 
-    Setzt außerdem monat_fertig=5 für die Monate in
-    BEIM_ANBIETER_NICHT_VORHANDEN, sofern sie im Würfel noch leer sind. Ein
-    schon fertiger Monat (Zustand 1) wird nicht neu verarbeitet.
+    Sonst der Grund (Auflage statistik-pruefer 2026-10-02, Punkt 6): `to_cube`
+    verarbeitet NUR Dateien, die so geprüft sind. Eine Rohdatei ohne (oder mit
+    abweichendem) Manifesteintrag könnte unbemerkt verändert oder durch einen
+    fehlgeschlagenen, nicht erkannten Download ersetzt worden sein.
+    """
+    if eintrag is None:
+        return "kein Manifesteintrag für diesen Monat"
+    if eintrag.zustand != ZUSTAND_GELADEN:
+        return f"Manifest-Zustand ist '{eintrag.zustand}', nicht '{ZUSTAND_GELADEN}'"
+    if eintrag.datei != pfad.name:
+        return f"Manifest nennt Datei '{eintrag.datei}', gefunden '{pfad.name}'"
+    try:
+        groesse_soll = int(eintrag.groesse_bytes_gemessen)
+    except (TypeError, ValueError):
+        return "Manifest hat keine gemessene Größe (groesse_bytes_gemessen)"
+    groesse_ist = pfad.stat().st_size
+    if groesse_ist != groesse_soll:
+        return f"Größe {groesse_ist} Bytes, Manifest nennt {groesse_soll}"
+    if not eintrag.sha256 or eintrag.sha256 == "-":
+        return "Manifest hat keinen sha256-Wert"
+    if _sha256(pfad) != eintrag.sha256:
+        return "sha256 passt nicht zum Manifest"
+    return None
+
+
+def to_cube() -> list[tuple[int, int]]:
+    """Verarbeitet alle Rohdateien unter raw/imerg/V07B/ in den Würfel, DIE GEGEN DAS
+    MANIFEST GEPRÜFT SIND (Auflage statistik-pruefer 2026-10-02, Punkt 6):
+    nur Monate mit Manifest-Zustand 'geladen' und übereinstimmendem Namen,
+    gemessener Größe und sha256 (`_pruefe_gegen_manifest`). Eine nicht
+    passende Datei wird übersprungen, mit klarer Meldung im Protokoll - nie
+    still.
+
+    Setzt außerdem monat_fertig=5 für die Monate in BEIM_ANBIETER_NICHT_VORHANDEN,
+    sofern sie im Würfel noch leer (0) ODER mitten im Schreiben abgebrochen (3)
+    sind (Punkt 5). Ein schon fertiger Monat (Zustand 1) wird nicht neu verarbeitet.
     """
     melde = _protokoll_melder()
     basis = io.rohdaten_pfad("imerg", DATEI_VERSION_TEXT)
@@ -1316,6 +1610,13 @@ def to_cube() -> list[tuple[int, int]]:
                 jahr, monat = int(treffer.group(1)), int(treffer.group(2))
                 if monatsstatus(jahr, monat) == MONAT_FERTIG:
                     continue
+                grund = _pruefe_gegen_manifest(datei, manifest.get((jahr, monat)))
+                if grund is not None:
+                    melde(
+                        f"{jahr:04d}-{monat:02d}: übersprungen, nicht gegen das Manifest "
+                        f"geprüft ({grund})."
+                    )
+                    continue
                 try:
                     datensatz = _verarbeite_monat(datei, jahr, monat)
                     schreibe_in_wuerfel(datensatz)
@@ -1324,7 +1625,7 @@ def to_cube() -> list[tuple[int, int]]:
                     raise
                 verarbeitet.append((jahr, monat))
     for jahr, monat in sorted(BEIM_ANBIETER_NICHT_VORHANDEN):
-        if monatsstatus(jahr, monat) == MONAT_LEER:
+        if monatsstatus(jahr, monat) in (MONAT_LEER, MONAT_WIRD_GESCHRIEBEN):
             setze_nicht_vorhanden(jahr, monat)
             manifest.setdefault(
                 (jahr, monat),

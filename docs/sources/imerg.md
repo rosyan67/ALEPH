@@ -93,7 +93,13 @@ Kennzeichnung (wie in `docs/sources/vnp46a3.md`):
 - **`precipitationQualityIndex` (QIm):** „equivalent number of gauges" je 2,5°×2,5°-Fläche, abgeleitet aus dem Zufallsfehler; „this formulation only addresses random error, not bias." Ampel laut Anbieter: 0–2 „red", 2–10 „yellow", 10+ „green". Über gefrorenen Flächen nicht angepasst, weil die Fehlerkoeffizienten auf Regen abgestimmt sind. [Anbieter: S. 56]
 - **`randomError`** (mm/h): Zufallsfehler des Monatswerts nach Huffman (1997). [Anbieter: S. 44]
 - **`gaugeRelativeWeighting`** (%): Anteil der Regenmesser am Ergebnis; über Meer und regenmesserarmen Gebieten klein. [Anbieter: Tabelle 2; Deutung: Eigene Überlegung]
-- **Für ALEPH** [Eigene Überlegung]: `randomError` (in mm/Monat umgerechnet), `precipitationQualityIndex` und `gaugeRelativeWeighting` werden je Zelle flächengewichtet mitgespeichert. Hinweis: Zufallsfehler verschiedener Pixel addieren sich nicht linear; der flächengewichtete Mittelwert von `randomError` ist eine **Obergrenze** des Zellfehlers bei voll korrelierten Fehlern, kein exakter Zellfehler.
+- **Für ALEPH** (nach Auflagen statistik-pruefer, 2026-10-02):
+  - `random_error_mm_monat`: Flächenmittel der Pixelfehler, in mm/Monat; exakt bei voll korrelierten Pixelfehlern, sonst eine Obergrenze.
+  - `quality_index_min`: **Minimum** der überlappenden 0,1°-Pixel (kein Flächenmittel, weil der Index auf der 2,5°-Skala definiert und nicht linear ist); Ampel des Anbieters gilt weiter.
+  - `probability_liquid`: **niederschlagsgewichtet** gemittelt (Gewicht = Fläche × Niederschlag), wie im Anbieterprodukt; in einer trockenen Zelle NaN (nicht definiert).
+  - `gauge_relative_weighting`: Flächenmittel.
+  - Mindestschwelle für die Nutzung eines Zellwerts: gültige Fläche ≥ 50 % (`MINDEST_GUELTIG_ANTEIL`, festgelegt vor dem Ansehen echter Daten); der Würfel behält auch Teilmittel.
+  - Kalibrierungsbruch TRMM → GPM (bis 2014-05 TRMM) als Variable `kalibrierung_trmm`.
 
 ## 9. Bekannte Schwächen
 

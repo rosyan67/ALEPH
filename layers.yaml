@@ -26,9 +26,14 @@ layers:
       - precipitation_gueltige_pixel
       - random_error_mm_monat
       - gauge_relative_weighting
-      - quality_index
+      - quality_index_min
       - probability_liquid
+      - kalibrierung_trmm
     erstellt: 2026-10-02
+    geaendert: 2026-10-02 (Auflagen statistik-pruefer: Attribute im Würfel,
+      probability_liquid niederschlagsgewichtet, quality_index_min als
+      Minimum statt Flächenmittel, MINDEST_GUELTIG_ANTEIL/nutzbar_maske,
+      kalibrierung_trmm, to_cube nur mit manifestgeprüften Rohdateien)
     ersetzt: gpm_imerg (gelöscht, Datei hatte u. a. keine Zeitlimits, falsches
       Enddatum, falsche Stundenzahl, bilineare statt flächengewichtete Interpolation)
     hinweis: >-
