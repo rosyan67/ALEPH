@@ -502,6 +502,7 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .zr-direkt { fill: var(--text); font-size: 10.5px; font-family: var(--font-ui); }
 .zr-leer, .zr-hinweis { font-size: 12px; color: var(--text-dim); border: 1px dashed var(--line); border-radius: var(--radius); padding: 10px 12px; margin: 4px 0; }
 .zr-hinweis { color: var(--text); }
+.zr-hinweis--warn { border: 1px solid #e0574c; border-left-width: 3px; background: rgba(179,38,30,0.18); margin: 8px 0; }
 .zr-klein { font-size: 11px; color: var(--text-dim); line-height: 1.4; margin: 3px 0 6px; }
 .zr-tkopf { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); margin: 12px 0 0; }
 .zr-tabelle td, .zr-tabelle th { white-space: nowrap; }

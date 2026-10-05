@@ -257,6 +257,14 @@
       "<li><b>Pro Kopf:</b> " + esc(r.pro_kopf) + ".</li><li><b>Pro km²:</b> " + esc(r.je_km2) + ".</li>" +
       "<li><b>Index:</b> " + esc(r.index) + ".</li></ul></details>";
   }
+  // Befund 2026-10-05 (Bericht 2026-10-05_globus-alle-monate.md): Jahresmittel der voll gültigen Monate, Median über
+  // alle Länder, Jahr gegen Vorjahr: 2014–2020 zwischen −4 und +4 %, 2021 +10 %, 2022 +15 % (61 % der Länder über +10 %).
+  // Die Zahlen sind beobachtet; die Deutung als Messeffekt ist eine Vermutung (Ursache nicht geprüft).
+  var MESSSPRUNG_HINWEIS = '<div class="zr-hinweis zr-hinweis--warn"><b>Achtung 2021–2022:</b> In fast allen Ländern liegt das Licht ' +
+    "gleichzeitig deutlich höher (Median aller Länder gegen das Vorjahr: 2021 +10 %, 2022 +15 %; 2014–2020 zwischen −4 und +4 %). " +
+    "Ein so gleichzeitiger Anstieg spricht eher für eine Änderung der Messung oder Verarbeitung als für wirtschaftliche Entwicklung " +
+    "(Vermutung, Ursache nicht geprüft). <b>Nicht als Wachstum deuten.</b></div>";
+
   function punktLegende() {
     function sym(stil) { return '<svg width="12" height="12"><circle cx="6" cy="6" r="3.6" ' + stil + "/></svg>"; }
     return '<div class="ad-legende">' +
@@ -265,7 +273,7 @@
       "<span>" + sym('fill="var(--bg-panel)" stroke="' + FARBE_LICHT + '" stroke-width="1.3" stroke-opacity="0.5" stroke-dasharray="2 1.5"') +
       " unter 90 % gemessen: nur Teilsumme</span><span>Lücke = kein Wert (nie 0)</span></div>" +
       '<div class="zr-klein">Unterschiede von Monat zu Monat können aus der wechselnden Abdeckung kommen. Der Schnee-Verdacht zählt nach Fläche, nicht nach Licht, ' +
-      "und erfasst nicht alle verschneiten Monate (z. B. Helsinki 2019-01). Juni- und Juli-Werte nördlich von etwa 45° N können durch Dämmerung in kurzen Sommernächten erhöht sein (Vermutung, im Handbuch nicht geprüft).</div>";
+      "und erfasst nicht alle verschneiten Monate (z. B. Helsinki 2019-01). Juni- und Juli-Werte nördlich von etwa 45° N können durch Dämmerung in kurzen Sommernächten erhöht sein (Vermutung, im Handbuch nicht geprüft).</div>" + MESSSPRUNG_HINWEIS;
   }
 
   // ---------- Einzelansicht ----------
@@ -413,7 +421,7 @@
     var inhalt = zustand.index
       ? grafikIndex(l, bz, achse, null) + '<div class="zr-klein">Die Jahreswerte beruhen je Jahr auf unterschiedlichen guten Monaten; kleine Indexunterschiede können daher aus der Messung stammen. ' +
         "Licht als Jahreswert nach den Regeln der Auswertung 2018 (nur volle Jahre mit gültigem Wert), " +
-        "BIP als Weltbank-Jahreswert. Monatswerte, 12-Monats-Durchschnitt und Saisonbereinigung gibt es nur im Modus „absolut“." + (bz.hinweis ? " " + esc(bz.hinweis) : "") + "</div>"
+        "BIP als Weltbank-Jahreswert. Monatswerte, 12-Monats-Durchschnitt und Saisonbereinigung gibt es nur im Modus „absolut“." + (bz.hinweis ? " " + esc(bz.hinweis) : "") + "</div>" + MESSSPRUNG_HINWEIS
       : punktLegende() + grafikenAbsolut(l, bz, achse);
     feld.innerHTML =
       '<div class="ad-kopf"><h2>Länderansicht: ' + esc(name) + ' <span class="zr-code">' + esc(zustand.code) + "</span></h2>" +
@@ -472,6 +480,7 @@
 
   window.ALEPH_ZEITREIHE = { oeffne: oeffne, schliesse: schliesse };
   window.ALEPH_ZR = {
+    messsprungHinweis: MESSSPRUNG_HINWEIS,
     Z: Z, BEZUG: BEZUG, grafik: grafik, leereGrafik: leereGrafik, zeitachse: zeitachse, monatsPunkte: monatsPunkte,
     jahrPunkte: jahrPunkte, indexPunkte: indexPunkte, bereich: bereich, indexBereich: indexBereich, landName: landName,
     landEinheit: landEinheit, sig2: sig2, form: form, rahmen: rahmen, datenstand: datenstand, statusText: statusText

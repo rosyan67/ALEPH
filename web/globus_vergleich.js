@@ -130,7 +130,7 @@
       if (bz.bip) html += '<div class="ad-legende"><span><svg width="18" height="10"><line x1="1" y1="5" x2="17" y2="5" stroke="var(--text)" stroke-width="2"/></svg> Licht (durchgezogen)</span>' +
         '<span><svg width="18" height="10"><line x1="1" y1="5" x2="17" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="4 3"/></svg> ' + esc(bz.bipName) + " (gestrichelt)</span><span>Linie bei 100 = Stand 2018</span></div>";
       html += '<div class="zr-klein">Die Jahreswerte beruhen je Jahr auf unterschiedlichen guten Monaten; kleine Indexunterschiede können daher aus der Messung stammen. ' +
-        "Ein Index vergleicht jedes Land nur mit sich selbst (2018); er sagt nichts über die Größe der Länder." + (bz.hinweis ? " " + esc(bz.hinweis) : "") + "</div>";
+        "Ein Index vergleicht jedes Land nur mit sich selbst (2018); er sagt nichts über die Größe der Länder." + (bz.hinweis ? " " + esc(bz.hinweis) : "") + "</div>" + (ZR.messsprungHinweis || "");
       return html;
     }
     // absolut: Zeile Nachtlicht monatlich, Zeile BIP – je Zeile gleicher Wertebereich für alle Länder
@@ -141,7 +141,7 @@
         if (!mp[i].length) return ZR.leereGrafik(kopf(x), "Kein Monatswert (" + esc(x.l.monate.length ? ZR.statusText(x.l.monate[x.l.monate.length - 1]) : "keine Daten") + ").");
         return ZR.grafik({ achse: achse, y0: bm.y0, y1: bm.y1, breite: BREITE, titel: kopf(x), titelText: x.name, reihen: [{ farbe: x.p.farbe, form: x.p.form, maxAbstand: 1, klein: true, punkte: mp[i] }] });
       }).join("") + "</div>" +
-      '<div class="ad-legende"><span>voll: Summe über die gemessene Fläche (mind. 90 %)</span><span>hohl: Schnee-Verdacht</span><span>hohl und blass: unter 90 % gemessen, nur Teilsumme</span><span>Lücke = kein Wert</span></div>';
+      '<div class="ad-legende"><span>voll: Summe über die gemessene Fläche (mind. 90 %)</span><span>hohl: Schnee-Verdacht</span><span>hohl und blass: unter 90 % gemessen, nur Teilsumme</span><span>Lücke = kein Wert</span></div>' + (ZR.messsprungHinweis || "");
     if (bz.bip) {
       var bp = laender.map(function (x) { return ZR.jahrPunkte(x.l, bz.bip, x.name, bz.bipName); });
       var bb = ZR.bereich(bp, true);
