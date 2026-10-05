@@ -156,8 +156,9 @@
     return new Promise(function (ok, fehler) {
       var s = document.createElement("script");
       s.src = pfad;
-      s.onload = ok;
-      s.onerror = function () { fehler(new Error("Datei nicht gefunden: " + pfad)); };
+      // Nach dem Ausführen wird das Element wieder entfernt (die Daten stehen dann in window.ALEPH_NACHTLICHT).
+      s.onload = function () { s.remove(); ok(); };
+      s.onerror = function () { s.remove(); fehler(new Error("Datei nicht gefunden: " + pfad)); };
       document.head.appendChild(s);
     });
   }
@@ -178,13 +179,25 @@
     return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
   }
 
+  var laedt = {}; // monat -> Promise, solange der Monat geladen wird (kein doppeltes Laden)
   function ladeMonat(monat) {
     if (geladen[monat]) return Promise.resolve(geladen[monat]);
+    if (laedt[monat]) return laedt[monat];
+    var p = ladeMonatNeu(monat);
+    laedt[monat] = p;
+    function fertig() { delete laedt[monat]; }
+    p.then(fertig, fertig);
+    return p;
+  }
+
+  function ladeMonatNeu(monat) {
     zeit("start " + monat);
     return ladeSkript("daten/nachtlicht_" + monat + ".js").then(function () {
       var e = window.ALEPH_NACHTLICHT && window.ALEPH_NACHTLICHT[monat];
       if (!e) throw new Error("Monat " + monat + " nicht in der Datei");
       zeit("skript geladen");
+      // Der gepackte Text wird nach dem Entpacken nicht mehr gebraucht (Speicher beim Abspielen).
+      delete window.ALEPH_NACHTLICHT[monat];
       return entpacke(e.daten_b64).then(function (buf) {
         zeit("entpackt");
         var n = e.breite * e.laenge;
@@ -423,45 +436,191 @@
     zahl: zahl
   };
 
-  // ---------- Monat: Regler in der Zeitleiste ----------
+  // ---------- Monat: Zeitleiste über alle Monate vor 2023 ----------
+  // Der Regler läuft über ALLE Kalendermonate der Zeitleiste, auch über nicht auswählbare (z. B. „zurückgestellt“),
+  // damit gleiche Abstände gleiche Zeit bedeuten und kein Monat still fehlt. Landet er auf einem nicht auswählbaren
+  // Monat, springt er zum nächsten auswählbaren in Bewegungsrichtung und sagt das sichtbar.
+  // Auswählbar ist nur, was der Export als Datei ausgegeben hat (DS.angezeigt).
+  var LEISTE = ((DS.zeitleiste && DS.zeitleiste.length) ? DS.zeitleiste
+    : DS.angezeigt.map(function (m) { return { monat: m, auswaehlbar: true, zustand: null, zustand_text: zustandText(m) }; }))
+    .filter(function (e) { return e.monat < GESPERRT_AB; })
+    .map(function (e) {
+      var k = {}; Object.keys(e).forEach(function (s) { k[s] = e[s]; });
+      k.auswaehlbar = !!e.auswaehlbar && DS.angezeigt.indexOf(e.monat) >= 0;
+      return k;
+    });
+  API.zeitleiste = function () { return LEISTE; };
 
-  function monatsIndex(monat) { return DS.angezeigt.indexOf(monat); }
+  function leistenIndex(monat) {
+    for (var i = 0; i < LEISTE.length; i++) if (LEISTE[i].monat === monat) return i;
+    return -1;
+  }
+  function naechsterWaehlbarer(i, richtung) {
+    for (var j = i; j >= 0 && j < LEISTE.length; j += richtung) if (LEISTE[j].auswaehlbar) return j;
+    return -1;
+  }
+  // Klasse im Zustandsband: vollständig / nur Afrika-Europa-Asien / zurückgestellt / sonst nicht auswählbar.
+  function bandKlasse(e) {
+    if (e.auswaehlbar) return e.zustand === 4 ? "tl-z--region" : "tl-z--voll";
+    return e.zustand_text === "zurückgestellt" ? "tl-z--zurueck" : "tl-z--fehlt";
+  }
+  function leistenTitel(e) {
+    return e.monat + ": " + e.zustand_text + (e.grund ? " – " + e.grund + " (Download, zuletzt versucht " + e.zurueckgestellt_seit + ")" : "") +
+      (e.auswaehlbar ? "" : " – nicht auswählbar");
+  }
+  // Zusammenhängende Monate gleichen Zustands als Bereiche, z. B. „2013-01 bis 2017-12: nur Afrika-Europa-Asien (60)“.
+  function leistenBereiche() {
+    var b = [];
+    LEISTE.forEach(function (e) {
+      var letzter = b[b.length - 1];
+      if (letzter && letzter.text === e.zustand_text) { letzter.bis = e.monat; letzter.n++; }
+      else b.push({ von: e.monat, bis: e.monat, text: e.zustand_text, n: 1 });
+    });
+    return b.map(function (x) { return (x.n > 1 ? x.von + " bis " + x.bis : x.von) + ": " + x.text + " (" + x.n + ")"; });
+  }
+
+  function zeigeUebersprungen(e, gezeigt) {
+    var el = byId("monat-hinweis");
+    if (!e) { el.hidden = true; return; }
+    el.innerHTML = "<b>" + esc(e.monat) + ": " + esc(e.zustand_text) + "</b>" +
+      (e.grund ? " – " + esc(e.grund) + " (Download, zuletzt versucht " + esc(e.zurueckgestellt_seit) + ")" : "") +
+      ". Nicht auswählbar; gezeigt wird " + esc(gezeigt) + ".";
+    el.hidden = false;
+  }
 
   function zeigeMonatWahl(monat) {
-    var i = monatsIndex(monat), n = DS.angezeigt.length;
+    var i = leistenIndex(monat);
     byId("monat-regler").value = i;
     byId("monat-name").textContent = monat;
     byId("monat-zustand").textContent = zustandText(monat);
-    byId("monat-zurueck").disabled = i <= 0;
-    byId("monat-vor").disabled = i >= n - 1;
+    byId("monat-zurueck").disabled = naechsterWaehlbarer(i - 1, -1) < 0;
+    byId("monat-vor").disabled = naechsterWaehlbarer(i + 1, 1) < 0;
     Array.prototype.forEach.call(byId("monat-marken").children, function (el) {
-      el.classList.toggle("is-aktiv", el.getAttribute("data-monat") === monat);
+      el.classList.toggle("is-aktiv", el.getAttribute("data-jahr") === monat.slice(0, 4));
     });
+    Array.prototype.forEach.call(byId("monat-band").children, function (el, j) { el.classList.toggle("is-aktiv", j === i); });
   }
 
   function baueMonatWahl() {
-    var n = DS.angezeigt.length, marken = byId("monat-marken");
+    var n = LEISTE.length, marken = byId("monat-marken"), band = byId("monat-band");
     byId("monat-regler").max = Math.max(0, n - 1);
-    byId("monat-regler").disabled = n < 2;
-    // Beschriftung: bei wenigen Monaten jeden, sonst nur jeden Januar und die Enden.
-    DS.angezeigt.forEach(function (m, i) {
-      if (n > 12 && i !== 0 && i !== n - 1 && m.slice(5) !== "01") return;
+    byId("monat-regler").disabled = DS.angezeigt.length < 2;
+    function pos(i) { return n > 1 ? 100 * i / (n - 1) : 50; }
+    // Jahresmarken: Strich und Jahreszahl an jedem Januar (und am ersten Monat).
+    LEISTE.forEach(function (e, i) {
+      if (i !== 0 && e.monat.slice(5) !== "01") return;
       var s = document.createElement("span");
-      s.style.left = (n > 1 ? 100 * i / (n - 1) : 50) + "%";
-      s.textContent = n > 12 && i !== 0 && i !== n - 1 ? m.slice(0, 4) : m;
-      s.setAttribute("data-monat", m);
+      s.className = "tl-jahr";
+      s.style.left = pos(i) + "%";
+      s.textContent = e.monat.slice(0, 4);
+      s.setAttribute("data-jahr", e.monat.slice(0, 4));
       marken.appendChild(s);
     });
+    // Zustandsband: ein Feld je Monat, Zustand als Farbe und im Tooltip; Klick wählt den Monat.
+    var breite = n > 1 ? 100 / (n - 1) : 100;
+    LEISTE.forEach(function (e, i) {
+      var f = document.createElement("span");
+      f.className = "tl-z " + bandKlasse(e);
+      f.style.left = (pos(i) - breite / 2) + "%";
+      f.style.width = breite + "%";
+      f.title = leistenTitel(e);
+      f.setAttribute("data-monat", e.monat);
+      band.appendChild(f);
+    });
+    band.addEventListener("click", function (ev) {
+      var m = ev.target.getAttribute("data-monat");
+      if (!m) return;
+      spiele(false);
+      var j = leistenIndex(m);
+      waehleIndex(j, j >= leistenIndex(aktiverMonat) ? 1 : -1);
+    });
+    // Legende des Bandes; nicht auswählbare Monate werden ausdrücklich genannt.
+    var fehlend = LEISTE.filter(function (e) { return !e.auswaehlbar; });
+    byId("monat-band-legende").innerHTML =
+      '<span><span class="tl-z-muster tl-z--voll"></span>vollständig</span>' +
+      '<span><span class="tl-z-muster tl-z--region"></span>nur Afrika-Europa-Asien</span>' +
+      (fehlend.length ? '<span class="tl-z-fehlt"><span class="tl-z-muster ' + bandKlasse(fehlend[0]) + '"></span>' +
+        fehlend.map(function (e) { return esc(e.monat) + " " + esc(e.zustand_text); }).join(", ") + " – nicht auswählbar</span>" : "");
     byId("monat-wahl").hidden = false;
+    byId("monat-band-legende").hidden = false;
   }
 
+  // Index der Zeitleiste wählen; nicht auswählbare Monate werden in Richtung `richtung` übersprungen (mit Hinweis).
+  function waehleIndex(i, richtung) {
+    var e = LEISTE[i];
+    if (!e) return Promise.resolve();
+    var j = e.auswaehlbar ? i : naechsterWaehlbarer(i, richtung || 1);
+    if (j < 0) j = naechsterWaehlbarer(i, -(richtung || 1));
+    if (j < 0) return Promise.resolve();
+    zeigeUebersprungen(e.auswaehlbar ? null : e, LEISTE[j].monat);
+    if (LEISTE[j].monat === aktiverMonat) { zeigeMonatWahl(aktiverMonat); return Promise.resolve(); }
+    return setzeMonat(LEISTE[j].monat);
+  }
+
+  // ---------- Abspielen: Monat für Monat ----------
+  // Zeigt jeden auswählbaren Monat der Reihe nach; nicht auswählbare werden übersprungen und genannt.
+  // Pause zwischen zwei Monaten erst NACH dem Laden, damit ein langsamer Rechner nicht hinterherhinkt.
+  var SPIEL_PAUSE_MS = 1200;
+  var spielt = false, spielTimer = null;
+  function spiele(an) {
+    if (spielt === an) return;
+    spielt = an;
+    clearTimeout(spielTimer);
+    var k = byId("abspielen");
+    k.textContent = an ? "❚❚" : "▶";
+    k.setAttribute("aria-label", an ? "Anhalten" : "Monat für Monat abspielen");
+    k.title = an ? "Anhalten" : "Monat für Monat abspielen";
+    byId("spiel-hinweis").hidden = !an;
+    if (!an) return;
+    var i = leistenIndex(aktiverMonat);
+    if (naechsterWaehlbarer(i + 1, 1) < 0) { // am Ende: von vorn
+      var erster = naechsterWaehlbarer(0, 1);
+      if (erster >= 0) { setzeMonat(LEISTE[erster].monat).then(weiter, function () { spiele(false); }); return; }
+    }
+    spielSchritt();
+  }
+  function weiter() { if (spielt) spielTimer = setTimeout(spielSchritt, SPIEL_PAUSE_MS); }
+  function spielSchritt() {
+    if (!spielt) return;
+    var i = leistenIndex(aktiverMonat), j = naechsterWaehlbarer(i + 1, 1);
+    if (j < 0) { spiele(false); return; }
+    var uebersprungen = LEISTE.slice(i + 1, j);
+    zeigeUebersprungen(uebersprungen.length ? uebersprungen[0] : null, LEISTE[j].monat);
+    setzeMonat(LEISTE[j].monat).then(weiter, function () { spiele(false); });
+  }
+
+  // ---------- Speicher: höchstens SPEICHER_MONATE entpackte Monate behalten ----------
+  // Jeder Monat belegt entpackt rund 3 MB plus ein Bild; beim Abspielen über 119 Monate würde der Speicher des
+  // MacBook Pro 2015 sonst volllaufen. Der aktive Monat und sein Vorjahresmonat (Vergleich) bleiben immer.
+  var SPEICHER_MONATE = 8;
+  var benutzt = []; // Reihenfolge der letzten Nutzung
+  function merkeBenutzt(monat) {
+    benutzt = benutzt.filter(function (m) { return m !== monat; });
+    benutzt.push(monat);
+    var schutz = [aktiverMonat, aktiverMonat && vorjahr(aktiverMonat)];
+    for (var k = 0; benutzt.length > SPEICHER_MONATE && k < benutzt.length;) {
+      var m = benutzt[k];
+      if (schutz.indexOf(m) >= 0) { k++; continue; }
+      delete geladen[m];
+      delete diffBilder[m];
+      benutzt.splice(k, 1);
+    }
+  }
+
+  var letzteAnfrage = 0;
   function setzeMonat(monat) {
+    var anfrage = ++letzteAnfrage;
     return ladeMonat(monat).then(function (m) {
       if (!vergleichAktiv(monat)) return [m, null];
       return ladeMonat(vorjahr(monat)).then(function (v) { return [m, v]; });
     }).then(function (paar) {
+      // Inzwischen wurde ein anderer Monat gewählt (z. B. schnelles Ziehen am Regler): dieses Ergebnis verwerfen,
+      // sonst könnte am Ende ein anderer Monat zu sehen sein, als der Regler zeigt.
+      if (anfrage !== letzteAnfrage) return paar[0];
       var m = paar[0], v = paar[1];
       aktiverMonat = monat;
+      merkeBenutzt(monat);
+      if (v) merkeBenutzt(vorjahr(monat));
       var url = m.bildUrl;
       if (v) url = diffBilder[monat] || (diffBilder[monat] = baueDiffBild(m, v));
       zeigeVergleichsLegende(!!v, monat);
@@ -810,7 +969,7 @@
     var status = Object.keys(z).map(function (k) { return z[k] + " " + (b[k] || ("Status " + k)); }).join(", ");
     var stand = aktiverMonat && geladen[aktiverMonat];
     var zeilen = [
-      ["Angezeigt", DS.angezeigt.length ? DS.angezeigt.map(function (m) { return m + " (" + zustandText(m) + ")"; }).join(", ") : "kein Monat"],
+      ["Zeitleiste", DS.angezeigt.length ? DS.angezeigt.length + " Monate auswählbar; " + leistenBereiche().join("; ") : "kein Monat"],
       ["Würfel", DS.monate_gesamt + " Monate (" + (DS.zeitraum_offen || "vor 2023") + "): " + status],
       ["Gesperrt", "2023–2025 (Validierungs- und Endtestzeitraum): weder auswählbar noch angezeigt, auch nicht mitgezählt"],
       ["Feld", DS.feld],
@@ -887,17 +1046,20 @@
   });
   byId("an-grenzen").addEventListener("change", function (e) { setzeGrenzenSichtbar(e.target.checked); });
   byId("monat-regler").addEventListener("input", function (e) {
-    var m = DS.angezeigt[Number(e.target.value)];
-    if (m && m !== aktiverMonat) setzeMonat(m);
+    spiele(false);
+    var i = Number(e.target.value), jetzt = leistenIndex(aktiverMonat);
+    if (LEISTE[i] && LEISTE[i].monat !== aktiverMonat) waehleIndex(i, i >= jetzt ? 1 : -1);
   });
   byId("monat-zurueck").addEventListener("click", function () {
-    var i = monatsIndex(aktiverMonat);
-    if (i > 0) setzeMonat(DS.angezeigt[i - 1]);
+    spiele(false);
+    waehleIndex(leistenIndex(aktiverMonat) - 1, -1);
   });
   byId("monat-vor").addEventListener("click", function () {
-    var i = monatsIndex(aktiverMonat);
-    if (i >= 0 && i < DS.angezeigt.length - 1) setzeMonat(DS.angezeigt[i + 1]);
+    spiele(false);
+    waehleIndex(leistenIndex(aktiverMonat) + 1, 1);
   });
+  byId("abspielen").addEventListener("click", function () { spiele(!spielt); });
+  API.spiele = function (an) { spiele(!!an); };
   byId("info-zu").addEventListener("click", schliesseDossier);
   byId("vergleich-an").addEventListener("change", function (e) {
     vergleichAn = e.target.checked;
@@ -981,6 +1143,7 @@
           var q = h.punkt.split(",").map(Number);
           klick({ point: map.project(q), lngLat: { lng: q[0], lat: q[1] } });
         }
+        window.ALEPH_BEREIT_MS = Math.round(performance.now()); // für scripts/globus_startzeit.py
         document.body.setAttribute("data-bereit", "1");
         document.dispatchEvent(new CustomEvent("aleph-bereit", { detail: h }));
       });

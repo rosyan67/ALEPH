@@ -119,11 +119,16 @@
   <!-- ---------- Zeitleiste unten: Monat, Zustand, Quelle ---------- -->
   <footer class="timeline-dock" id="zeitleiste">
     <div id="nachtlicht-hinweis" class="dock-hinweis" hidden></div>
+    <div id="spiel-hinweis" class="dock-hinweis dock-hinweis--spiel" hidden>
+      <b>Monatswerte schwanken jahreszeitlich (Schnee, kurze Nächte); keine Trendaussage.</b>
+    </div>
+    <div id="monat-hinweis" class="dock-hinweis" hidden></div>
     <div id="monat-wahl" class="tl-main" hidden>
-      <span class="tl-label">Monat</span>
+      <button id="abspielen" class="tl-schritt tl-spiel" aria-label="Monat für Monat abspielen" title="Monat für Monat abspielen">▶</button>
       <button id="monat-zurueck" class="tl-schritt" aria-label="Voriger Monat">‹</button>
       <div class="tl-regler">
         <input id="monat-regler" type="range" min="0" max="0" value="0" step="1" aria-label="Monat wählen">
+        <div class="tl-band" id="monat-band" aria-hidden="true"></div>
         <div class="tl-marken" id="monat-marken"></div>
       </div>
       <button id="monat-vor" class="tl-schritt" aria-label="Nächster Monat">›</button>
@@ -132,6 +137,7 @@
         <span id="monat-zustand" class="tl-zustand"></span>
       </div>
     </div>
+    <div id="monat-band-legende" class="tl-band-legende" hidden></div>
     <label class="tl-vergleich" id="vergleich-zeile"><input type="checkbox" id="vergleich-an" disabled> Vergleich mit Vorjahresmonat <span class="tl-klein">(nur 2019 gegen 2018)</span></label>
     <div class="tl-quelle" id="quelle-zeile"></div>
   </footer>

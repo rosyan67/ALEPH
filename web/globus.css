@@ -290,6 +290,31 @@ body.ebenen-offen .legende-karte { transform: translateX(340px); }
 .tl-marken span:first-child { transform: none; margin-left: -7px; }
 .tl-marken span:last-child:not(:first-child) { transform: translateX(-100%); margin-left: 7px; }
 .tl-marken span.is-aktiv { color: var(--gold-soft); }
+/* Zeitleiste über alle Jahre (2026-10-05): Regler höher, darunter das Zustandsband (ein Feld je Monat) und die
+   Jahresmarken (Strich am Januar, Jahreszahl rechts daneben). */
+.tl-regler { height: 46px; }
+.tl-marken { top: 31px; }
+.tl-marken span.tl-jahr, .tl-marken span.tl-jahr:first-child, .tl-marken span.tl-jahr:last-child:not(:first-child) {
+  transform: none; margin-left: 0; padding-left: 3px; border-left: 1px solid var(--text-faint); line-height: 11px;
+}
+.tl-band { position: absolute; left: 7px; right: 7px; top: 21px; height: 7px; }
+.tl-z { position: absolute; top: 0; height: 100%; box-sizing: border-box; border-right: 1px solid rgba(5,7,13,0.7); cursor: pointer; }
+.tl-z--voll { background: #c9cfdc; }
+/* nur Afrika-Europa-Asien: obere Hälfte geladen, untere im Blau von „noch nicht geladen“ (wie auf der Karte) */
+.tl-z--region { background: linear-gradient(to bottom, #c9cfdc 0 50%, rgb(96,106,168) 50% 100%); }
+.tl-z--zurueck { background: #e0574c; top: -3px; height: calc(100% + 6px); }
+.tl-z--fehlt { background: #5c6785; }
+.tl-z.is-aktiv { box-shadow: 0 0 0 1.5px var(--gold-soft); z-index: 1; }
+.tl-band-legende {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 2px;
+  font-size: 10.5px; color: var(--text-dim);
+}
+.tl-band-legende > span { display: inline-flex; align-items: center; gap: 5px; }
+.tl-z-muster { display: inline-block; position: static; width: 14px; height: 7px; border: 0; }
+.tl-z-muster.tl-z--zurueck { height: 9px; }
+.tl-z-fehlt { color: #f0a39b; }
+.tl-spiel { width: 30px; font-size: 12px; }
+.dock-hinweis--spiel { font-size: 13px; border-left-color: #e0574c; background: rgba(179,38,30,0.28); }
 .tl-anzeige { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; min-width: 150px; padding-left: 6px; }
 .tl-monat { font-family: var(--font-display); font-size: 18px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tl-zustand { font-size: 11px; color: var(--text-dim); }

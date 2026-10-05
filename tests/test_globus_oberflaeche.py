@@ -235,3 +235,24 @@ def test_laendervergleich_nutzt_nicht_den_adressschluessel_des_vorjahresvergleic
     js = (WEB / "globus_vergleich.js").read_text(encoding="utf-8")
     assert "h.laendervergleich" in js and "h.vergleich" not in js
     assert 'h.vergleich === "1"' in (WEB / "globus.js").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------- Zeitleiste über alle Jahre (2026-10-05)
+
+
+def test_zeitleiste_mit_band_abspielen_und_hinweis():
+    html = (WEB / "globus.html").read_text(encoding="utf-8")
+    for teil in ('id="abspielen"', 'id="monat-band"', 'id="monat-band-legende"', 'id="monat-hinweis"', 'id="spiel-hinweis"'):
+        assert teil in html
+    assert "Monatswerte schwanken jahreszeitlich (Schnee, kurze Nächte); keine Trendaussage." in html
+    js = (WEB / "globus.js").read_text(encoding="utf-8")
+    # Die Zeitleiste filtert gesperrte Monate selbst und lässt nur exportierte Monate wählen.
+    assert ".filter(function (e) { return e.monat < GESPERRT_AB; })" in js
+    assert "k.auswaehlbar = !!e.auswaehlbar && DS.angezeigt.indexOf(e.monat) >= 0;" in js
+    # Speichergrenze beim Abspielen
+    assert "var SPEICHER_MONATE = 8;" in js
+
+
+def test_ueber_aleph_nennt_nicht_auswaehlbare_monate():
+    js = (WEB / "globus_ueber.js").read_text(encoding="utf-8")
+    assert "nicht auswählbar: " in js

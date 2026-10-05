@@ -16,8 +16,12 @@
   document.querySelector(".corner-group--right").appendChild(knopf);
 
   var m = DS.angezeigt || [];
-  var zeitraum = m.length ? m[0] + " bis " + m[m.length - 1] + " (" + m.length + " Monate)" : "noch kein Monat";
-  var nurRegion = (DS.monate || []).some(function (x) { return x.zustand === 4; });
+  // Nicht auswählbare Monate (z. B. zurückgestellt) werden genannt, nicht still weggelassen.
+  var fehlend = (G.zeitleiste ? G.zeitleiste() : []).filter(function (e) { return !e.auswaehlbar; })
+    .map(function (e) { return e.monat + " " + e.zustand_text; });
+  var zeitraum = m.length ? m[0] + " bis " + m[m.length - 1] + " (" + m.length + " Monate" +
+    (fehlend.length ? "; nicht auswählbar: " + fehlend.join(", ") : "") + ")" : "noch kein Monat";
+  var nurRegion = (DS.monate || []).filter(function (x) { return x.zustand === 4; }).length;
 
   var feld = document.createElement("section");
   feld.id = "ueber";
@@ -35,7 +39,7 @@
     "<dt>hypothetisches Szenario</dt><dd>Was-wäre-wenn, ausdrücklich keine Vorhersage (noch keine auf dem Globus)</dd></dl>" +
     "<h3>Datenstand</h3><ul>" +
     "<li>Nachtlicht: NASA VIIRS Black Marble VNP46A3, " + esc(zeitraum) +
-    (nurRegion ? ", bisher nur Afrika, Europa und Asien vollständig; Amerika und Ozeanien werden noch geladen" : "") + ".</li>" +
+    (nurRegion ? "; davon " + nurRegion + " Monate bisher nur für Afrika, Europa und Asien vollständig (Amerika und Ozeanien werden noch geladen)" : "") + ".</li>" +
     "<li>Wirtschaft: Weltbank World Development Indicators (reales BIP, BIP pro Kopf, Bevölkerung).</li>" +
     "<li>Grenzen: Natural Earth 5.1.1 und UN-Länderliste M49; Stand Mai 2022, nicht zeitabhängig.</li>" +
     "<li>Stand dieser Anzeige: " + esc(String(DS.erstellt_utc).replace("T", " ").replace("Z", " UTC")) + ".</li></ul>" +

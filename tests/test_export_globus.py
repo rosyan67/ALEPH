@@ -444,9 +444,10 @@ def test_echter_export_24_monate_und_2024_gesperrt():
 
 
 @pytest.mark.skipif(not _web_daten_da(), reason="web/daten nicht erzeugt (Globus aktualisieren)")
-@pytest.mark.parametrize("monat", ["2018-06", "2019-06"])
+@pytest.mark.parametrize("monat", ["2014-06", "2018-06", "2019-06", "2021-06"])
 def test_echter_export_stichproben(monat):
-    code, anteil = g.entpacke_monat(_monat_aus_web(monat))
+    eintrag = _monat_aus_web(monat)
+    code, anteil = g.entpacke_monat(eintrag)
 
     def an(lat, lon):
         z, s = g.zelle_von(lat, lon)
@@ -458,8 +459,13 @@ def test_echter_export_stichproben(monat):
         assert 50 <= a <= 100 and lo <= wert <= hi, (ort, wert, a)
     wert, a = an(23.0, 12.0)  # Sahara
     assert 50 <= a <= 100 and wert < 0.5
-    assert an(5.0, -75.0)[1] == g.ANTEIL_NICHT_GELADEN  # Kolumbien: noch nicht geladen
-    assert an(40.0, -100.0)[1] == g.ANTEIL_NICHT_GELADEN  # USA
+    # Amerika: im Zustand 4 „noch nicht geladen“, im Zustand 1 gemessen (seit dem Ladestand 2026-10 z. B. 2018-06).
+    for ort, lat, lon in (("Kolumbien", 5.0, -75.0), ("USA", 40.0, -100.0)):
+        a = an(lat, lon)[1]
+        if eintrag["zustand"] == g.MONAT_REGION:
+            assert a == g.ANTEIL_NICHT_GELADEN, (ort, a)
+        else:
+            assert eintrag["zustand"] == g.MONAT_FERTIG and a <= 100, (ort, a)
     assert an(85.1, 0.1)[1] == g.ANTEIL_KEINE_DATEN  # Arktis: keine Daten, nicht „nicht geladen“
 
 
@@ -468,3 +474,69 @@ def test_echter_export_ost_sabah_auf_dem_globus():
     eh = _lies_js(WEB_DATEN / "einheiten.js")
     namen = {f["properties"]["einheit_id"]: f["properties"]["name"] for f in eh["geojson"]["features"]}
     assert namen["sabah_north_borneo"] == "Ost-Sabah (von den Philippinen beansprucht)"
+
+
+# ---------------------------------------------------------------- Zeitleiste über alle Monate (2026-10-05)
+
+PROTOKOLL_BEISPIEL = """\
+2026-09-30 19:14:03 UTC  2022-07: Start 2026-09-30 19:14:03 UTC (Stufe 1: nur Afrika-Europa-Asien).
+2026-09-30 19:14:07 UTC  2022-07: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert, Rohdaten bleiben erhalten. 2022-07: Im Katalog fehlen 36 Positionen der Referenzliste (z. B. h00v01); das passt nicht.
+2026-09-30 20:00:00 UTC  2021-03: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert. 2021-03: Dateien fehlen; Rest.
+2026-10-01 08:00:00 UTC  2021-03: fertig (Stufe 1), 188 Dateien geprüft.
+2026-10-04 09:57:11 UTC  2022-07: Start 2026-10-04 09:57:11 UTC (Stufe 1: nur Afrika-Europa-Asien).
+2026-10-04 09:57:15 UTC  2022-07: ZURÜCKGESTELLT (später erneut versuchen), nicht als fertig markiert, Rohdaten bleiben erhalten. 2022-07: Im Katalog fehlen 36 Positionen der Referenzliste (z. B. h00v01); das passt nicht.
+2026-10-04 10:00:00 UTC  2024-02: ZURÜCKGESTELLT (später erneut versuchen). 2024-02: Grund.
+Zeile ohne Zeitstempel
+"""
+
+
+def test_zurueckgestellte_monate_aus_dem_protokoll(tmp_path):
+    p = tmp_path / "vnp46a3.log"
+    p.write_text(PROTOKOLL_BEISPIEL, encoding="utf-8")
+    z = g.zurueckgestellte_monate(p)
+    # 2021-03 ist danach fertig geworden; 2024-02 liegt im gesperrten Zeitraum und wird nie genannt.
+    assert list(z) == ["2022-07"]
+    assert z["2022-07"]["seit"] == "2026-10-04"
+    assert z["2022-07"]["grund"] == "Im Katalog fehlen 36 Positionen der Referenzliste (z. B. h00v01)"
+
+
+def test_zurueckgestellte_monate_ohne_protokoll_ist_leer(tmp_path):
+    assert g.zurueckgestellte_monate(tmp_path / "fehlt.log") == {}
+
+
+def test_zeitleiste_nennt_jeden_monat_vor_2023_mit_zustand():
+    status = [("2018-01", 1), ("2018-02", 4), ("2018-03", 0), ("2018-04", 2), ("2018-05", 3), ("2022-07", 0),
+              ("2023-01", 1), ("2024-01", 4)]
+    z = g.zeitleiste(status, {"2022-07": {"seit": "2026-10-04", "grund": "Katalog unvollständig"}})
+    assert [e["monat"] for e in z] == ["2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2022-07"]
+    assert [e["auswaehlbar"] for e in z] == [True, True, False, False, False, False]
+    texte = {e["monat"]: e["zustand_text"] for e in z}
+    assert texte == {"2018-01": "vollständig", "2018-02": "nur Afrika-Europa-Asien", "2018-03": "noch nicht geladen",
+                     "2018-04": "unvollständig, wird neu geladen", "2018-05": "wird gerade geschrieben",
+                     "2022-07": "zurückgestellt"}
+    assert z[-1]["grund"] == "Katalog unvollständig" and z[-1]["zurueckgestellt_seit"] == "2026-10-04"
+
+
+def test_zeitleiste_ein_fertiger_monat_ist_nie_zurueckgestellt():
+    z = g.zeitleiste([("2021-03", 4)], {"2021-03": {"seit": "2026-09-30", "grund": "x"}})
+    assert z[0]["auswaehlbar"] and z[0]["zustand_text"] == "nur Afrika-Europa-Asien" and "grund" not in z[0]
+
+
+def test_export_schreibt_zeitleiste_ohne_gesperrte_monate(fake_ssd, tmp_path):
+    (fake_ssd / "protokoll").mkdir()
+    (fake_ssd / "protokoll" / "vnp46a3.log").write_text(PROTOKOLL_BEISPIEL, encoding="utf-8")
+    stand = _lies_js(g.exportiere(tmp_path / "web_daten") and tmp_path / "web_daten" / "datenstand.js")
+    assert [(e["monat"], e["auswaehlbar"]) for e in stand["zeitleiste"]] == [("2018-01", True), ("2018-02", False)]
+
+
+@pytest.mark.skipif(not _web_daten_da(), reason="web/daten nicht erzeugt (Globus aktualisieren)")
+def test_echter_export_zeitleiste_2013_bis_2022():
+    stand = _lies_js(WEB_DATEN / "datenstand.js")
+    leiste = stand["zeitleiste"]
+    soll = [f"{j}-{m:02d}" for j in range(2013, 2023) for m in range(1, 13)]
+    assert [e["monat"] for e in leiste] == soll  # jeder Monat genau einmal, keiner ab 2023
+    assert [e["monat"] for e in leiste if e["auswaehlbar"]] == stand["angezeigt"]
+    for e in leiste:
+        assert e["zustand_text"], e
+        if not e["auswaehlbar"]:
+            assert e["zustand"] not in (1, 4)

@@ -49,6 +49,7 @@ import argparse
 import base64
 import hashlib
 import json
+import re
 import sys
 import zlib
 from datetime import datetime, timezone
@@ -75,6 +76,15 @@ MONAT_FERTIG = 1
 MONAT_REGION = 4  # aleph.layers.vnp46a3.MONAT_REGION_VOLLSTAENDIG
 REGION = "afrika_europa_asien"
 ZUSTAND_TEXT = {MONAT_FERTIG: "vollständig", MONAT_REGION: "nur Afrika-Europa-Asien"}
+# Für die Zeitleiste: auch Monate, die (noch) nicht auswählbar sind, werden mit ihrem Zustand genannt –
+# nie still weggelassen (Auftrag 2026-10-05).
+ZUSTAND_TEXT_ZEITLEISTE = {0: "noch nicht geladen", 2: "unvollständig, wird neu geladen", 3: "wird gerade geschrieben",
+                           **ZUSTAND_TEXT}
+ZURUECKGESTELLT_TEXT = "zurückgestellt"
+# Download-Protokoll (nur gelesen): Dort vermerkt der Lauf „<JJJJ-MM>: ZURÜCKGESTELLT (später erneut versuchen)“
+# mit Grund (aleph/layers/vnp46a3_lauf.py). Der Download selbst wird nicht angefasst.
+PROTOKOLL_DOWNLOAD = ("protokoll", "vnp46a3.log")
+GRUND_MAX_ZEICHEN = 220
 ENDTEST_AB = "2023-01"
 
 # Kontrollzellen für den Selbsttest im Browser (Werte nach dem Entpacken
@@ -134,6 +144,58 @@ def monatsstatus(ds) -> list[tuple[str, int]]:
 def anzeigbare_monate(ds) -> list[str]:
     """Monate mit Zustand 1 (fertig) oder 4 (nur Afrika-Europa-Asien), nur vor 2023-01."""
     return [m for m, s in monatsstatus(ds) if s in (MONAT_FERTIG, MONAT_REGION) and m < ENDTEST_AB]
+
+
+_PROTOKOLL_ZEILE = re.compile(r"^(\d{4}-\d{2}-\d{2}) \d{2}:\d{2}:\d{2} UTC\s+(\d{4}-\d{2}): (.*)$")
+
+
+def zurueckgestellte_monate(pfad: Path) -> dict[str, dict]:
+    """Monate, deren LETZTER Eintrag im Download-Protokoll (Startzeilen nicht gezählt) „ZURÜCKGESTELLT“ ist.
+
+    Rückgabe: {JJJJ-MM: {"seit": JJJJ-MM-TT des letzten Versuchs, "grund": kurzer Grund aus dem Protokoll}}, nur
+    Monate vor 2023-01. Fehlt das Protokoll oder ist es nicht lesbar, ist das Ergebnis leer (die Zeitleiste zeigt
+    dann den Zustand aus dem Würfel, z. B. „noch nicht geladen“)."""
+    try:
+        zeilen = pfad.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return {}
+    letzte: dict[str, tuple[str, str]] = {}
+    for z in zeilen:
+        t = _PROTOKOLL_ZEILE.match(z)
+        if not t or t.group(2) >= ENDTEST_AB:
+            continue
+        datum, monat, text = t.groups()
+        if text.startswith("Start "):
+            continue
+        letzte[monat] = (datum, text)
+    ergebnis = {}
+    for monat, (datum, text) in letzte.items():
+        if "ZURÜCKGESTELLT" not in text:
+            continue
+        # Grund: der Teil nach „<monat>: “ im Meldungstext, bis zum ersten Semikolon (Rest ist Technik).
+        teil = text.split(f"{monat}: ", 1)[1] if f"{monat}: " in text else ""
+        grund = teil.split(";", 1)[0].strip().rstrip(".")
+        if len(grund) > GRUND_MAX_ZEICHEN:
+            grund = grund[: GRUND_MAX_ZEICHEN - 1].rstrip() + "…"
+        ergebnis[monat] = {"seit": datum, "grund": grund or "Grund nicht im Protokoll"}
+    return ergebnis
+
+
+def zeitleiste(status: list[tuple[str, int]], zurueckgestellt: dict[str, dict]) -> list[dict]:
+    """Alle Monate vor 2023-01 mit Zustand; auswählbar nur Zustand 1 und 4. Ein nicht fertiger Monat, den der
+    Download zurückgestellt hat, heißt „zurückgestellt“ (mit Grund), sonst gilt der Text seines Würfel-Zustands."""
+    leiste = []
+    for monat, s in status:
+        if monat >= ENDTEST_AB:
+            continue
+        e = {"monat": monat, "zustand": s, "auswaehlbar": s in (MONAT_FERTIG, MONAT_REGION),
+             "zustand_text": ZUSTAND_TEXT_ZEITLEISTE.get(s, f"Zustand {s}")}
+        if not e["auswaehlbar"] and monat in zurueckgestellt:
+            e["zustand_text"] = ZURUECKGESTELLT_TEXT
+            e["zurueckgestellt_seit"] = zurueckgestellt[monat]["seit"]
+            e["grund"] = zurueckgestellt[monat]["grund"]
+        leiste.append(e)
+    return leiste
 
 
 def kodiere_monat(ds, monat: str, nicht_geladen: np.ndarray | None = None) -> dict:
@@ -535,6 +597,7 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
         "fertig_alle": [m for m, s in offen if s == MONAT_FERTIG],
         "region_alle": [m for m, s in offen if s == MONAT_REGION],
         "angezeigt": monate,
+        "zeitleiste": zeitleiste(status, zurueckgestellte_monate(io.aleph_data_dir().joinpath(*PROTOKOLL_DOWNLOAD))),
         "monate": eintraege,
         "min_beobachtet_prozent": int(MIN_BEOBACHTET_ANTEIL * 100),
         "einheiten_verfuegbar": einheiten["verfuegbar"],
@@ -568,6 +631,10 @@ def main(argv=None) -> int:
     zt = {e["monat"]: e["zustand_text"] for e in d["monate"]}
     print("Angezeigt: " + (", ".join(f"{m} ({zt.get(m, '?')})" for m in d["angezeigt"])
                            or "kein Monat (noch keiner vollständig)"))
+    offen_nicht_waehlbar = [e for e in d["zeitleiste"] if not e["auswaehlbar"]]
+    if offen_nicht_waehlbar:
+        print("Nicht auswählbar (in der Zeitleiste mit Zustand gezeigt): " + ", ".join(
+            f"{e['monat']} ({e['zustand_text']}{', ' + e['grund'] if e.get('grund') else ''})" for e in offen_nicht_waehlbar))
     if d["fertig_gesperrt_endtest"]:
         print(f"Fertig, aber gesperrt (ab {ENDTEST_AB}): {', '.join(d['fertig_gesperrt_endtest'])}")
     print(f"Einheiten: {'ja' if d['einheiten_verfuegbar'] else 'NEIN'} – {d['einheiten_grund']}")
