@@ -257,13 +257,15 @@
       "<li><b>Pro Kopf:</b> " + esc(r.pro_kopf) + ".</li><li><b>Pro km²:</b> " + esc(r.je_km2) + ".</li>" +
       "<li><b>Index:</b> " + esc(r.index) + ".</li></ul></details>";
   }
-  // Befund 2026-10-05 (Bericht 2026-10-05_globus-alle-monate.md): Jahresmittel der voll gültigen Monate, Median über
-  // alle Länder, Jahr gegen Vorjahr: 2014–2020 zwischen −4 und +4 %, 2021 +10 %, 2022 +15 % (61 % der Länder über +10 %).
-  // Die Zahlen sind beobachtet; die Deutung als Messeffekt ist eine Vermutung (Ursache nicht geprüft).
-  var MESSSPRUNG_HINWEIS = '<div class="zr-hinweis zr-hinweis--warn"><b>Achtung 2021–2022:</b> In fast allen Ländern liegt das Licht ' +
-    "gleichzeitig deutlich höher (Median aller Länder gegen das Vorjahr: 2021 +10 %, 2022 +15 %; 2014–2020 zwischen −4 und +4 %). " +
-    "Ein so gleichzeitiger Anstieg spricht eher für eine Änderung der Messung oder Verarbeitung als für wirtschaftliche Entwicklung " +
-    "(Vermutung, Ursache nicht geprüft). <b>Nicht als Wachstum deuten.</b></div>";
+  // Befund 2026-10-05 (Bericht 2026-10-05_globus-alle-monate.md): Jahresmittel der voll gültigen Monate je Land, fester
+  // Länderkreis (128 Länder mit Wert in allen Jahren 2013–2022, ohne 2022-07/-08), Median Jahr gegen Vorjahr: 2014–2020
+  // zwischen −2,6 und +3,6 %, 2021 +9,8 %, 2022 +15,6 % (59 % der Länder über +10 %). Zahlen beobachtet; Ursache ungeklärt
+  // (plausibilitaets-pruefer: keine NASA-Angabe zu einem Bruch gefunden). Wortlaut nach dessen Empfehlung abgeschwächt.
+  var MESSSPRUNG_HINWEIS = '<div class="zr-hinweis zr-hinweis--warn"><b>Achtung 2021–2022:</b> In der Mehrheit der Länder liegt das Licht ' +
+    "2021–2022 deutlich höher (Median von 128 Ländern gegen das Vorjahr: 2021 +10 %, 2022 +16 %; 2014–2020 zwischen −3 und +4 %). " +
+    "Die Ursache ist ungeklärt: möglich ist eine Änderung der Messung oder Verarbeitung, teilweise auch echte Veränderung. " +
+    "2022-07 fehlt und 2022-08 ist ein Teilmonat (Satellit Suomi NPP vom 26.07. bis 20.08.2022 im Sicherheitsmodus, laut NASA). " +
+    "<b>Nicht als Wachstum deuten.</b></div>";
 
   function punktLegende() {
     function sym(stil) { return '<svg width="12" height="12"><circle cx="6" cy="6" r="3.6" ' + stil + "/></svg>"; }

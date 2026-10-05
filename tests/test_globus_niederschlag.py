@@ -105,7 +105,8 @@ def test_seite_bindet_niederschlag_ein_mit_eigener_farbskala():
     assert 'src="daten/niederschlag_stand.js"' in html
     js = (WEB / "globus_niederschlag.js").read_text(encoding="utf-8")
     for teil in ('var GESPERRT_AB = "2023-01";', "mm/Monat", "beobachtet", "keine Daten", "zu wenig Messungen",
-                 "Das ist keine Messung von 0 mm."):
+                 "Das ist keine Messung von 0 mm.",
+                 "Für großräumige Muster geeignet, an einzelnen Orten deutliche Abweichungen zu Messstationen möglich."):
         assert teil in js
     farben = lambda text, name: set(re.findall(r"\[(\d+), (\d+), (\d+)\]", text.split(f"var {name} = [", 1)[1].split("];", 1)[0]))
     ns = farben(js, "STUFEN")

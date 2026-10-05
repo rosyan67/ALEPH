@@ -1,0 +1,97 @@
+[
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/01_zeitleiste.png",
+  "titel": "Ganze Erde und Zeitleiste 2013–2022",
+  "text": "Nachtlicht NASA VIIRS Black Marble, Monat 2018-01, Evidenzstufe beobachtet. Das Band unter dem Regler zeigt je Monat den Ladestand (hell: weltweit; halb blau: nur Afrika-Europa-Asien). 2022-07 rot: fehlt, Satellit Suomi NPP vom 26.07. bis 20.08.2022 im Sicherheitsmodus (NASA Earthdata). Gestreift heißt keine Messung, nie dunkel."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/bp_nil.png",
+  "titel": "Blickpunkt Nildelta und Ägypten",
+  "text": "2018-10. Das Licht folgt dem Nil; die Wüste daneben ist gemessen dunkel, nicht fehlend. Beobachtet."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/bp_korea.png",
+  "titel": "Blickpunkt Korea, Nord und Süd",
+  "text": "2018-10. In Südkorea sind knapp zwei Drittel der Zellen heller als 1, in Nordkorea keine. Nur gemessen, keine Deutung."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/bp_nigerdelta.png",
+  "titel": "Blickpunkt Nigerdelta",
+  "text": "2018-11. Helle Punkte abseits der Städte. Gasfackeln sind eine Vermutung, nicht geprüft."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/bp_irak.png",
+  "titel": "Blickpunkt Irak",
+  "text": "2018-10. Die hellsten Zellen liegen südwestlich von Basra, nicht in Bagdad. Gasfackeln: Vermutung, nicht geprüft."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/bp_indien.png",
+  "titel": "Blickpunkt Indien",
+  "text": "2018-03. Viele helle Städte, dichte schwächere Lichter in der Gangesebene. Beobachtet."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/bp_europa.png",
+  "titel": "Blickpunkt Europa",
+  "text": "2018-09. Beobachtet. Juni- und Juli-Werte nördlich von 45° N werden wegen möglicher Dämmerung nicht gezeigt."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/punktwolke.png",
+  "titel": "Nachtlicht und Wirtschaftsleistung 2018",
+  "text": "125 Länder in Afrika, Europa und Asien. Steigung 0,94 (95 %: 0,85–1,03). Statistische Assoziation im Querschnitt, keine Ursache; vom Statistik-Prüfer noch nicht abgenommen."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/vorjahr.png",
+  "titel": "Vergleich 2019-10 mit 2018-10",
+  "text": "Blau dunkler, rot heller, Karomuster: kein Vergleich möglich. Beobachtete Differenz, nicht auf Signifikanz geprüft; ±1 kann normale Schwankung sein."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/02_monat_2014-10.png",
+  "titel": "Ein Monat aus 2014",
+  "text": "2014-10, bisher nur Afrika-Europa-Asien geladen; die übrigen Zellen blau gestreift „noch nicht geladen“."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/03_monat_2021-10.png",
+  "titel": "Ein Monat aus 2021",
+  "text": "2021-10, nur Afrika-Europa-Asien. Achtung: 2021–2022 liegt das Licht in der Mehrheit der Länder ungeklärt höher; nicht als Wachstum deuten."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/06_aegypten_lang.png",
+  "titel": "Länderansicht Ägypten 2013–2022",
+  "text": "Nachtlicht monatlich, 12-Monats-Durchschnitt, saisonbereinigt; daneben Weltbank. Nebeneinander gestellt, kein Zusammenhang behauptet. Roter Kasten: Sprung 2021–2022, Ursache ungeklärt."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/11_aegypten_bip.png",
+  "titel": "Ägypten: BIP und Tabelle",
+  "text": "Reales BIP (Weltbank, konstante US-$ 2015) 2013–2022 und Jahreswerte des Lichts. 2022 kein Licht-Jahreswert (2022-07 fehlt)."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/pdf/vergleich_index.png",
+  "titel": "Ländervergleich im Index (2018 = 100)",
+  "text": "Ägypten, Deutschland, Indien, Nigeria. Jedes Land nur mit sich selbst verglichen. Wenige Indexpunkte und 2021 nicht deuten."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/07_deutschland_lang.png",
+  "titel": "Länderansicht Deutschland",
+  "text": "Hohle Punkte: Schnee-Verdacht (6 Monate); Lücken im 12-Monats-Durchschnitt dort, wo ein Monat unsicher ist."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/08_indien_lang.png",
+  "titel": "Länderansicht Indien",
+  "text": "Blasse Punkte im Juli: geringe Abdeckung (Monsun vermutet, nicht geprüft). Anstieg 2021–2022 nicht als Wachstum deuten."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/14_niederschlag_erde_2018-07.png",
+  "titel": "Niederschlag Juli 2018",
+  "text": "NASA GPM IMERG V07B, Monatssumme in mm, eigene Grünskala (hell = trocken). Monsun über Indien, Regengürtel Afrika, Sahara trocken. Beobachtet (Satellitenschätzung, an Regenmesser angepasst). Für großräumige Muster geeignet, an einzelnen Orten deutliche Abweichungen zu Messstationen möglich."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/13_niederschlag_mumbai_2018-07.png",
+  "titel": "Niederschlag Mumbai, Juli 2018",
+  "text": "Zelle 19,00–19,25° N: rund 1 070 mm (± 77 mm zufälliger Fehler laut NASA). Zellenmittel über etwa 28 × 28 km, kein Stationswert. Für großräumige Muster geeignet, an einzelnen Orten deutliche Abweichungen zu Messstationen möglich."
+ },
+ {
+  "bild": "berichte/2026-10-05_globus-alle-monate_bilder/04_2022-07_uebersprungen.png",
+  "titel": "2022-07 fehlt, 2022-08 Teilmonat",
+  "text": "Der fehlende Monat wird übersprungen und mit Grund genannt. 2022-08 beruht nur auf den Tagen ab 21.08.: nicht deuten."
+ }
+]

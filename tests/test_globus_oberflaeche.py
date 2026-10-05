@@ -260,7 +260,7 @@ def test_ueber_aleph_nennt_nicht_auswaehlbare_monate():
 
 def test_hinweis_messsprung_2021_2022_in_laenderansicht_und_vergleich():
     zr = (WEB / "globus_zeitreihen.js").read_text(encoding="utf-8")
-    assert "Nicht als Wachstum deuten." in zr and "Vermutung, Ursache nicht geprüft" in zr
+    assert "Nicht als Wachstum deuten." in zr and "Die Ursache ist ungeklärt" in zr and "Suomi NPP" in zr
     assert zr.count("MESSSPRUNG_HINWEIS") >= 4  # Definition, absolut, Index, Schnittstelle
     vg = (WEB / "globus_vergleich.js").read_text(encoding="utf-8")
     assert vg.count("ZR.messsprungHinweis") == 2  # absolut und Index

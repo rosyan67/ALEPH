@@ -85,6 +85,17 @@ ZURUECKGESTELLT_TEXT = "zurückgestellt"
 # mit Grund (aleph/layers/vnp46a3_lauf.py). Der Download selbst wird nicht angefasst.
 PROTOKOLL_DOWNLOAD = ("protokoll", "vnp46a3.log")
 GRUND_MAX_ZEICHEN = 220
+# Belegte Sonderfälle einzelner Monate (Quelle gelesen: Earthdata, „Suomi NPP Recovers from Safe Mode“,
+# https://www.earthdata.nasa.gov/data/alerts-outages/suomi-npp-recovers-from-safe-mode, abgerufen 2026-10-05:
+# „Suomi NPP VIIRS data lost between July 26 and August 20, 2022, will not be recoverable.“).
+SAFE_MODE_2022 = ("Satellit Suomi NPP war vom 26.07. bis 20.08.2022 im Sicherheitsmodus; VIIRS-Daten dieser Zeit sind "
+                  "laut NASA nicht wiederherstellbar (Earthdata)")
+MONATS_HINWEISE = {
+    "2022-07": {"hinweis": SAFE_MODE_2022 + ". Dass deshalb die Kacheln 70–80° N fehlen, ist eine Vermutung.",
+                "teilmonat": True},
+    "2022-08": {"hinweis": SAFE_MODE_2022 + ". Der Monatswert beruht nur auf den Tagen ab 21.08. (Teilmonat): nicht deuten.",
+                "teilmonat": True},
+}
 ENDTEST_AB = "2023-01"
 
 # Kontrollzellen für den Selbsttest im Browser (Werte nach dem Entpacken
@@ -190,6 +201,8 @@ def zeitleiste(status: list[tuple[str, int]], zurueckgestellt: dict[str, dict]) 
             continue
         e = {"monat": monat, "zustand": s, "auswaehlbar": s in (MONAT_FERTIG, MONAT_REGION),
              "zustand_text": ZUSTAND_TEXT_ZEITLEISTE.get(s, f"Zustand {s}")}
+        if monat in MONATS_HINWEISE:
+            e.update(MONATS_HINWEISE[monat])
         if not e["auswaehlbar"] and monat in zurueckgestellt:
             e["zustand_text"] = ZURUECKGESTELLT_TEXT
             e["zurueckgestellt_seit"] = zurueckgestellt[monat]["seit"]

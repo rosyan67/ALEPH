@@ -545,3 +545,6 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .ns-legende-hinweis b { color: var(--text); }
 .ebenen-wahl .ad-jahr { border: 1px solid var(--line); border-radius: var(--radius); }
 .tl-zustand { max-width: 170px; line-height: 1.3; }
+.tl-z--teil { box-shadow: inset 0 -3px 0 #e0574c; }
+.dock-hinweis--guete { border-left-color: rgb(49,155,84); background: rgba(49,155,84,0.16); }
+.ns-legende-guete { color: var(--text); }

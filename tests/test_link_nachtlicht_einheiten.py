@@ -105,7 +105,18 @@ def test_technikprobe_2018_01_echte_daten():
     w = r["je_land"].set_index("weltbank_code")
     for code in ("EGY", "DEU", "SAU", "NGA", "IND"):
         assert w.loc[code, "abdeckung"] > 0.95 and w.loc[code, "licht_summe"] > 0
-    assert np.isnan(w.loc["USA", "licht_summe"]) and "nicht geladen" in w.loc["USA", "kennzeichen"]
+    # USA: im Zustand 4 (nur Afrika-Europa-Asien) „nicht geladen“; seit 2018-01 vollständig ist (Ladestand 2026-10),
+    # sind die USA gemessen – im Januar mit Schnee unter 90 % Abdeckung, also ohne Landessumme.
+    import xarray as xr
+    from aleph.layers import vnp46a3
+    ds = xr.open_zarr(vnp46a3._wuerfel_pfad())
+    zustand = int(ds["monat_fertig"].sel(zeit="2018-01-01").values)
+    ds.close()
+    if zustand == 4:
+        assert np.isnan(w.loc["USA", "licht_summe"]) and "nicht geladen" in w.loc["USA", "kennzeichen"]
+    else:
+        assert zustand == 1 and "nicht geladen" not in w.loc["USA", "kennzeichen"]
+        assert w.loc["USA", "abdeckung"] > 0.5
     assert (r["je_land"]["evidenzstufe"] == "beobachtet").all()
     with pytest.raises(ValueError):
         ne.technikprobe((2023, 1))

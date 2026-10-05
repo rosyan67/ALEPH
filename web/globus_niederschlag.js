@@ -29,6 +29,8 @@
     [150, [49, 155, 84]], [300, [18, 118, 64]], [600, [0, 80, 48]], [1200, [0, 48, 32]]
   ];
   var SPEICHER_MONATE = 4;
+  // Pflichtsatz (Auftrag 2026-10-05, nach dem IMERG-Bericht: einzelne Orte weichen um 25–40 % von Stationen ab).
+  var GUETE_SATZ = "Für großräumige Muster geeignet, an einzelnen Orten deutliche Abweichungen zu Messstationen möglich.";
 
   var aktiv = false, geladen = {}, benutzt = [], monatJetzt = null, laedt = {};
   var monate = NS && NS.verfuegbar ? (NS.monate || []).filter(function (m) { return m < GESPERRT_AB; }) : [];
@@ -83,6 +85,7 @@
       '<div class="legende-trenner">ohne gültige Messung – gestreift, nie „0 mm“</div>' +
       '<div class="legende-zeile"><span class="feld feld--keine"></span><span><b>keine Daten</b>: kein gültiger Satellitenwert (vor allem an den Polen)</span></div>' +
       '<div class="legende-zeile"><span class="feld feld--duenn"></span><span><b>zu wenig Messungen</b>: unter ' + esc(NS.min_gueltig_prozent) + " % der Zellfläche gültig</span></div>" +
+      '<div class="ns-legende-hinweis ns-legende-guete"><b>' + esc(GUETE_SATZ) + "</b></div>" +
       '<div class="ns-legende-hinweis">Evidenzstufe <b>beobachtet</b>: Satellitenschätzung, an Regenmesser angepasst. Zellenmittel über rund 28 × 28 km, kein Stationswert.</div>';
   }
 
@@ -159,6 +162,11 @@
   // ---------- Anzeige ----------
 
   var map = G.map, ECKEN = [[-180, MERC_MAX], [180, MERC_MAX], [180, -MERC_MAX], [-180, -MERC_MAX]];
+  var gueteHinweis = document.createElement("div");
+  gueteHinweis.className = "dock-hinweis dock-hinweis--guete";
+  gueteHinweis.hidden = true;
+  gueteHinweis.innerHTML = "<b>Niederschlag (GPM IMERG): " + esc(GUETE_SATZ) + "</b> Evidenzstufe beobachtet; Monate 2013–2022, 2023–2025 gesperrt.";
+  dock.insertBefore(gueteHinweis, umschalter.nextSibling);
   var hinweis = document.createElement("div");
   hinweis.className = "dock-hinweis";
   hinweis.hidden = true;
@@ -223,6 +231,7 @@
     byId("legende-normal").hidden = an;
     legende.hidden = !an;
     document.body.classList.toggle("ebene-niederschlag", an);
+    gueteHinweis.hidden = !an;
     var badge = document.querySelector(".brand-badge");
     if (badge) badge.textContent = (an ? "Niederschlag" : "Nachtlicht") + " · Evidenzstufe: beobachtet";
     if (an) {
@@ -289,7 +298,7 @@
     var kennz = [];
     if (Math.abs(punkt[1]) > NS.verminderte_guete_ab_breite) kennz.push("Jenseits von " + NS.verminderte_guete_ab_breite + "° verminderte Güte (gefrorene Flächen, kein Infrarot).");
     if (r.meta.kalibrierung_trmm) kennz.push("Monat noch TRMM-kalibriert (bis 2014-05).");
-    kennz.push("Zellenmittel über rund 28 × 28 km, kein Stationswert; einzelne Orte können um 25–40 % von Stationen abweichen (IMERG-Prüfung 2018).");
+    kennz.push(GUETE_SATZ + " Zellenmittel über rund 28 × 28 km, kein Stationswert; in der IMERG-Prüfung 2018 wichen einzelne Orte um 25–40 % von Stationen ab.");
     var ort = r.nord.toFixed(2).replace(".", ",") + "° bis " + (r.nord - 0.25).toFixed(2).replace(".", ",") + "° Breite, " +
       r.west.toFixed(2).replace(".", ",") + "° bis " + (r.west + 0.25).toFixed(2).replace(".", ",") + "° Länge";
     return '<div class="inv-messung"><div class="inv-messung-kopf"><span>Niederschlag ' + esc(monatJetzt) + " · GPM IMERG</span>" +

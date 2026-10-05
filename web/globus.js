@@ -475,8 +475,9 @@
     return e.zustand_text === "zurückgestellt" ? "tl-z--zurueck" : "tl-z--fehlt";
   }
   function leistenTitel(e) {
-    return e.monat + ": " + e.zustand_text + (e.grund ? " – " + e.grund + " (Download, zuletzt versucht " + e.zurueckgestellt_seit + ")" : "") +
-      (e.auswaehlbar ? "" : " – nicht auswählbar");
+    return e.monat + ": " + e.zustand_text + (e.teilmonat && e.auswaehlbar ? " (Teilmonat)" : "") +
+      (e.grund ? " – " + e.grund + " (Download, zuletzt versucht " + e.zurueckgestellt_seit + ")" : "") +
+      (e.hinweis ? " – " + e.hinweis : "") + (e.auswaehlbar ? "" : " – nicht auswählbar");
   }
   // Zusammenhängende Monate gleichen Zustands als Bereiche, z. B. „2013-01 bis 2017-12: nur Afrika-Europa-Asien (60)“.
   function leistenBereiche() {
@@ -494,8 +495,17 @@
     if (!e) { el.hidden = true; return; }
     el.innerHTML = "<b>" + esc(e.monat) + ": " + esc(e.zustand_text) + "</b>" +
       (e.grund ? " – " + esc(e.grund) + " (Download, zuletzt versucht " + esc(e.zurueckgestellt_seit) + ")" : "") +
-      ". Nicht auswählbar; gezeigt wird " + esc(gezeigt) + ".";
+      ". " + (e.hinweis ? esc(e.hinweis) + " " : "") + "Nicht auswählbar; gezeigt wird " + esc(gezeigt) +
+      ((LEISTE[leistenIndex(gezeigt)] || {}).teilmonat ? " (Teilmonat, nicht deuten)" : "") + ".";
     el.hidden = false;
+  }
+  // Belegter Sonderfall des gezeigten Monats (z. B. Teilmonat 2022-08), sonst nichts.
+  function zeigeMonatsHinweis(monat) {
+    var e = LEISTE[leistenIndex(monat)], el = byId("monat-hinweis");
+    if (e && e.auswaehlbar && e.hinweis) {
+      el.innerHTML = "<b>" + esc(monat) + (e.teilmonat ? ": Teilmonat" : "") + "</b> – " + esc(e.hinweis);
+      el.hidden = false;
+    }
   }
 
   function zeigeMonatWahl(monat) {
@@ -530,7 +540,7 @@
     var breite = n > 1 ? 100 / (n - 1) : 100;
     LEISTE.forEach(function (e, i) {
       var f = document.createElement("span");
-      f.className = "tl-z " + bandKlasse(e);
+      f.className = "tl-z " + bandKlasse(e) + (e.teilmonat && e.auswaehlbar ? " tl-z--teil" : "");
       f.style.left = (pos(i) - breite / 2) + "%";
       f.style.width = breite + "%";
       f.title = leistenTitel(e);
@@ -550,7 +560,10 @@
       '<span><span class="tl-z-muster tl-z--voll"></span>vollständig</span>' +
       '<span><span class="tl-z-muster tl-z--region"></span>nur Afrika-Europa-Asien</span>' +
       (fehlend.length ? '<span class="tl-z-fehlt"><span class="tl-z-muster ' + bandKlasse(fehlend[0]) + '"></span>' +
-        fehlend.map(function (e) { return esc(e.monat) + " " + esc(e.zustand_text); }).join(", ") + " – nicht auswählbar</span>" : "");
+        fehlend.map(function (e) { return esc(e.monat) + " " + esc(e.zustand_text); }).join(", ") + " – nicht auswählbar</span>" : "") +
+      LEISTE.filter(function (e) { return e.auswaehlbar && e.teilmonat; }).map(function (e) {
+        return '<span class="tl-z-fehlt"><span class="tl-z-muster tl-z--region tl-z--teil"></span>' + esc(e.monat) + " Teilmonat</span>";
+      }).join("");
     byId("monat-wahl").hidden = false;
     byId("monat-band-legende").hidden = false;
   }
@@ -563,6 +576,7 @@
     if (j < 0) j = naechsterWaehlbarer(i, -(richtung || 1));
     if (j < 0) return Promise.resolve();
     zeigeUebersprungen(e.auswaehlbar ? null : e, LEISTE[j].monat);
+    if (e.auswaehlbar) zeigeMonatsHinweis(LEISTE[j].monat);
     if (LEISTE[j].monat === aktiverMonat) { zeigeMonatWahl(aktiverMonat); return Promise.resolve(); }
     return setzeMonat(LEISTE[j].monat);
   }
@@ -596,6 +610,7 @@
     if (j < 0) { spiele(false); return; }
     var uebersprungen = LEISTE.slice(i + 1, j);
     zeigeUebersprungen(uebersprungen.length ? uebersprungen[0] : null, LEISTE[j].monat);
+    if (!uebersprungen.length) zeigeMonatsHinweis(LEISTE[j].monat);
     setzeMonat(LEISTE[j].monat).then(weiter, function () { spiele(false); });
   }
 

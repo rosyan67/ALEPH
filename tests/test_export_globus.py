@@ -540,3 +540,11 @@ def test_echter_export_zeitleiste_2013_bis_2022():
         assert e["zustand_text"], e
         if not e["auswaehlbar"]:
             assert e["zustand"] not in (1, 4)
+
+
+def test_zeitleiste_traegt_belegten_safe_mode_2022():
+    z = g.zeitleiste([("2022-06", 4), ("2022-07", 0), ("2022-08", 4)], {})
+    e = {x["monat"]: x for x in z}
+    assert "hinweis" not in e["2022-06"]
+    assert e["2022-08"]["auswaehlbar"] and e["2022-08"]["teilmonat"] and "Teilmonat" in e["2022-08"]["hinweis"]
+    assert "Suomi NPP" in e["2022-07"]["hinweis"] and "Vermutung" in e["2022-07"]["hinweis"]
