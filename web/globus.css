@@ -537,3 +537,11 @@ body.ebenen-offen .blickpunkte { transform: translateX(340px); }
 .vg-pw-schalter input { accent-color: var(--gold); }
 .vg-pw-liste a { color: var(--text); }
 @media (max-width: 700px) { .vg-raster { grid-template-columns: 1fr; } }
+
+/* ---------- Niederschlag als zweite Ebene (2026-10-05) ---------- */
+.ebenen-wahl { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; flex-wrap: wrap; }
+.ebenen-wahl .ad-jahr:disabled { opacity: 0.4; cursor: default; }
+.ns-legende-hinweis { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.4; }
+.ns-legende-hinweis b { color: var(--text); }
+.ebenen-wahl .ad-jahr { border: 1px solid var(--line); border-radius: var(--radius); }
+.tl-zustand { max-width: 170px; line-height: 1.3; }

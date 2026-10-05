@@ -287,7 +287,7 @@
 
   function vorjahr(monat) { return (Number(monat.slice(0, 4)) - 1) + monat.slice(4); }
   function vergleichMoeglich(monat) {
-    return monat && monat.slice(0, 4) === VERGLEICH_JAHR && DS.angezeigt.indexOf(vorjahr(monat)) >= 0;
+    return nachtlichtSichtbar && monat && monat.slice(0, 4) === VERGLEICH_JAHR && DS.angezeigt.indexOf(vorjahr(monat)) >= 0;
   }
   function vergleichAktiv(monat) { return vergleichAn && vergleichMoeglich(monat); }
 
@@ -421,6 +421,16 @@
   var API = window.ALEPH_GLOBUS = {
     map: map,
     dossierZusatz: [], // Funktionen (p, n) -> HTML, erscheinen im Dossier unter dem Nachtlicht-Kasten
+    messungZusatz: [], // Funktionen ([lon, lat] oder null) -> HTML, neben dem Nachtlicht-Kasten, auch ohne Einheit (Meer)
+    zeigerZusatz: [], // Funktionen (lon, lat) -> Text für die Zeigerzeile
+    nachtlichtSichtbar: function (an) {
+      nachtlichtSichtbar = !!an;
+      byId("an-nachtlicht").checked = nachtlichtSichtbar;
+      if (map.getLayer("nachtlicht")) map.setLayoutProperty("nachtlicht", "visibility", nachtlichtSichtbar ? "visible" : "none");
+      if (aktiverMonat) zeigeVergleichsLegende(vergleichAktiv(aktiverMonat), aktiverMonat);
+      aktualisiereDossier();
+    },
+    aktualisiereDossier: function () { aktualisiereDossier(); },
     beiMonat: [], // Funktionen (monat) nach jedem Monatswechsel
     setzeMonat: function (m) { return setzeMonat(m); },
     aktiverMonat: function () { return aktiverMonat; },
@@ -758,7 +768,7 @@
 
   function nachtlichtHtml(n) {
     if (!n) {
-      if (!aktiverMonat) return "";
+      if (!aktiverMonat || !nachtlichtSichtbar) return "";
       return '<div class="inv-messung"><div class="inv-messung-kopf"><span>Nachtlicht ' + esc(aktiverMonat) + "</span></div>" +
         '<div class="inv-messung-note">Für den Nachtlichtwert auf eine Stelle im Gebiet klicken.</div></div>';
     }
@@ -802,6 +812,12 @@
     }).join("");
   }
 
+  function messungZusatzHtml(punkt) {
+    return API.messungZusatz.map(function (f) {
+      try { return f(punkt || null) || ""; } catch (err) { return '<div class="hinweis hinweis--stark">Zusatzfeld fehlerhaft: ' + esc(err.message) + "</div>"; }
+    }).join("");
+  }
+
   function aktualisiereDossier() {
     if (!letzteAuswahl || !byId("info").classList.contains("is-open")) return;
     var q = letzteAuswahl.punkt;
@@ -813,11 +829,11 @@
     letzteAuswahl = { p: p, punkt: punkt || null };
     if (p) {
       var e = einheitHtml(p);
-      html = e.kopf + nachtlichtHtml(n) + zusatzHtml(p, n) + e.felder;
+      html = e.kopf + nachtlichtHtml(n) + messungZusatzHtml(punkt) + zusatzHtml(p, n) + e.felder;
     } else {
       html = '<div class="inv-badges"><span class="inv-badge inv-badge--hell">keine Einheit</span></div>' +
         '<h2 class="inv-title">Keine Einheit</h2><p class="inv-sub">An dieser Stelle liegt keine Einheit der Tabelle (z. B. offenes Meer).</p>' +
-        nachtlichtHtml(n);
+        nachtlichtHtml(n) + messungZusatzHtml(punkt);
     }
     var oben = byId("info-inhalt").scrollTop;
     byId("info-inhalt").innerHTML = html;
@@ -875,6 +891,7 @@
         Math.abs(ll.lng).toFixed(1).replace(".", ",") + "° " + (ll.lng >= 0 ? "O" : "W"));
       var n = nachtlichtAn(ll.lng, ll.lat);
       if (n) teile.push("Nachtlicht: " + n.text);
+      API.zeigerZusatz.forEach(function (f) { try { var z = f(ll.lng, ll.lat); if (z) teile.push(z); } catch (err) { /* nur Anzeige */ } });
       if (map.getLayer("einheiten-fuellung") && map.getLayoutProperty("einheiten-fuellung", "visibility") !== "none") {
         var t2 = map.queryRenderedFeatures(e.point, { layers: ["einheiten-fuellung"] });
         if (t2.length) teile.push(t2[0].properties.name);
@@ -1040,10 +1057,7 @@
   byId("ebenen-auf").addEventListener("click", function () { setzeEbenenLeiste(!byId("ebenen-panel").classList.contains("is-open")); });
   byId("ebenen-zu").addEventListener("click", function () { setzeEbenenLeiste(false); });
   byId("blick-erde").addEventListener("click", function () { map.easeTo({ center: START_BLICK.center, zoom: START_BLICK.zoom, bearing: 0, pitch: 0, duration: 900 }); });
-  byId("an-nachtlicht").addEventListener("change", function (e) {
-    nachtlichtSichtbar = e.target.checked;
-    if (map.getLayer("nachtlicht")) map.setLayoutProperty("nachtlicht", "visibility", nachtlichtSichtbar ? "visible" : "none");
-  });
+  byId("an-nachtlicht").addEventListener("change", function (e) { API.nachtlichtSichtbar(e.target.checked); });
   byId("an-grenzen").addEventListener("change", function (e) { setzeGrenzenSichtbar(e.target.checked); });
   byId("monat-regler").addEventListener("input", function (e) {
     spiele(false);

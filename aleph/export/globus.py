@@ -607,6 +607,18 @@ def _exportiere_in(ziel: Path, pruefmonate: list[str] | None) -> dict:
     (ziel / "auswertung_nachtlicht_bip.js").write_text(_js("ALEPH_NACHTLICHT_BIP", None, auswertung_nachtlicht_bip()),
                                             encoding="utf-8")
     (ziel / "laender_zeitreihen.js").write_text(_js("ALEPH_ZEITREIHEN", None, laender_zeitreihen()), encoding="utf-8")
+    # Niederschlag (zweite Ebene, 2026-10-05). Scheitert er, bleibt der Globus nutzbar; der Grund steht sichtbar
+    # in der Oberfläche. Nie in der Prüfansicht.
+    if not pruefansicht:
+        from aleph.export import globus_niederschlag
+
+        try:
+            globus_niederschlag.exportiere_in(ziel)
+        except Exception as e:  # noqa: BLE001 – Grund wird ausgegeben, nicht verschluckt
+            grund = f"Niederschlag nicht exportiert: {type(e).__name__}: {e}"
+            print(f"Warnung: {grund}", file=sys.stderr)
+            (ziel / "niederschlag_stand.js").write_text(
+                _js("ALEPH_NIEDERSCHLAG_STAND", None, {"verfuegbar": False, "grund": grund}), encoding="utf-8")
     # Nur für die Konsole (nie in eine Datei der Oberfläche):
     return {**datenstand, "monate_gesamt_wuerfel": len(status), "status_zaehlung_wuerfel": zaehlung,
             "fertig_gesperrt_endtest": [m for m, s in status if s in (MONAT_FERTIG, MONAT_REGION) and m >= ENDTEST_AB]}
