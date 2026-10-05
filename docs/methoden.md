@@ -140,3 +140,28 @@ Die vollständigen Quellenangaben mit DOI stehen im Kopf von `aleph/detect/stati
   - Das Licht von Schiffen und Plattformen in Küstenzellen landet auf dem Land.
   - Gasfackeln zählen als Licht.
   - Die Umrisse haben den festen Stand Mai 2022.
+
+## Bekannte Messeigenheiten Nachtlicht
+
+Stand: 2026-10-06. Diese Regeln gelten für jede Auswertung, Grafik und Aussage mit dem Nachtlicht (NASA Black Marble VNP46A3). Herkunft je Punkt in Klammern; Hauptquelle ist `berichte/2026-10-05_anstieg-2021-2022.md` („Bericht Anstieg“).
+
+- **2020 ist ein Tiefjahr.**
+  - Befund (*beobachtet*): Jahreswert 2020 gegen 2019 etwa −3 % (alle beleuchteten Zellen, Afrika-Europa-Asien), Mai −8,4 %, Juni −10,6 %. In der Vergleichsquelle EOG ist die Delle nur im Mai und Juni sichtbar (−5,0 % / −5,9 %), im Jahreswert nicht (0,999) (Bericht Anstieg, Teil 1 „Pandemie 2020“, und Teil 4).
+  - Regel: Vergleiche **gegen 2019**, nicht gegen 2020. Wo 2020 vorkommt, dazuschreiben: „2020 ist ein Tiefjahr“. Ein Vergleich Jahr gegen Vorjahr ab 2020 überzeichnet den Anstieg 2021.
+  - Dass die Pandemie die Ursache ist, ist eine naheliegende Vermutung, **nicht geprüft**.
+- **2022 liegt im Mittel 3–6 % über einer Vergleichsquelle desselben Sensors.**
+  - Befund (*beobachtet*): gegen 2019 NASA +12,7 %, EOG VCMCFG +8,5 %; 95-%-Intervall des Unterschieds +2,7 bis +5,9 Prozentpunkte gegen 2019, nur räumliche Streuung erfasst; gemessen nur an Landzellen südlich 60° N in Afrika-Europa-Asien, Klassen mittel und hell (Bericht Anstieg, Teil 4). EOG ist nur **teilweise unabhängig** verarbeitet: gleicher Sensor (Suomi NPP VIIRS), eine eigene Kalibrierkette ist nicht belegt.
+  - **Ursache offen.** Wer richtig liegt, ist nicht entschieden; EOG ist nicht „die Wahrheit“ (anderes Verfahren, ohne Mond- und Winkelkorrektur).
+  - Regel: **Keine Korrektur**, nichts ausschließen. 2022 in Trend- und Ländervergleichen kennzeichnen, in der Oberfläche mit „NASA-Wert 2022 im Mittel 3–6 % höher als eine Vergleichsquelle desselben Sensors; Ursache offen“ (Bericht: „… als eine unabhängige Quelle …“; „desselben Sensors“ ergänzt, weil der Bericht „unabhängig“ ohne diesen Zusatz ausschließt). Änderungen unter etwa 6 % zwischen 2021 und 2022 nicht als Veränderung deuten. Dunkle und schwach beleuchtete Zellen 2022 mit „Grundwert 2022 erhöht“ versehen (Bericht Anstieg, Empfehlung 2–3).
+  - 2021 wird normal verwendet: Der Anstieg 2021 erscheint auch bei EOG; kein Hinweis auf einen Verarbeitungsfehler (Bericht Anstieg, Urteil 1).
+- **2022-07 fehlt, 2022-08 ist ein Teilmonat.**
+  - Befund: Suomi NPP war vom 26.07. bis 20.08.2022 im Sicherheitsmodus; laut NASA sind die VIIRS-Daten dieser Zeit nicht wiederherstellbar (Earthdata, „Suomi NPP Recovers from Safe Mode“, gelesen am 2026-10-05; Zitat und Beleg in `aleph/export/globus.py` im worktree, Konstante `SAFE_MODE_2022`). Die MODAPS-Ausfallliste nennt für dieselbe Zeit „Lock-up 26.07.–11.08.“ (Bericht Anstieg, Teil 2.2).
+  - 2022-07 ist in der Untersuchung ganz ausgeschlossen, 2022-08 ist dort als Teilmonat vermerkt (Bericht Anstieg, „Gemeinsame Grundlage“). Dass der Wert für 2022-08 nur auf den Tagen ab 21.08. beruht, folgt aus der Earthdata-Angabe (`MONATS_HINWEISE` in `aleph/export/globus.py`).
+  - Regel: Beide Monate nicht deuten. **Keine Jahresmittel mit unterschiedlichen Monaten** vergleichen (2022 fehlen Juli und August); stattdessen gleiche Monate oder einen festen Zellkreis nehmen (Bericht Anstieg, Empfehlung 4).
+- **Schnee.**
+  - Befund: Der Würfel enthält nur die schneefreien Felder, ein Schnee-Kennzeichen fehlt. Verschneite Monate können heller erscheinen (Vermutung, Moskau 2018-02; Abschnitt „Schnee“ oben).
+  - Regel: Zellmonate mit Schnee-Verdacht werden nicht bewertet; die Untersuchung zum Anstieg nutzt nur Zellmonate ohne Verdacht (Bericht Anstieg, „Gemeinsame Grundlage“). Die Verdachtsregel erfasst **nicht jeden** Schneemonat (z. B. Helsinki 2019-01).
+- **Norden über 65° N ist unsicher.**
+  - Befund: Nördlich von etwa 65° N weichen Würfel und der Earth-Engine-Nachbau A deutlich voneinander ab, auch in Städten (Norilsk ×1,7); welche Quelle falsch liegt, ist offen. Belastbar ist der Vergleich nur südlich 55° N; 55–65° N ist eine Übergangszone (A dort rund 4–5 % heller) (`berichte/2026-09-28_earth-engine-a.md`). Die Grenze 65° N selbst ist die Kennzeichnung aus `berichte/2026-09-29_nachtlicht-bip-2018.md`. Die Vergleichsquelle EOG ist im Norden lückenhaft; die Gegenprobe im Bericht Anstieg nutzt deshalb nur Zellen südlich 60° N (Teil 4).
+  - Regel: Aussagen nördlich 65° N nicht verwenden; Länder mit nennenswertem Lichtanteil dort kennzeichnen (Kennzeichen „nördlich von 65° N“, `berichte/2026-09-29_nachtlicht-bip-2018.md`).
+- **Methodenwarnung** (Bericht Anstieg, Empfehlung 5): Ein Vergleich mit dem Median desselben Kalendermonats über einen festen Basiszeitraum macht aus jedem stetigen Trend Stufen im Januar (Test `test_basislinie_macht_aus_stetigem_anstieg_eine_treppe`). Für Trend- oder Bruchfragen die Jahreszeit gemeinsam mit dem Trend schätzen.

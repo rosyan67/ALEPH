@@ -600,3 +600,17 @@
 - **Tests:** 817/817 (vor den letzten Textänderungen).
 - **Nicht angefasst:** Nachtlicht-Download (Prozess 82367), `vnp46a3*.py`, Kachellisten, `scripts/vnp46a3_*`, `.env`. Würfel nur gelesen. Keine Daten ab 2023.
 - **Bericht:** `berichte/2026-10-05_anstieg-2021-2022.md`.
+
+## 2026-10-06 (Regeln aus der Untersuchung Anstieg 2021–2022 übernommen, Warntext Globus angepasst)
+
+- **~/ALEPH, `docs/methoden.md`:** neuer Abschnitt „Bekannte Messeigenheiten Nachtlicht“: 2020 Tiefjahr (gegen 2019 vergleichen), 2022 im Mittel 3–6 % über einer Vergleichsquelle desselben Sensors (Ursache offen, keine Korrektur), 2022-07 fehlt / 2022-08 Teilmonat (Sicherheitsmodus 26.07.–20.08.2022), Schnee, Norden über 65° N, Methodenwarnung Kalendermonats-Basislinie. Jeweils mit Verweis auf `berichte/2026-10-05_anstieg-2021-2022.md` bzw. die Berichte zu Earth Engine A und Nachtlicht × BIP.
+- **worktree ~/ALEPH-ui (Zweig ui-geruest):**
+  - Warntext 2021–2022 (Länderansicht und Vergleich) durch den Wortlaut aus Empfehlung 6 des Berichts ersetzt, ergänzt um „(gleicher Sensor)“; „Nicht als Wachstum deuten“ und „+10 % / +16 %“ entfernt. Hinweis beim Abspielen (`globus.html`) entsprechend.
+  - Kennzeichnung 2022: Kennzeichen im Kopf der Länderansicht und je Land im Vergleich, Stern an 2022 in Jahres- und Vergleichstabelle mit Fußnote, Zusatz im Hinweis jedes Punkts aus 2022. Kein Wert verändert.
+  - `praesentation/ablauf.md`: Liste „Nicht sagen“ aus dem Bericht übernommen; gesprochener Text zur Länderansicht und Antwort auf Frage 1 an den neuen Warntext angepasst, weil sie sonst dem roten Kasten widersprächen.
+  - Test `test_globus_oberflaeche.py` angepasst, neuer Test zur Kennzeichnung 2022.
+- **plausibilitaets-pruefer:** „plausibel mit Vorbehalt“; fünf Präzisierungen umgesetzt (EOG-Delle 2020 nur Mai/Juni, „Vergleichsquelle desselben Sensors“ statt „unabhängige Quelle“ auch im Kennzeichen 2022, „2022-07 fehlt“, Schnee als Vermutung, Übergangszone 55–65° N).
+- **Geprüft:** Bildschirmfotos (Chrome ohne Fenster) von Länderansicht Ägypten und Vergleich EGY/DEU/IND/NGA: neuer Text und Kennzeichen sichtbar, keine Fehleranzeige. JavaScript-Syntax mit JavaScriptCore geprüft.
+- **Tests:** ~/ALEPH 817/817; worktree 866/866 (vor den Prüfer-Korrekturen), danach `test_globus_oberflaeche.py` 19/19.
+- **Offen:** Ersatzbilder-PDF (`praesentation/globus_ersatzbilder.pdf`, Bildunterschriften in `ersatzbilder_seiten.json`) zeigen noch den alten Warntext; nicht neu erzeugt.
+- **Nicht angefasst:** Download, Würfel (nur gelesen), `.env`. Keine Daten ab 2023.
