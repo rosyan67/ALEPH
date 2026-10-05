@@ -573,3 +573,15 @@
 - **Nachgetragen:** `layers.yaml` (Status geladen), `ARCHITECTURE.md` (Stand), `docs/sources/imerg.md` (gemessene Polgrenze, Freigabe erledigt), Bericht `berichte/2026-10-02_imerg.md` abgeschlossen (Urteil, Empfehlung).
 - **Tests:** `tests/test_imerg.py` 60/60.
 - **Nicht angefasst:** Nachtlicht-Download (Prozess 82367), `vnp46a3*.py`, `.env`, LOG-Eintrag der Globus-Sitzung (stand schon uncommittet in LOG.md). Nicht gepusht.
+
+## 2026-10-05 (Globus mit allen Nachtlicht-Monaten – Abschluss, worktree ~/ALEPH-ui, ergänzt den Zwischeneintrag oben)
+
+- **Teil 1:** 119 Nachtlicht-Monate 2013-01 bis 2022-12 auf dem Globus, Zeitleiste mit Jahresmarken und Zustandsband, Abspielknopf mit Hinweis. 2022-07 sichtbar als fehlend: Suomi NPP Safe Mode 26.07.–20.08.2022 (Earthdata, selbst gelesen), 2022-08 als Teilmonat markiert. Startzeit 3,1 s → 2,8 s (Chrome ohne Grafikkarte).
+- **Teil 2:** Zeitreihen vom Nutzer in ~/ALEPH neu gerechnet (119 Monate, Code-Stand 9d3d0f0), geprüft und exportiert. Weltbank 2013–2022. Saisonbereinigung jetzt für 125 von 236 Ländern bestimmbar (vorher 88, Regel unverändert). Stichproben EGY, DEU, IND, NGA korrekt (Lücken, Schnee, Abdeckung).
+- **Befund:** Licht 2021/2022 in der Mehrheit der Länder ungeklärt höher (Median 128 Länder: +9,8 % / +15,6 %, sonst −2,6 bis +3,6 %). Ursache nicht gefunden; Warnung „Nicht als Wachstum deuten“ in Länderansicht und Vergleich. Vor jeder Auswertung von 2021/2022 klären.
+- **Teil 3:** Niederschlag (IMERG V07B) als umschaltbare Ebene, Monate 2013–2022, Grünskala, mm/Monat, keine Daten nie 0 mm, Zufallsfehler, TRMM-Kennzeichen, Quelle und „beobachtet“ sichtbar, Satz „Für großräumige Muster geeignet, an einzelnen Orten deutliche Abweichungen zu Messstationen möglich.“ Voraussetzung selbst geprüft (Manifest, Größe und sha256 aller 120 Monate vor 2023). main in ui-geruest zusammengeführt.
+- **plausibilitaets-pruefer:** plausibel mit Vorbehalt; Auflagen umgesetzt (Safe Mode, Teilmonat, Warntext abgeschwächt, Abspiel-Hinweis, Ablauf, Skala). Kein statistik-pruefer (keine Rechnung geändert).
+- **Ablauf** 7 Minuten, **Ersatzbilder-PDF** 19 Seiten (jetzt per Skript `scripts/ersatzbilder_pdf.py`).
+- **Tests:** worktree 865/865; danach 67 Globus-Tests nach Textänderung. Zwei Tests mit festem Ladestand angepasst; `tests/test_link_nachtlicht_einheiten.py::test_technikprobe_2018_01_echte_daten` scheitert auf main mit dem heutigen Würfel aus demselben Grund (USA 2018-01 inzwischen geladen).
+- **Nicht angefasst:** Nachtlicht-Download, `.env`. In ~/ALEPH nur LOG.md. Nichts aus 2023–2025 gezeigt oder ausgewertet.
+- **Bericht:** `~/ALEPH-ui/berichte/2026-10-05_globus-alle-monate.md`, Prüferbericht `2026-10-05_plausibilitaet-globus-alle-monate.md`.
