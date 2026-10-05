@@ -157,7 +157,7 @@
   function monatsPunkte(l, bz, name) {
     return l.monate.filter(function (p) { return STATUS_ART[p.status] && p[bz.licht] != null; }).map(function (p) {
       return { x: mn(p.monat) + 0.5, y: p[bz.licht], art: STATUS_ART[p.status], monat: p.monat,
-        tip: (name ? name + " · " : "") + p.monat + ": " + sig2(p[bz.licht]) + " · " + statusText(p) };
+        tip: (name ? name + " · " : "") + p.monat + ": " + sig2(p[bz.licht]) + " · " + statusText(p) + zusatz2022(p.monat) };
     });
   }
   function gleitPunkte(l, bz, name) {
@@ -174,14 +174,15 @@
     return Object.keys(l.jahre).filter(function (j) { return l.jahre[j][feld] != null; }).map(function (j) {
       var e = l.jahre[j];
       return { x: jahrX(j), y: e[feld], art: "voll",
-        tip: (name ? name + " · " : "") + bezeichnung + " " + j + ": " + sig2(e[feld]) + (e[feld + "_vorlaeufig"] ? " (vorläufig)" : "") };
+        tip: (name ? name + " · " : "") + bezeichnung + " " + j + ": " + sig2(e[feld]) + (e[feld + "_vorlaeufig"] ? " (vorläufig)" : "") +
+          (feld.indexOf("licht") === 0 ? zusatz2022(j) : "") };
     });
   }
   function indexPunkte(l, feld, name, bezeichnung) {
     var idx = l.index[feld] || {};
     return Object.keys(idx).map(function (j) {
       var vl = l.jahre[j] && l.jahre[j][feld + "_vorlaeufig"];
-      return { x: jahrX(j), y: idx[j], art: "voll", tip: (name ? name + " · " : "") + bezeichnung + " " + j + ": " + idx[j] + " (2018 = 100)" + (vl ? " (vorläufig)" : "") };
+      return { x: jahrX(j), y: idx[j], art: "voll", tip: (name ? name + " · " : "") + bezeichnung + " " + j + ": " + idx[j] + " (2018 = 100)" + (vl ? " (vorläufig)" : "") + (feld.indexOf("licht") === 0 ? zusatz2022(j) : "") };
     });
   }
   function bereich(punkteListen, nullBasis) {
@@ -228,6 +229,7 @@
       var w = l.jahre[j].anteil_wenige_monate;
       if (l.jahre[j].licht_gueltig && w != null && w > 33) b.push('<span class="lw-marke">' + j + ": " + w + " % des Lichts aus Zellen mit nur 6–8 guten Monaten</span>");
     });
+    if (marke2022(l)) b.push(marke2022(l));
     if (k.monate_schnee) b.push('<span class="lw-marke">Schnee-Verdacht in ' + monate(k.monate_schnee) + "</span>");
     if (k.nord65_prozent) b.push('<span class="lw-marke">' + k.nord65_prozent + " % des Lichts nördlich von 65° N (2018)</span>");
     if (k.reinheit_unter_50) b.push('<span class="lw-marke">Licht überwiegend aus Grenzzellen (Reinheit unter 50 %)</span>');
@@ -257,15 +259,23 @@
       "<li><b>Pro Kopf:</b> " + esc(r.pro_kopf) + ".</li><li><b>Pro km²:</b> " + esc(r.je_km2) + ".</li>" +
       "<li><b>Index:</b> " + esc(r.index) + ".</li></ul></details>";
   }
-  // Befund 2026-10-05 (Bericht 2026-10-05_globus-alle-monate.md): Jahresmittel der voll gültigen Monate je Land, fester
-  // Länderkreis (128 Länder mit Wert in allen Jahren 2013–2022, ohne 2022-07/-08), Median Jahr gegen Vorjahr: 2014–2020
-  // zwischen −2,6 und +3,6 %, 2021 +9,8 %, 2022 +15,6 % (59 % der Länder über +10 %). Zahlen beobachtet; Ursache ungeklärt
-  // (plausibilitaets-pruefer: keine NASA-Angabe zu einem Bruch gefunden). Wortlaut nach dessen Empfehlung abgeschwächt.
-  var MESSSPRUNG_HINWEIS = '<div class="zr-hinweis zr-hinweis--warn"><b>Achtung 2021–2022:</b> In der Mehrheit der Länder liegt das Licht ' +
-    "2021–2022 deutlich höher (Median von 128 Ländern gegen das Vorjahr: 2021 +10 %, 2022 +16 %; 2014–2020 zwischen −3 und +4 %). " +
-    "Die Ursache ist ungeklärt: möglich ist eine Änderung der Messung oder Verarbeitung, teilweise auch echte Veränderung. " +
-    "2022-07 fehlt und 2022-08 ist ein Teilmonat (Satellit Suomi NPP vom 26.07. bis 20.08.2022 im Sicherheitsmodus, laut NASA). " +
-    "<b>Nicht als Wachstum deuten.</b></div>";
+  // Befund 2026-10-05 (~/ALEPH, berichte/2026-10-05_anstieg-2021-2022.md; Regeln in docs/methoden.md, Abschnitt
+  // „Bekannte Messeigenheiten Nachtlicht“): 2021 steigt auch in einer zweiten, teilweise unabhängig verarbeiteten Quelle
+  // desselben Sensors (EOG); 2020 ist ein Tiefjahr. 2022 liegt das NASA-Produkt 3–6 Punkte über EOG, Ursache offen,
+  // keine Korrektur. Wortlaut nach Empfehlung 6 des Berichts; „gleicher Sensor“ ergänzt, weil der Bericht „unabhängig
+  // bestätigt“ ohne diesen Zusatz ausdrücklich ausschließt. Die früheren Zahlen „+10 % / +16 %“ (Median Jahr gegen
+  // Vorjahr) überzeichnen laut Bericht und stehen deshalb nicht mehr hier.
+  var MESSSPRUNG_HINWEIS = '<div class="zr-hinweis zr-hinweis--warn"><b>Achtung 2021–2022:</b> ' +
+    "2021 höher als 2020, auch in einer unabhängigen Quelle (gleicher Sensor); 2020 war ein Tiefjahr. " +
+    "2022 im NASA-Produkt einige Prozent höher als in der Vergleichsquelle, Ursache offen. " +
+    "2022-07 fehlt und 2022-08 ist ein Teilmonat (Satellit Suomi NPP vom 26.07. bis 20.08.2022 im Sicherheitsmodus, laut NASA).</div>";
+  // Kennzeichnung je Wert aus 2022 (Bericht, Empfehlung 2; „desselben Sensors“ statt „unabhängige“ nach plausibilitaets-pruefer
+  // 2026-10-06): kein Wert wird verändert.
+  var HINWEIS_2022 = "NASA-Wert 2022 im Mittel 3–6 % höher als eine Vergleichsquelle desselben Sensors; Ursache offen";
+  function zusatz2022(zeit) { return String(zeit).slice(0, 4) === "2022" ? " · " + HINWEIS_2022 : ""; }
+  function marke2022(l) {
+    return l.jahre["2022"] ? '<span class="lw-marke">2022: ' + esc(HINWEIS_2022) + "; Änderungen unter etwa 6 % gegen 2021 nicht deuten</span>" : "";
+  }
 
   function punktLegende() {
     function sym(stil) { return '<svg width="12" height="12"><circle cx="6" cy="6" r="3.6" ' + stil + "/></svg>"; }
@@ -309,7 +319,7 @@
       kopf = "<tr><th>Jahr</th><th>" + esc(bz.lichtName) + " (Jahreswert), Index</th><th>Licht aus Zellen mit 6–8 guten Monaten</th>" + (bz.bip ? "<th>" + esc(bz.bipName) + ", Index</th>" : "") + "</tr>";
       zeilen = jahre.map(function (j) {
         var li = (l.index[bz.jahr] || {})[j], bi = bz.bip ? (l.index[bz.bip] || {})[j] : null;
-        return "<tr><th>" + j + "</th><td>" + (li != null ? li : '<span class="zr-fehlt">' + esc(l.jahre[j].licht_grund || "kein Index") + "</span>") + "</td>" +
+        return "<tr><th>" + j + (j === "2022" ? " *" : "") + "</th><td>" + (li != null ? li : '<span class="zr-fehlt">' + esc(l.jahre[j].licht_grund || "kein Index") + "</span>") + "</td>" +
           "<td>" + wenige(l.jahre[j]) + "</td>" +
           (bz.bip ? "<td>" + (bi != null ? bi + (l.jahre[j][bz.bip + "_vorlaeufig"] ? " (vorl.)" : "") : "–") + "</td>" : "") + "</tr>";
       }).join("");
@@ -317,13 +327,14 @@
       kopf = "<tr><th>Jahr</th><th>" + esc(bz.lichtName) + " (Jahreswert)</th><th>Licht aus Zellen mit 6–8 guten Monaten</th>" + (bz.bip ? "<th>" + esc(bz.bipName) + "</th>" : "") + "<th>Bevölkerung</th></tr>";
       zeilen = jahre.map(function (j) {
         var e = l.jahre[j], lw = e[bz.jahr];
-        return "<tr><th>" + j + "</th><td>" + (lw != null ? sig2(lw) : '<span class="zr-fehlt">' + esc(e.licht_grund || (bz.licht === "pro_kopf" ? "kein Pro-Kopf-Wert" : "kein Wert")) + "</span>") + "</td>" +
+        return "<tr><th>" + j + (j === "2022" ? " *" : "") + "</th><td>" + (lw != null ? sig2(lw) : '<span class="zr-fehlt">' + esc(e.licht_grund || (bz.licht === "pro_kopf" ? "kein Pro-Kopf-Wert" : "kein Wert")) + "</span>") + "</td>" +
           "<td>" + wenige(e) + "</td>" +
           (bz.bip ? "<td>" + (e[bz.bip] != null ? sig2(e[bz.bip]) + (e[bz.bip + "_vorlaeufig"] ? " (vorl.)" : "") : e[bz.bip + "_nicht_verwenden"] ? "nicht verwendet" : "–") + "</td>" : "") +
           "<td>" + (e.bevoelkerung != null ? sig2(e.bevoelkerung) : "–") + "</td></tr>";
       }).join("");
     }
-    return '<table class="ad-tabelle zr-tabelle"><thead>' + kopf + "</thead><tbody>" + zeilen + "</tbody></table>";
+    return '<table class="ad-tabelle zr-tabelle"><thead>' + kopf + "</thead><tbody>" + zeilen + "</tbody></table>" +
+      (l.jahre["2022"] ? '<div class="zr-klein">* ' + esc(HINWEIS_2022) + ". Lichtwert nicht korrigiert; 2022 ohne Juli und August.</div>" : "");
   }
 
   function monatsTabelle(l, bz) {
@@ -482,7 +493,7 @@
 
   window.ALEPH_ZEITREIHE = { oeffne: oeffne, schliesse: schliesse };
   window.ALEPH_ZR = {
-    messsprungHinweis: MESSSPRUNG_HINWEIS,
+    messsprungHinweis: MESSSPRUNG_HINWEIS, hinweis2022: HINWEIS_2022,
     Z: Z, BEZUG: BEZUG, grafik: grafik, leereGrafik: leereGrafik, zeitachse: zeitachse, monatsPunkte: monatsPunkte,
     jahrPunkte: jahrPunkte, indexPunkte: indexPunkte, bereich: bereich, indexBereich: indexBereich, landName: landName,
     landEinheit: landEinheit, sig2: sig2, form: form, rahmen: rahmen, datenstand: datenstand, statusText: statusText

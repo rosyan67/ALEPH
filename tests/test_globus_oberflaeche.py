@@ -259,8 +259,29 @@ def test_ueber_aleph_nennt_nicht_auswaehlbare_monate():
 
 
 def test_hinweis_messsprung_2021_2022_in_laenderansicht_und_vergleich():
+    # Wortlaut nach berichte/2026-10-05_anstieg-2021-2022.md (Empfehlung 6) in ~/ALEPH, „gleicher Sensor“ ergänzt.
     zr = (WEB / "globus_zeitreihen.js").read_text(encoding="utf-8")
-    assert "Nicht als Wachstum deuten." in zr and "Die Ursache ist ungeklärt" in zr and "Suomi NPP" in zr
+    assert "2021 höher als 2020, auch in einer unabhängigen Quelle (gleicher Sensor); 2020 war ein Tiefjahr. " in zr
+    assert "2022 im NASA-Produkt einige Prozent höher als in der Vergleichsquelle, Ursache offen. " in zr
+    assert "Suomi NPP" in zr and "2022-08 ist ein Teilmonat" in zr
+    # Überholte Aussagen (Bericht, „Nicht behaupten“) stehen nicht mehr im Hinweis.
+    assert "Nicht als Wachstum deuten" not in zr and "2022 +16 %" not in zr
     assert zr.count("MESSSPRUNG_HINWEIS") >= 4  # Definition, absolut, Index, Schnittstelle
     vg = (WEB / "globus_vergleich.js").read_text(encoding="utf-8")
     assert vg.count("ZR.messsprungHinweis") == 2  # absolut und Index
+    html = (WEB / "globus.html").read_text(encoding="utf-8")
+    assert "ungeklärt höher" not in html and "2020 war ein Tiefjahr" in html
+
+
+def test_kennzeichnung_2022_in_laenderansicht_und_vergleich():
+    zr = (WEB / "globus_zeitreihen.js").read_text(encoding="utf-8")
+    assert 'var HINWEIS_2022 = "NASA-Wert 2022 im Mittel 3–6 % höher als eine Vergleichsquelle desselben Sensors; Ursache offen";' in zr
+    # Länderansicht: Kennzeichen, Stern in der Jahrestabelle mit Fußnote, Zusatz in den Punkt-Hinweisen.
+    assert "if (marke2022(l)) b.push(marke2022(l));" in zr
+    assert zr.count('(j === "2022" ? " *" : "")') == 2  # absolut und Index
+    assert zr.count("zusatz2022(") >= 4  # Definition, Monats-, Jahres-, Indexpunkte
+    assert "hinweis2022: HINWEIS_2022" in zr
+    # Vergleich: Kennzeichen je Land, Stern im Tabellenkopf, Fußnote. Kein Wert wird verändert.
+    vg = (WEB / "globus_vergleich.js").read_text(encoding="utf-8")
+    assert 't.push("2022: " + ZR.hinweis2022)' in vg
+    assert '(j === "2022" ? " *" : "")' in vg and '" * " + esc(ZR.hinweis2022)' in vg

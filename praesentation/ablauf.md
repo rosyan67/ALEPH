@@ -1,6 +1,6 @@
 # ALEPH-Globus – Ablauf für 7 Minuten
 
-Stand: 2026-10-05 (Nachtlicht 2013–2022, Länderansicht lang, Niederschlag). Vorige Fassung: Präsentation 30.09.2026 (Git-Verlauf).
+Stand: 2026-10-06 (Nachtlicht 2013–2022, Länderansicht lang, Niederschlag; Warntext 2021–2022 nach der Untersuchung vom 05.10.). Vorige Fassung: Präsentation 30.09.2026 (Git-Verlauf).
 
 **Vorher (5 Minuten vor Beginn):**
 - `~/ALEPH-ui/web/globus.html` in Chrome öffnen, per Doppelklick auf **„Globus öffnen.command“**. Internet und SSD sind nicht nötig.
@@ -67,11 +67,11 @@ Danach das Häkchen wieder abnehmen.
 
 **Zeigen:**
 1. Suche: **Egypt** eingeben (Namen sind englisch), Enter. Rechts **„Zeitreihen ansehen (EGY)“**.
-2. Auf die oberste Grafik (monatlich 2013–2022), den roten Kasten „Achtung 2021–2022“ und den Kasten „Nebeneinander gestellt“ zeigen.
+2. Auf die oberste Grafik (monatlich 2013–2022), den roten Kasten „Achtung 2021–2022“, das Kennzeichen „2022: NASA-Wert …“ und den Kasten „Nebeneinander gestellt“ zeigen.
 3. Zum **zweiten Tab** wechseln: Vergleich der vier Länder im Index-Modus.
 
 **Sagen:**
-> „Für jedes Land stehen Nachtlicht und Weltbank-Zahlen auf derselben Zeitachse, jede in ihrer eigenen Grafik. Unsichere Monate lassen wir nicht weg, wir markieren sie: hohle Punkte bei Schneeverdacht, Lücken, wo nicht gemessen wurde. 2021 und 2022 liegt das Licht in der Mehrheit der Länder deutlich höher. Wir wissen noch nicht, warum. Darum steht hier ausdrücklich: nicht als Wachstum deuten.“
+> „Für jedes Land stehen Nachtlicht und Weltbank-Zahlen auf derselben Zeitachse, jede in ihrer eigenen Grafik. Unsichere Monate lassen wir nicht weg, wir markieren sie: hohle Punkte bei Schneeverdacht, Lücken, wo nicht gemessen wurde. 2021 liegt das Licht höher als 2020, das sieht auch eine zweite Quelle vom selben Satelliten; 2020 war aber ein Tiefjahr, deshalb vergleichen wir mit 2019. 2022 liegt der NASA-Wert einige Prozent über dieser Vergleichsquelle. Woher das kommt, ist offen, darum ist 2022 gekennzeichnet und wir korrigieren nichts.“
 
 **Nicht vorlesen, nur wissen:** Die Saisonbereinigung ist jetzt für 125 von 236 Ländern bestimmbar, auch für Deutschland, Indien und Nigeria. Ohne Nachfrage nicht darauf eingehen.
 
@@ -93,9 +93,19 @@ Danach zurück auf **„Nachtlicht“** schalten.
 
 ## Was ich NICHT behaupten darf
 
-**Neu seit 2026-10-05 (Plausibilitäts-Prüfer):**
-- **2021–2022 nicht als Wachstum deuten.** Das Licht liegt in der Mehrheit der Länder höher (Median von 128 Ländern: 2021 +10 %, 2022 +16 %; vorher −3 bis +4 % je Jahr). Ausdrücklich nicht deuten: Indiens Anstieg (Index 2021: 113) und Ägyptens Index 2021 = 107.
-- **Den Sprung nicht als „bekannten Messfehler der NASA“ bezeichnen.** Die Ursache ist ungeklärt; eine NASA-Angabe dazu wurde nicht gefunden.
+**Neu seit 2026-10-06 (Untersuchung Anstieg 2021–2022, `~/ALEPH/berichte/2026-10-05_anstieg-2021-2022.md`, Abschnitt Prüfer; Regeln in `~/ALEPH/docs/methoden.md`, „Bekannte Messeigenheiten Nachtlicht“). Nicht sagen:**
+- „Der Anstieg 2021/2022 ist echtes Wachstum.“
+- „2021 ist bewiesen kein Messfehler“ oder „unabhängig bestätigt“, ohne dazuzusagen: **gleicher Sensor**.
+- „NASA überschätzt 2022 um 3–6 %.“ Offen ist, wer von beiden Quellen richtig liegt.
+- „Der Sonnenzyklus erklärt 2022.“
+- „Die Pandemie verursachte die Delle 2020“ als geprüfte Ursache.
+- „Nachtlicht stieg 2021 um 10 % und 2022 um 16 %.“ Diese Zahlen (Median der Länder gegen das Vorjahr) überzeichnen: Sie messen ab dem Tiefjahr 2020, und 2022 fehlen Juli und August.
+- Aussagen zu Europa in der Energiekrise über das im Bericht Beschriebene hinaus.
+- LED oder Elektrifizierung als Ursache.
+
+**Aus dem 05.10. weiter gültig:**
+- Einzelne Länder 2021–2022 nicht deuten, ausdrücklich nicht Indiens Anstieg (Index 2021: 113) und Ägyptens Index 2021 = 107.
+- **Den Anstieg nicht als „bekannten Messfehler der NASA“ bezeichnen.** Eine NASA-Angabe dazu wurde nicht gefunden.
 - **2022-07 fehlt wegen des Sicherheitsmodus von Suomi NPP** (26.07.–20.08.2022, belegt: Earthdata-Seite „Suomi NPP Recovers from Safe Mode“). **2022-08 ist ein Teilmonat** (nur ab 21.08.) und nicht zu deuten.
 - **Ägypten: Licht flach, BIP +48 % (2013–2022).** Nicht sagen „Licht widerspricht dem BIP“ oder „Licht erfasst Wachstum nicht“.
 - **Abspielen zeigt keinen Trend.** Der Wechsel der Abdeckung (Amerika bisher nur 2018-01 bis 2020-11, Stand 05.10.), Schnee, Wolken und kurze Sommernächte verändern das Bild. Kein Ereignis daraus ableiten.
@@ -127,7 +137,7 @@ Danach zurück auf **„Nachtlicht“** schalten.
 ## Die drei wahrscheinlichsten Fragen
 
 **1. „Kann man mit Nachtlicht das BIP messen oder schätzen?“**
-> „Das haben wir nicht gezeigt. Im Querschnitt von 125 Ländern geht mehr BIP im Mittel mit mehr Licht einher, ungefähr im gleichen Verhältnis. Einzelne Länder weichen aber stark ab. Und über die Zeit sieht man, wie schwierig das ist: Ägyptens BIP ist seit 2013 um fast die Hälfte gewachsen, sein Licht kaum – und 2021/22 springt das Licht in vielen Ländern, ohne dass wir wissen warum.“
+> „Das haben wir nicht gezeigt. Im Querschnitt von 125 Ländern geht mehr BIP im Mittel mit mehr Licht einher, ungefähr im gleichen Verhältnis. Einzelne Länder weichen aber stark ab. Und über die Zeit sieht man, wie schwierig das ist: Ägyptens BIP ist seit 2013 um fast die Hälfte gewachsen, sein Licht kaum – und 2022 liegt der NASA-Wert einige Prozent über einer Vergleichsquelle, ohne dass wir wissen warum.“
 
 **2. „Warum fehlen Teile von Amerika und die Jahre nach 2022?“**
 > „Der Download der NASA-Daten läuft noch: Wir haben zuerst Afrika, Europa und Asien für alle Jahre geladen, Amerika bisher für 2018 bis November 2020. 2023 bis 2025 sperren wir absichtlich: Das ist unser Testzeitraum, damit wir unsere Regeln nicht an den Daten ausrichten, an denen wir sie später prüfen.“

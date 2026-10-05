@@ -161,7 +161,7 @@
     auswahl.forEach(function (a) { Object.keys(Z.laender[a.code].jahre).forEach(function (j) { if (jahre.indexOf(j) < 0) jahre.push(j); }); });
     jahre.sort();
     var sig2 = ZR.sig2;
-    var kopf = "<tr><th>Land</th>" + jahre.map(function (j) { return "<th>Licht " + j + "</th>"; }).join("") +
+    var kopf = "<tr><th>Land</th>" + jahre.map(function (j) { return "<th>Licht " + j + (j === "2022" ? " *" : "") + "</th>"; }).join("") +
       (bz.bip ? jahre.map(function (j) { return "<th>" + (bz.bip === "bip_real" ? "BIP " : "BIP/Kopf ") + j + "</th>"; }).join("") : "") + "</tr>";
     var zeilen = auswahl.map(function (a) {
       var l = Z.laender[a.code], p = PLAETZE[a.platz];
@@ -183,7 +183,7 @@
     return '<div class="zr-tkopf">Vergleichstabelle' + (zustand.index ? " (Index, 2018 = 100)" : " (Jahreswerte)") + "</div>" +
       '<div class="vg-tabwrap"><table class="ad-tabelle zr-tabelle"><thead>' + kopf + "</thead><tbody>" + zeilen + "</tbody></table></div>" +
       '<div class="zr-klein">Licht: Jahreswert nach den Regeln der Auswertung 2018; „–“ = kein gültiger Jahreswert (Grund in der Länderansicht). ' +
-      "Weltbank-Werte „(vorl.)“ = vorläufig.</div>";
+      "Weltbank-Werte „(vorl.)“ = vorläufig." + (jahre.indexOf("2022") >= 0 && ZR.hinweis2022 ? " * " + esc(ZR.hinweis2022) + "; Lichtwert nicht korrigiert, 2022 ohne Juli und August." : "") + "</div>";
   }
 
   function kennzeichenKurz() {
@@ -193,6 +193,7 @@
       else if (k.gebiet_weltbank === "unklar") t.push("Gebiet der Weltbank-Zahl unklar");
       if (k.monate_nicht_geladen) t.push("in " + monate(k.monate_nicht_geladen) + " noch nicht geladen");
       if (k.monate_gering) t.push("geringe Abdeckung in " + monate(k.monate_gering) + "");
+      if (Z.laender[a.code].jahre["2022"] && ZR.hinweis2022) t.push("2022: " + ZR.hinweis2022);
       if (k.monate_schnee) t.push("Schnee-Verdacht in " + monate(k.monate_schnee) + "");
       if (k.nord65_prozent) t.push(k.nord65_prozent + " % des Lichts nördlich von 65° N");
       if (!k.pro_kopf_erlaubt) t.push("kein Pro-Kopf-Wert");
