@@ -552,3 +552,24 @@
 - **Blockiert:** GES DISC liefert HTTP 403 „EULA Acceptance Failure“. Nutzer muss „NASA GESDISC DATA ARCHIVE“ freigeben (https://urs.earthdata.nasa.gov/approve_app?client_id=e2WVk8Pw6weeLUKZYOxvTQ). Noch keine Datei geladen, Teil 4 an Daten offen, plausibilitaets-pruefer offen, nicht gepusht.
 - **Tests:** ganze Suite 798/798 (Lauf von layer-bauer), IMERG + Erkennung 146/146 selbst nachgeprüft.
 - **Nicht angefasst:** Nachtlicht-Download (Prozess 82367), `vnp46a3*.py`, `auth.py`, Kachellisten, `scripts/vnp46a3_*`, `.env`. Keine Daten aus 2023–2025.
+
+## 2026-10-05 (Globus mit allen Nachtlicht-Monaten 2013–2022 – Zwischenstand, worktree ~/ALEPH-ui)
+
+- **Teil 1 fertig** (Commit `cab931a`, gepusht): Globus zeigt 119 Monate 2013-01 bis 2022-12 (35 vollständig, 84 nur Afrika-Europa-Asien). 2022-07 als „zurückgestellt“ sichtbar, Grund aus dem Download-Protokoll (nur gelesen). Zeitleiste mit Jahresmarken und Zustandsband, Abspielknopf mit Hinweis „keine Trendaussage“, höchstens 8 Monate im Speicher.
+- Startzeit bis Globus fertig (Median, Chrome ohne Grafikkarte): vorher 3,1 s, nachher 2,8 s; Monate laden erst bei Auswahl.
+- **Teil 2 blockiert:** Neuberechnung `python -m aleph.link.laender_zeitreihen` in ~/ALEPH vom Berechtigungssystem abgelehnt, nicht umgangen. Wartet auf Freigabe durch den Nutzer. Sicherung `auswertungen/laender_zeitreihen/ergebnis_stand_2026-09-29.json` angelegt.
+- **Teil 3 entfällt:** IMERG-Bericht ohne Urteil, Download läuft; nichts gebaut.
+- Tests Globus-Dateien 58/58. Gesamtlauf, plausibilitaets-pruefer, PDF, Ablauf folgen nach Teil 2.
+- In ~/ALEPH nur dieser LOG-Eintrag. Nicht angefasst: Download, IMERG-Lauf, `.env`. Nichts aus 2023–2025 gezeigt.
+- **Bericht:** `~/ALEPH-ui/berichte/2026-10-05_globus-alle-monate.md` (Zwischenstand).
+
+## 2026-10-05 (Niederschlag GPM IMERG geladen und geprüft)
+
+- **Freigabe** „NASA GESDISC DATA ARCHIVE“ vom Nutzer erteilt; danach keine 403 mehr.
+- **Geladen:** Probemonat 2018-07, dann 2018, dann 2013-01 bis 2025-12. Manifest 153 × geladen (Größe je Datei bytegenau wie Katalog, sha256), 3 × beim Anbieter nicht vorhanden (2025-10..12). Würfel 153 × Status 1, 3 × Status 5. Code unverändert.
+- **Technische Prüfung aller Monate** (auch 2023–2025, nur Datenlieferung): Fehlwerte 0,34–0,57 % je Monat, nur Polzeilen jenseits ±89,5°; 0 negative Werte.
+- **Erwartungen E1–E8 (2018):** alle erfüllt. Global 2,76 mm/Tag; Mumbai Juli 1072 mm; Berlin Jahr 472 mm; Singapur 2386 mm. Monatsmaxima alle in Tropengebieten.
+- **plausibilitaets-pruefer:** plausibel mit Vorbehalt. Berlin (+25–35 %) und Singapur (+40 % gegen Station Changi, laut NEA-Text war Changi aber trockener Ausreißer) über Stationswerten; Kerala Juli/August 2018 deutlich unter IMD-Werten aus einer Suchzusammenfassung (nicht bestätigt). Keine Ortsaussagen aus IMERG allein in die Präsentation.
+- **Nachgetragen:** `layers.yaml` (Status geladen), `ARCHITECTURE.md` (Stand), `docs/sources/imerg.md` (gemessene Polgrenze, Freigabe erledigt), Bericht `berichte/2026-10-02_imerg.md` abgeschlossen (Urteil, Empfehlung).
+- **Tests:** `tests/test_imerg.py` 60/60.
+- **Nicht angefasst:** Nachtlicht-Download (Prozess 82367), `vnp46a3*.py`, `.env`, LOG-Eintrag der Globus-Sitzung (stand schon uncommittet in LOG.md). Nicht gepusht.
