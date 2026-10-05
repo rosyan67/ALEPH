@@ -14,14 +14,33 @@ layers:
       - near_nadir
     erstellt: 2026-09-22
 
-  - id: gpm_imerg
-    name: GPM IMERG Precipitation
-    status: in Arbeit
-    datei: aleph/layers/gpm_imerg.py
-    raster: 0.25° (von 0.1° aggregiert)
-    zeitraum: 2013-2025
+  - id: imerg
+    name: GPM IMERG V07 Precipitation (GPM_3IMERGM, Final Run)
+    status: geladen (2026-10-05; 153 Monate geladen, 3 beim Anbieter nicht vorhanden)
+    datei: aleph/layers/imerg.py
+    raster: 0.25° (exakt flächengewichtet aus 0,1°; Verhältnis 2,5, keine ganze Zahl)
+    zeitraum: 2013-01 bis 2025-09 (2025-10..12 beim Anbieter nicht vorhanden, V07 Final endet 2025-09)
     felder:
-      - precipitation
-    erstellt: 2026-09-25
+      - precipitation_mm_monat
+      - precipitation_gueltig_anteil
+      - precipitation_gueltige_pixel
+      - random_error_mm_monat
+      - gauge_relative_weighting
+      - quality_index_min
+      - probability_liquid
+      - kalibrierung_trmm
+    erstellt: 2026-10-02
+    geaendert: 2026-10-02 (Auflagen statistik-pruefer: Attribute im Würfel,
+      probability_liquid niederschlagsgewichtet, quality_index_min als
+      Minimum statt Flächenmittel, MINDEST_GUELTIG_ANTEIL/nutzbar_maske,
+      kalibrierung_trmm, to_cube nur mit manifestgeprüften Rohdateien)
+    ersetzt: gpm_imerg (gelöscht, Datei hatte u. a. keine Zeitlimits, falsches
+      Enddatum, falsche Stundenzahl, bilineare statt flächengewichtete Interpolation)
     hinweis: >-
-      Flächengewichtete Aggregation 0.1° → 0.5° → 0.25°
+      Exakte flächengewichtete (konservative) Aggregation 0,1° -> 0,25°
+      (Begründung im Modulkopf von aleph/layers/imerg.py); je Zielzelle genau
+      3x3=9 überlappende Quellpixel bei voller Gültigkeit. Steckbrief
+      docs/sources/imerg.md. Geladen 2026-10-05 (GES-DISC-Freigabe erteilt):
+      153 Dateien, Größe je Datei bytegenau wie im Katalog, sha256 im Manifest;
+      2025-10..12 als Zustand 5. Plausibilitätsprüfung an 2018 siehe
+      berichte/2026-10-02_imerg.md.

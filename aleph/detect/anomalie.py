@@ -689,11 +689,15 @@ def _lade(wuerfel, monat, feld, s: Schwellen):
     return ziel, basis, ds["breite"].values, ds["laenge"].values, basis_monate, fehlend
 
 
-def _nicht_geladen(monat, feld, s, breite, laenge) -> Erkennung:
+def _nicht_geladen(monat, feld, s, breite, laenge, zustand: int = 0) -> Erkennung:
+    """`zustand`: Rohwert von `monat_fertig` (siehe aleph.detect.wuerfel.ZUSTANDSNAMEN), nur für
+    den Grund-Text; am Verhalten ändert sich nichts (weiterhin ausschließlich Zustand 1 bewertet).
+    """
     return Erkennung(
         monat=monat, feld=feld, status="nicht geladen",
         grund=(
-            f"{_monat_text(monat)} ist im Würfel nicht als fertig markiert (nicht geladen oder unvollständig). "
+            f"{_monat_text(monat)} ist im Würfel nicht als fertig markiert "
+            f"(Zustand: {lesen.zustandstext(zustand)}). "
             "Das ist NICHT „keine Daten“ und NICHT „keine Anomalie“; der Monat wurde nicht bewertet."
         ),
         zellen=_leere_zellen(breite, laenge), ereignisse=pd.DataFrame(columns=SPALTEN_EREIGNISSE),
@@ -810,6 +814,7 @@ def erkenne_zeitraum(
     """
     s = schwellen or Schwellen()
     fertig = set(lesen.fertige_monate(wuerfel))
+    zustaende = lesen.monat_zustaende(wuerfel)
     monate = [m for m in lesen.zeitachse_monate(wuerfel) if (von is None or m >= von) and (bis is None or m <= bis)]
     _pruefe_endtest(monate, endtest_freigabe)
     breite_achse, laenge_achse = lesen.gitter(wuerfel)
@@ -819,7 +824,9 @@ def erkenne_zeitraum(
     lauf = None
     for monat in monate:
         if monat not in fertig:
-            ergebnisse.append(_nicht_geladen(monat, feld, s, breite_achse, laenge_achse))
+            ergebnisse.append(
+                _nicht_geladen(monat, feld, s, breite_achse, laenge_achse, zustaende.get(monat, 0))
+            )
             vorher_monat, vorher_vorzeichen, lauf = None, None, None
             continue
         ziel, basis, breite, laenge, basis_monate, fehlend = _lade(wuerfel, monat, feld, s)

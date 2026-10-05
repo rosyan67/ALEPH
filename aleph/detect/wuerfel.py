@@ -25,6 +25,30 @@ import xarray as xr
 
 FERTIG_VARIABLE = "monat_fertig"  # muss zu aleph.layers.vnp46a3.FERTIG_VARIABLE passen (Test prüft das)
 
+# Namen der `monat_fertig`-Werte über alle Layer hinweg (nur für Meldungen, ändert
+# nichts am Verhalten: gelesen wird weiterhin ausschließlich Zustand 1). 0/1/3 sind
+# layerübergreifend gleich definiert; 2/4 kommen nur bei vnp46a3 vor (unvollständig
+# bzw. nur-Region-vollständig), 5 nur bei imerg (beim Anbieter nicht vorhanden, z. B.
+# 2025-10..12 nach Ende des V07-Final-Runs - siehe aleph/layers/imerg.py). Ein
+# unbekannter Wert wird nicht verschluckt, sondern benannt.
+ZUSTANDSNAMEN = {
+    0: "nicht geladen",
+    1: "fertig",
+    2: "unvollständig (wird neu geladen)",
+    3: "wird gerade geschrieben",
+    4: "nur für eine Region vollständig",
+    5: "beim Anbieter nicht vorhanden",
+}
+
+
+def zustandstext(wert: int) -> str:
+    """Name eines `monat_fertig`-Werts für Meldungen (siehe ZUSTANDSNAMEN)."""
+    try:
+        wert = int(wert)
+    except (TypeError, ValueError):
+        return f"unbekannter Zustand {wert!r}"
+    return ZUSTANDSNAMEN.get(wert, f"unbekannter Zustand {wert}")
+
 
 class MonatNichtFertig(RuntimeError):
     """Ein verlangter Monat ist im Würfel nicht als fertig markiert (nicht geladen)."""
@@ -85,6 +109,24 @@ def zeitachse_monate(wuerfel) -> list[tuple[int, int]]:
     return [_als_monat(z) for z in zeiten]
 
 
+def monat_zustaende(wuerfel) -> dict[tuple[int, int], int]:
+    """Rohwert von `monat_fertig` je Monat der Zeitachse (0/1/2/3/4/5, siehe ZUSTANDSNAMEN).
+
+    Nur für Meldungen/Diagnose (z. B. "beim Anbieter nicht vorhanden" statt
+    pauschal "nicht geladen"); ändert nichts daran, dass `lies_monate`
+    weiterhin ausschließlich Zustand 1 akzeptiert.
+    """
+    ds, schliessen = _oeffne(wuerfel)
+    try:
+        _pruefe_format(ds)
+        zeiten = ds["zeit"].values
+        fertig = ds[FERTIG_VARIABLE].values
+    finally:
+        if schliessen:
+            ds.close()
+    return {_als_monat(z): int(f) for z, f in zip(zeiten, fertig)}
+
+
 def gitter(wuerfel) -> tuple[np.ndarray, np.ndarray]:
     """Breiten- und Längenkoordinaten des Würfels (für leere Ergebnisse nicht geladener Monate)."""
     ds, schliessen = _oeffne(wuerfel)
@@ -113,10 +155,14 @@ def lies_monate(wuerfel, monate: list[tuple[int, int]], variablen: list[str]) ->
         position = {m: i for i, m in enumerate(achse)}
         nicht_fertig = [m for m in monate if m not in position or int(fertig[position[m]]) != 1]
         if nicht_fertig:
+            details = ", ".join(
+                f"{j:04d}-{mo:02d} ({zustandstext(fertig[position[(j, mo)]]) if (j, mo) in position else 'nicht auf der Zeitachse'})"
+                for j, mo in nicht_fertig
+            )
             raise MonatNichtFertig(
-                "Diese Monate sind im Würfel nicht als fertig markiert (nicht geladen oder unvollständig) "
-                "und werden nicht geliefert: " + ", ".join(f"{j:04d}-{mo:02d}" for j, mo in nicht_fertig) + ". "
-                "Ein nicht geladener Monat ist nicht dasselbe wie „keine Daten“."
+                "Diese Monate sind im Würfel nicht als fertig markiert und werden nicht geliefert: "
+                + details + ". Ein nicht geladener oder beim Anbieter nicht vorhandener Monat ist "
+                "nicht dasselbe wie „keine Daten“."
             )
         indizes = [position[m] for m in monate]
         auswahl = ds[variablen].isel(zeit=indizes).load()
@@ -183,10 +229,14 @@ def lies_monate_mit_region(
         erlaubt = (1, region_zustand)
         nicht_fertig = [m for m in monate if m not in position or int(fertig[position[m]]) not in erlaubt]
         if nicht_fertig:
+            details = ", ".join(
+                f"{j:04d}-{mo:02d} ({zustandstext(fertig[position[(j, mo)]]) if (j, mo) in position else 'nicht auf der Zeitachse'})"
+                for j, mo in nicht_fertig
+            )
             raise MonatNichtFertig(
                 "Diese Monate sind weder fertig noch für die Region vollständig und werden nicht geliefert: "
-                + ", ".join(f"{j:04d}-{mo:02d}" for j, mo in nicht_fertig) + ". "
-                "Ein nicht geladener Monat ist nicht dasselbe wie „keine Daten“."
+                + details + ". Ein nicht geladener oder beim Anbieter nicht vorhandener Monat ist "
+                "nicht dasselbe wie „keine Daten“."
             )
         indizes = [position[m] for m in monate]
         auswahl = ds[variablen].isel(zeit=indizes).load()
