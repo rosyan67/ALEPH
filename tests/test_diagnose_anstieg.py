@@ -132,3 +132,71 @@ def test_regel_r2_ersatz_waehlt_zehn_prozent():
     g = np.ones_like(x, dtype=bool)
     m, regel, abw = an.regel_r2(x, g, bm, monate, np.zeros(n), np.array(["hell"] * n, dtype=object))
     assert "Ersatzregel" in regel and m.sum() == 10 and m[:10].all()
+
+
+def test_zellschluessel_ohne_ueberlauf_bei_16_bit():
+    z = np.array([719, 300], dtype="int16")
+    s = np.array([1439, 5], dtype="int16")
+    assert list(an.zellschluessel(z, s)) == [719 * 1440 + 1439, 300 * 1440 + 5]
+
+
+def _monate_text():
+    return [f"{j:04d}-{m:02d}" for j in range(2013, 2023) for m in range(1, 13)]
+
+
+def test_jahresgrenzen_stetig_gegen_stufen():
+    ms = _monate_text()
+    stetig = [0.0025 * i for i in range(len(ms))]  # 3 % je Jahr, gleichmäßig
+    r = an.jahresgrenzen(ms, stetig)
+    assert all(abs(v - 0.0075) < 1e-9 for v in r["q1_minus_q4_vorjahr"].values())
+    assert r["quartalsschritte_im_jahr_mittel"] == pytest.approx(0.0075, abs=1e-4)
+    stufen = [0.03 * (int(m[:4]) - 2013) for m in ms]  # 3 % je Jahr, nur am Jahreswechsel
+    r = an.jahresgrenzen(ms, stufen)
+    assert all(abs(v - 0.03) < 1e-9 for v in r["q1_minus_q4_vorjahr"].values())
+    assert r["quartalsschritte_im_jahr_mittel"] == pytest.approx(0.0, abs=1e-9)
+
+
+def test_jahresgrenzen_luecken_und_none():
+    ms = _monate_text()
+    v = [0.0] * len(ms)
+    v[ms.index("2022-07")] = None
+    r = an.jahresgrenzen(ms, v)
+    assert r["q1_minus_q4_vorjahr"]["2022"] == 0.0
+
+
+def test_sonnenflecken_lesen(tmp_path):
+    p = tmp_path / "sn.csv"
+    p.write_text("2019;01;2019.042;   7.7;  1.2;  600;1\n2019;02;2019.123;  -1.0; -1.0;   -1;0\n", encoding="utf-8")
+    assert an.sonnenflecken(p) == {"2019-01": 7.7}
+
+
+def _gl_kuenstlich(ln_x):
+    monate = [(j, m) for j in range(2013, 2023) for m in range(1, 13)]
+    x = np.exp(np.asarray(ln_x))[:, None] * np.ones((1, 3))
+    g = np.ones_like(x, dtype=bool)
+    b = an.basislinie(x, g, monate)
+    return monate, x, g, b
+
+
+def test_basislinie_macht_aus_stetigem_anstieg_eine_treppe():
+    """Befund statistik-pruefer: stetiges Wachstum erscheint im Maß x/B als Stufen im Januar (Artefakt)."""
+    monate = [(j, m) for j in range(2013, 2023) for m in range(1, 13)]
+    ln_x = [0.0025 * i + 0.1 * np.sin(m) for i, (_, m) in enumerate(monate)]
+    monate, x, g, b = _gl_kuenstlich(ln_x)
+    idx = an.monatsindex(x, g, an.basis_je_monat(b, monate), np.ones(3), np.ones(3, dtype=bool))["index"]
+    r = an.jahresgrenzen([f"{j:04d}-{m:02d}" for j, m in monate], list(np.log(idx)))
+    assert r["quartalsschritte_im_jahr_mittel"] == pytest.approx(0.0, abs=1e-9)
+    assert all(abs(v - 0.03) < 1e-6 for v in r["q1_minus_q4_vorjahr"].values())
+
+
+def test_saisonmodell_trennt_stetig_und_stufe():
+    monate = [(j, m) for j in range(2013, 2023) for m in range(1, 13)]
+    rng = np.random.default_rng(7)
+    saison = np.array([0.1 * np.sin(m) for _, m in monate])
+    t = np.arange(len(monate))
+    stetig = 0.0025 * t + saison + rng.normal(0, 0.005, len(t))
+    m0 = an.bruch_mit_saison(monate, stetig)
+    assert m0["M0"]["steigung_je_jahr"] == pytest.approx(0.03, abs=0.002)
+    assert m0["M0"]["bic"] < m0["M_stufe"]["bic"]  # keine Stufe eingebaut → einfaches Modell gewinnt
+    m = an.bruch_mit_saison(monate, 0.002 * t + 0.1 * (t >= 102) + saison + rng.normal(0, 0.005, len(t)))
+    assert m["M_stufe"]["k"] == "2021-07" and m["M_stufe"]["bic"] < m["M0"]["bic"]

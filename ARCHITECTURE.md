@@ -381,6 +381,7 @@ ALEPH/
 │   ├── classify/          Anomalien benennen
 │   ├── link/              Verknüpfung und Theorieprüfung
 │   ├── validate/          Blindtest
+│   ├── diagnose/          Untersuchungen an geladenen Daten, nur lesend (z. B. Anstieg 2021–2022)
 │   └── export/            Ausgabe für die Oberfläche
 ├── web/                   Oberfläche
 ├── tests/                 automatische Tests

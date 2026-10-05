@@ -462,6 +462,12 @@ class Gruppe:
 # --- Zusatzdaten: Landanteil, Kontinent, L1B-Versionen --------------------------------------------------------
 
 
+def zellschluessel(zeilen, spalten) -> np.ndarray:
+    """Eindeutige Nummer je Zelle. int64: In der Zuordnungstabelle sind Zeile/Spalte 16-Bit-Zahlen; zeile·1440
+    liefe dort über (Fehler im ersten Lauf 2026-10-05: kein einziger Landanteil gefunden)."""
+    return np.asarray(zeilen).astype("int64") * 1440 + np.asarray(spalten).astype("int64")
+
+
 def land_und_kontinent(zeilen, spalten) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Je Zelle: Landanteil gesamt, Kontinent (M49-Region mit größtem Anteil), Anteil dieses Kontinents."""
     from aleph.layers import un_m49, zell_einheiten
@@ -471,8 +477,8 @@ def land_und_kontinent(zeilen, spalten) -> tuple[np.ndarray, np.ndarray, np.ndar
     region = dict(zip(m49["m49"], m49["region"]))
     z = zuordnung.merge(einheiten[["einheit_id", "un_m49"]], on="einheit_id", how="left")
     z["region"] = z["un_m49"].map(region).fillna("")
-    schluessel = z["zeile"].to_numpy() * 1440 + z["spalte"].to_numpy()
-    ziel = np.asarray(zeilen) * 1440 + np.asarray(spalten)
+    schluessel = zellschluessel(z["zeile"].to_numpy(), z["spalte"].to_numpy())
+    ziel = zellschluessel(zeilen, spalten)
     pos = {k: i for i, k in enumerate(ziel)}
     land = np.zeros(len(ziel))
     je = {}
@@ -735,10 +741,305 @@ def rechne_b() -> dict:
             urteil[str(j)] = "B zeigt keinen nennenswerten Anstieg"
         else:
             urteil[str(j)] = "teilweise"
+    # NACHTRÄGLICH: Monatsreihe ln(Σa·B / Σa·Würfel) über die in diesem Monat in beiden gültigen Zellen. Hat nur
+    # der Würfel Stufen an den Jahreswechseln, fällt diese Reihe genau dort (jahresgrenzen).
+    reihe = {}
+    for (j, m), i in pos.items():
+        if j < 2019:
+            continue
+        try:
+            w, a_, _ = ee.lies_ergebnis(j, m, "B")
+        except FileNotFoundError:
+            continue
+        wb, ab = w[s["zeilen"], s["spalten"]], a_[s["zeilen"], s["spalten"]]
+        ok = basis & gl["g"][i] & np.isfinite(wb) & (ab >= B_MIN_ANTEIL)
+        reihe[f"{j:04d}-{m:02d}"] = float(np.log((gl["a"] * np.maximum(wb, 0.0))[ok].sum() / (gl["a"] * gl["x"][i])[ok].sum()))
+    ms_b = sorted(reihe)
     erg = {"je_kalendermonat": je_kalendermonat, "gepoolt_ohne_juli": pool, "differenz_wuerfel_minus_b": diff,
-           "urteil": urteil, "fehlende_b_monate": fehlend, "zellen_grundmenge": int(basis.sum())}
+           "urteil": urteil, "fehlende_b_monate": fehlend, "zellen_grundmenge": int(basis.sum()),
+           "nachtraeglich_ln_b_durch_wuerfel": {k: _rund(reihe[k], 4) for k in ms_b},
+           "nachtraeglich_jahresgrenzen_b_durch_wuerfel": jahresgrenzen(ms_b, [reihe[k] for k in ms_b])}
     (ausgabe_ordner() / "ergebnis_b.json").write_text(json.dumps(erg, ensure_ascii=False, indent=1), encoding="utf-8")
     return erg
+
+
+
+
+# --- NACHTRÄGLICH (nach Ansicht der ersten Ergebnisse, 2026-10-05; beschreibend, nicht vorab festgelegt) -------
+
+
+def jahresgrenzen(monate: list[str], ln_reihe) -> dict:
+    """Änderung Q1(j) − Q4(j−1) gegen die Quartalsschritte innerhalb eines Jahres (ln-Werte, Lücken erlaubt).
+
+    Ein stetiger Anstieg verteilt sich gleichmäßig auf alle vier Quartalsschritte; Stufen an den Jahreswechseln
+    zeigen sich als große Q1−Q4-Werte bei Quartalsschritten nahe 0.
+    """
+    y = {m: v for m, v in zip(monate, ln_reihe) if v is not None and np.isfinite(v)}
+    jahre = sorted({int(m[:4]) for m in y})
+
+    def q(j, mm):
+        w = [y[f"{j:04d}-{m:02d}"] for m in mm if f"{j:04d}-{m:02d}" in y]
+        return float(np.mean(w)) if w else np.nan
+
+    Q = ((1, 2, 3), (4, 5, 6), (7, 8, 9), (10, 11, 12))
+    grenze = {str(j): q(j, Q[0]) - q(j - 1, Q[3]) for j in jahre if j - 1 in jahre}
+    innen = [q(j, Q[k + 1]) - q(j, Q[k]) for j in jahre for k in range(3)]
+    innen = [v for v in innen if np.isfinite(v)]
+    return {"q1_minus_q4_vorjahr": {k: _rund(v, 4) for k, v in grenze.items()},
+            "quartalsschritte_im_jahr_mittel": _rund(float(np.mean(innen)), 4),
+            "quartalsschritte_im_jahr_sd": _rund(float(np.std(innen)), 4), "n_innen": len(innen)}
+
+
+def sonnenflecken(pfad: Path) -> dict[str, float]:
+    """SILSO-Monatsmittel der Sonnenfleckenzahl (Datei snmtotcsv, Spalten Jahr;Monat;Dezimaljahr;Wert;…)."""
+    aus = {}
+    for zeile in pfad.read_text(encoding="utf-8").splitlines():
+        t = zeile.split(";")
+        if len(t) >= 4 and float(t[3]) >= 0:
+            aus[f"{int(t[0]):04d}-{int(t[1]):02d}"] = float(t[3])
+    return aus
+
+
+def nachtraeglich() -> dict:
+    from scipy import stats
+
+    e = json.loads((ausgabe_ordner() / "ergebnis.json").read_text(encoding="utf-8"))
+    ms = e["monate"]
+    aus = {"hinweis": "nachträglich nach Ansicht der Ergebnisse; beschreibend, kein vorab festgelegter Test"}
+    aus["jahresgrenzen"] = {}
+    for n in ("alle beleuchteten Zellen", "Klasse mittel", "Klasse hell", "Kontinent Europa", "Kontinent Asien", "Kontinent Afrika"):
+        v = [None if x is None else float(np.log(x)) for x in e["gruppen"][n]["monat_index"]]
+        v = [None if m in [f"{j:04d}-{mm:02d}" for j, mm in TEILMONATE] else x for m, x in zip(ms, v)]
+        aus["jahresgrenzen"][n] = jahresgrenzen(ms, v)
+    r2 = [None if x is None else float(np.log(x)) for x in e["teil3"]["r2_monat_index"]]
+    aus["jahresgrenzen"]["R2 hell und stabil"] = jahresgrenzen(ms, r2)
+    sp = ausgabe_ordner() / "silso_sn_m.csv"
+    if sp.exists():
+        sn = sonnenflecken(sp)
+        jahre = [str(j) for j in range(2013, 2023)]
+        a = [e["teil3"]["r1_je_jahr"][j]["anteil_ueber_0"] for j in jahre]
+        s = [float(np.mean([sn[f"{j}-{k:02d}"] for k in range(1, 13)])) for j in jahre]
+        r = stats.spearmanr(a, s)
+        aus["sonne"] = {"sonnenflecken_jahresmittel": dict(zip(jahre, [round(x, 1) for x in s])),
+                        "r1_anteil_ueber_0": dict(zip(jahre, a)), "spearman_jahre": _rund(r.statistic, 3),
+                        "hinweis": "10 Jahreswerte, zeitlich abhängig: Beschreibung, kein Test"}
+    (ausgabe_ordner() / "ergebnis_nachtraeglich.json").write_text(json.dumps(aus, ensure_ascii=False, indent=1), encoding="utf-8")
+    return aus
+
+
+
+# --- NACHTRÄGLICH nach Auflage statistik-pruefer (2026-10-05) ------------------------------------------------
+# Befund des Prüfers: Die Basislinie „Median desselben Kalendermonats 2013–2019“ macht aus einem stetigen Anstieg
+# eine Treppe mit Stufen im Januar (ln(x/B) ≈ 12·g·(Jahr − 2016), innerhalb eines Jahres konstant). Das
+# Jahresgrenzen-Profil oben und das Modell M_jan sind damit NICHT trennscharf. Hier deshalb: fester Zellkreis,
+# Jahreszeit und Trend gemeinsam geschätzt.
+PANEL_MAX_BREITE = 35.0  # kein Schnee-Verdacht (Regel greift ab 23,5°, Winter); ±35° hält Monsun- und Wüstenländer
+
+
+def panel_reihe(gl: dict, breite: np.ndarray, ohne=TEILMONATE) -> tuple[list, np.ndarray, int]:
+    """ln Σ a·x über einen festen Zellkreis: Niveau ≥ 0,5, |Breite| < 35°, gültig in allen verwendeten Monaten."""
+    nimm = [i for i, m in enumerate(gl["monate"]) if m not in ohne]
+    fest = (gl["niveau"] >= DUNKEL_BIS) & (np.abs(breite) < PANEL_MAX_BREITE) & gl["g"][nimm].all(axis=0)
+    y = np.log((gl["a"][None, fest] * gl["x"][nimm][:, fest]).sum(axis=1))
+    return [gl["monate"][i] for i in nimm], y, int(fest.sum())
+
+
+def bruch_mit_saison(monate, y, extra: dict | None = None, rand=BRUCH_RAND_MONATE) -> dict:
+    """Wie bruch_modelle, aber mit 11 Kalendermonats-Indikatoren statt vorab abgezogener Jahreszeit."""
+    t = t_von(monate)
+    mon = np.array([m for _, m in monate])
+    D = np.column_stack([(mon == k).astype(float) for k in range(2, 13)])
+    X0 = np.column_stack([np.ones(len(y)), t, D])
+    n, p0 = len(y), X0.shape[1]
+    _, _, rss0 = _ols(X0, y)
+    aus = {"M0": {"bic": _bic(rss0, n, p0), "steigung_je_jahr": float(_ols(X0, y)[0][1] * 12)}}
+    best = {}
+    for name, f in (("M_stufe", lambda k: (t >= k).astype(float)), ("M_knick", lambda k: np.maximum(t - k, 0.0))):
+        for k in [k for k in np.unique(t) if (t < k).sum() >= rand and (t >= k).sum() >= rand]:
+            b, _, rss = _ols(np.column_stack([X0, f(k)]), y)
+            if name not in best or rss < best[name]["rss"]:
+                best[name] = {"k": monat_aus_index(int(k)), "rss": rss, "koeffizient": float(b[-1]), "bic": _bic(rss, n, p0 + 2)}
+    aus.update(best)
+    for name, R in (extra or {}).items():
+        R = R if R.ndim == 2 else R[:, None]
+        b, _, rss = _ols(np.column_stack([X0, R]), y)
+        aus[name] = {"bic": _bic(rss, n, p0 + R.shape[1]), "koeffizienten": [float(v) for v in b[-R.shape[1]:]]}
+    return aus
+
+
+# Nicht gebaut (bewusst): „Wächst das Licht innerhalb eines Jahres?“ ist bei frei geschätzter Jahreszeit nicht
+# bestimmbar – stetiger Trend = Januar-Stufen + jedes Jahr gleiche Rampe, und die Rampe geht in die
+# Kalendermonats-Effekte auf. Bestimmbar ist nur eine EINMALIGE Stufe/Knick gegenüber einem durchgehenden Trend.
+
+
+def nachtraeglich_panel() -> dict:
+    s = lade_stapel()
+    gl = _grundlage(s)
+    monate, y, n = panel_reihe(gl, s["breite"])
+    f, _ = l1b_anteil_neu(monate)
+    t = t_von(monate)
+    jan = np.column_stack([(t >= 96).astype(float), (t >= 108).astype(float)])
+    aus = {"hinweis": "nachträglich nach Auflage statistik-pruefer; fester Zellkreis, Jahreszeit mitgeschätzt",
+           "zellen": n, "monate": len(monate),
+           "modelle": bruch_mit_saison(monate, y, {"M_jan": jan, "M_l1b": f}),
+           "ln_reihe": {f"{j:04d}-{m:02d}": _rund(v, 4) for (j, m), v in zip(monate, y)}}
+    (ausgabe_ordner() / "ergebnis_panel.json").write_text(json.dumps(aus, ensure_ascii=False, indent=1), encoding="utf-8")
+    return aus
+
+
+# --- Grafiken ------------------------------------------------------------------------------------------------------
+
+FARBE = {"blau": "#2a78d6", "orange": "#eb6834", "aqua": "#1baf7a", "grau": "#8a8984", "tinte": "#0b0b0b",
+         "tinte2": "#52514e", "flaeche": "#fcfcfb", "raster": "#e4e3df", "div_kalt": "#2a78d6", "div_warm": "#e34948",
+         "div_mitte": "#f0efec"}
+BILDER = Path(__file__).resolve().parents[2] / "berichte" / "bilder"
+
+
+def _achse(ax):
+    ax.set_facecolor(FARBE["flaeche"])
+    for k in ("top", "right"):
+        ax.spines[k].set_visible(False)
+    for k in ("left", "bottom"):
+        ax.spines[k].set_color(FARBE["grau"])
+    ax.tick_params(colors=FARBE["tinte2"], labelsize=8)
+    ax.grid(axis="y", color=FARBE["raster"], lw=0.8)
+    ax.set_axisbelow(True)
+
+
+def _zeit(monate):
+    import datetime as dt
+
+    return [dt.date(int(m[:4]), int(m[5:7]), 15) for m in monate]
+
+
+def grafiken() -> list[Path]:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import datetime as dt
+
+    import matplotlib.pyplot as plt
+
+    e = json.loads((ausgabe_ordner() / "ergebnis.json").read_text(encoding="utf-8"))
+    bpfad = ausgabe_ordner() / "ergebnis_b.json"
+    eb = json.loads(bpfad.read_text(encoding="utf-8")) if bpfad.exists() else None
+    BILDER.mkdir(parents=True, exist_ok=True)
+    z = _zeit(e["monate"])
+    aus = []
+    plt.rcParams.update({"font.size": 9, "figure.facecolor": FARBE["flaeche"]})
+
+    def arr(v):
+        return np.array([np.nan if w is None else w for w in v], dtype=float)
+
+    def sichern(fig, name):
+        ziel = BILDER / f"2026-10-05_anstieg_{name}.png"
+        fig.savefig(ziel, dpi=150, bbox_inches="tight", facecolor=FARBE["flaeche"])
+        plt.close(fig)
+        aus.append(ziel)
+
+    # 1 Gesamtreihe, Blickwinkel-Gegenprobe, Anteil neuer L1B-Version
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(9, 5.2), sharex=True, gridspec_kw={"height_ratios": [3, 1]})
+    for ax in (a1, a2):
+        _achse(ax)
+    g = arr(e["gruppen"]["alle beleuchteten Zellen"]["monat_index"])
+    nn = arr(e["near_nadir"]["monat_index"])
+    a1.plot(z, g, color=FARBE["blau"], lw=2, label="alle Blickwinkel (Hauptfeld)")
+    a1.plot(z, nn, color=FARBE["orange"], lw=1.4, label="nur nahe Senkrechtblick (Gegenprobe)")
+    a1.axhline(1, color=FARBE["grau"], lw=0.8, ls="--")
+    i8 = e["monate"].index("2022-08")
+    a1.plot([z[i8]], [g[i8]], "o", mfc="none", mec=FARBE["tinte"], ms=8)
+    a1.annotate("2022-08 Teilmonat", (z[i8], g[i8]), xytext=(-40, -28), textcoords="offset points", fontsize=8, color=FARBE["tinte2"])
+    a1.set_ylabel("Licht / Mittel 2013–2019\n(gleicher Kalendermonat)", color=FARBE["tinte2"])
+    a1.legend(frameon=False, fontsize=8, loc="upper left")
+    a1.set_title("Afrika-Europa-Asien, beleuchtete Zellen: Nachtlicht im Verhältnis zu 2013–2019", loc="left", fontsize=10)
+    f = e["bruch"]["l1b_anteil_neu_je_monat"]
+    mz = sorted(f)
+    a2.bar(_zeit(mz), [f[k] * 100 for k in mz], width=25, color=FARBE["grau"])
+    a2.set_ylabel(f"% L1B-Dateien\nPGE {L1B_NEUE_VERSION}", color=FARBE["tinte2"])
+    a2.set_ylim(0, 100)
+    sichern(fig, "gesamt")
+
+    # 2 kleine Vielfache: Breitenbänder, Kontinente, Klassen
+    namen = [k for k in e["gruppen"] if k.startswith("Breite")] + [k for k in e["gruppen"] if k.startswith("Kontinent")] + ["Klasse mittel", "Klasse hell"]
+    # Ozeanien: nur Randzellen der Region mit wenig Licht, Reihe ist Rauschen (im Bericht vermerkt)
+    namen = [n for n in namen if e["gruppen"][n]["zellen_gesamt"] > 0 and n != "Kontinent Ozeanien"]
+    sp = 4
+    zl = int(np.ceil(len(namen) / sp))
+    fig, axs = plt.subplots(zl, sp, figsize=(11, 2.1 * zl), sharex=True, sharey=True)
+    for ax, n in zip(axs.flat, namen):
+        _achse(ax)
+        v = arr(e["gruppen"][n]["monat_index"])
+        ax.plot(z, v, color=FARBE["blau"], lw=1.4)
+        ax.axhline(1, color=FARBE["grau"], lw=0.8, ls="--")
+        ax.set_title(n.replace("Breite ", "").replace("Kontinent ", ""), loc="left", fontsize=9)
+    import matplotlib.dates as mdates
+
+    for ax in axs.flat:
+        ax.xaxis.set_major_locator(mdates.YearLocator(3))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    for ax in list(axs.flat)[len(namen):]:
+        ax.set_visible(False)
+    axs.flat[0].set_ylim(0.7, 1.5)
+    fig.suptitle("Gleiches Maß je Gruppe (1 = Mittel 2013–2019)", x=0.01, ha="left", fontsize=10)
+    fig.tight_layout()
+    sichern(fig, "gruppen")
+
+    # 3 gleiche Kalendermonate
+    jahre = [str(j) for j in range(2013, 2023)]
+    M = np.array([[np.nan if e["kalendermonate"][f"{m:02d}"]["index"].get(j) is None else e["kalendermonate"][f"{m:02d}"]["index"][j]
+                   for j in jahre] for m in range(1, 13)])
+    from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+
+    cmap = LinearSegmentedColormap.from_list("div", [FARBE["div_kalt"], FARBE["div_mitte"], FARBE["div_warm"]])
+    fig, ax = plt.subplots(figsize=(8, 4.6))
+    ax.imshow(M, cmap=cmap, norm=TwoSlopeNorm(1.0, 0.75, 1.25), aspect="auto")
+    for i in range(12):
+        for k in range(10):
+            if np.isfinite(M[i, k]):
+                ax.text(k, i, f"{M[i, k]:.2f}", ha="center", va="center", fontsize=7, color=FARBE["tinte"])
+            else:
+                ax.text(k, i, "–", ha="center", va="center", fontsize=7, color=FARBE["tinte2"])
+    ax.set_xticks(range(10), jahre, fontsize=8)
+    ax.set_yticks(range(12), [f"{m:02d} ({e['kalendermonate'][f'{m:02d}']['zellen']} Zellen)" for m in range(1, 13)], fontsize=8)
+    ax.set_title("Gleicher Kalendermonat, fester Zellkreis: Licht / Mittel 2013–2019", loc="left", fontsize=10)
+    sichern(fig, "kalendermonate")
+
+    # 4 Teil 3
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 3.4))
+    for ax in (a1, a2):
+        _achse(ax)
+    a1.plot(z, arr(e["teil3"]["r1_je_monat"]), color=FARBE["blau"], lw=1.4)
+    a1.set_title(f"R1 dunkle Referenz ({e['teil3']['r1_zellen']} Zellen): Mittelwert", loc="left", fontsize=9)
+    a1.set_ylabel("nW·cm⁻²·sr⁻¹", color=FARBE["tinte2"])
+    jj = list(range(2013, 2023))
+    for n, farbe, versatz in (("alle beleuchteten Zellen", FARBE["blau"], -0.2), ("Klasse mittel", FARBE["aqua"], 0.0)):
+        d = e["gruppen"][n]["jahr"]
+        w = np.array([d[str(j)]["wert"] for j in jj]); u = np.array([d[str(j)]["unten"] for j in jj]); o = np.array([d[str(j)]["oben"] for j in jj])
+        a2.errorbar(np.array(jj) + versatz, w, yerr=[w - u, o - w], fmt="o", ms=4, color=farbe, lw=1.2, label=n)
+    d = e["teil3"]["r2_jahr"]
+    w = np.array([d[str(j)]["wert"] for j in jj]); u = np.array([d[str(j)]["unten"] for j in jj]); o = np.array([d[str(j)]["oben"] for j in jj])
+    a2.errorbar(np.array(jj) + 0.2, w, yerr=[w - u, o - w], fmt="s", ms=4, color=FARBE["orange"], lw=1.2,
+                label=f"R2 hell und stabil ({e['teil3']['r2_zellen']} Zellen)")
+    a2.axhline(1, color=FARBE["grau"], lw=0.8, ls="--")
+    a2.legend(frameon=False, fontsize=7, loc="upper left")
+    a2.set_title("Jahreswert mit 95-%-Intervall (Kachel-Bootstrap)", loc="left", fontsize=9)
+    sichern(fig, "teil3")
+
+    # 5 Teil 4
+    if eb:
+        fig, axs = plt.subplots(1, 3, figsize=(11, 3.2), sharey=True)
+        for ax, j in zip(axs, (2020, 2021, 2022)):
+            _achse(ax)
+            km = sorted(eb["je_kalendermonat"])
+            for q, farbe, mk, lab in (("wuerfel", FARBE["blau"], "o", "NASA VNP46A3 (Würfel)"), ("b", FARBE["orange"], "s", "EOG VCMCFG (B)")):
+                v = [eb["je_kalendermonat"][k][q].get(str(j)) for k in km]
+                ax.plot([int(k) for k in km], [np.nan if x is None else x for x in v], marker=mk, ms=5, lw=1.2, color=farbe, label=lab)
+            ax.axhline(1, color=FARBE["grau"], lw=0.8, ls="--")
+            ax.set_title(f"{j} / 2019 je Kalendermonat", loc="left", fontsize=9)
+            ax.set_xticks(range(1, 13))
+        axs[0].legend(frameon=False, fontsize=7, loc="upper left")
+        sichern(fig, "gegenprobe_b")
+    return aus
 
 
 def main(argv=None) -> int:
@@ -752,6 +1053,14 @@ def main(argv=None) -> int:
         rechne()
     elif aktion == "b":
         print(json.dumps(rechne_b(), ensure_ascii=False, indent=1))
+    elif aktion == "nachtraeglich":
+        print(json.dumps(nachtraeglich(), ensure_ascii=False, indent=1))
+    elif aktion == "panel":
+        r = nachtraeglich_panel()
+        print(json.dumps({k: v for k, v in r.items() if k != "ln_reihe"}, ensure_ascii=False, indent=1))
+    elif aktion == "grafiken":
+        for p in grafiken():
+            print(p)
     else:
         raise SystemExit(f"Unbekannte Aktion {aktion!r} (lesen | rechnen | b)")
     return 0

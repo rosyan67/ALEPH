@@ -585,3 +585,18 @@
 - **Tests:** worktree 865/865; danach 67 Globus-Tests nach Textänderung. Zwei Tests mit festem Ladestand angepasst; `tests/test_link_nachtlicht_einheiten.py::test_technikprobe_2018_01_echte_daten` scheitert auf main mit dem heutigen Würfel aus demselben Grund (USA 2018-01 inzwischen geladen).
 - **Nicht angefasst:** Nachtlicht-Download, `.env`. In ~/ALEPH nur LOG.md. Nichts aus 2023–2025 gezeigt oder ausgewertet.
 - **Bericht:** `~/ALEPH-ui/berichte/2026-10-05_globus-alle-monate.md`, Prüferbericht `2026-10-05_plausibilitaet-globus-alle-monate.md`.
+
+## 2026-10-05 (Untersuchung: Anstieg des Nachtlichts 2021–2022; nur untersucht, nichts an Daten oder Download geändert)
+
+- **Teil 0:** Test `test_technikprobe_2018_01_echte_daten` wie im worktree an den Ladezustand angepasst (Commit `c7cad2a`); Suite 798/798.
+- **Regeln vorab:** Code, Regeln und Vorhersagen vor der ersten Rechnung committet (`9de5e42`). Danach ein Programmfehler behoben (16-Bit-Überlauf der Zellnummer, kein Landanteil gefunden), Regeln unverändert.
+- **Teil 1** (nur Afrika-Europa-Asien, Jahreszeit je Zelle herausgerechnet): 2021/2019 +4,6 % [2,2; 7,2], 2022/2019 +11,3 % [7,3; 15,3]; schon 2013–2019 stetiger Anstieg; Delle 2020 (Mai/Juni −8 bis −11 %). Stark in Asien und der Klasse mittel, kaum in Europa und der Klasse hell.
+- **Bruchpunkt:** Das Gerüst hat keinen. Das eigene BIC-Verfahren war mit der Kalendermonats-Basislinie nicht trennscharf. Artefaktfreie Gegenrechnung (fester Zellkreis, Jahreszeit mitgeschätzt): Trend +3,6 %/Jahr, kein Effekt des L1B-Wechsels; 2018 +4,9 %, 2020 −6,5 %, 2022 +3,2 % über dem Trend.
+- **Teil 2:** Alle Monatsdateien 2013–2022 Collection 2, PGE 2.0.5, 2025 erzeugt; Manifest = heutiger Katalog. Kalibrier-Software der Rohdaten VNP02DNB wechselt am 12.06.2021 auf 3.0.30 (alle 3 652 Tage abgefragt), ohne sichtbare Stufe. NASA-Seiten: nichts zu 2021/22.
+- **Teil 3:** Dunkle Wüstenreferenz 2022 erhöht (Anteil > 0: 0,20 → 0,40; Verlauf ähnlich dem Sonnenzyklus, nur beschreibend). Helle, stabile Orte (181 Zellen) 2022/2019 +2,3 % [−1,6; 6,6].
+- **Teil 4:** EOG VCMCFG 47 Monate über Earth Engine: B zeigt denselben Anstieg (2021: +7,5 % gegen NASA +5,6 %; 2022: +8,5 % gegen +12,7 %, knapp). NASA − B 2022: +2,7 bis +5,9 Punkte, Ursache offen. Würfel über Ladezustände stimmig (Kandidat A 2017-10, 2018-10, 2021-10: Median 0,999).
+- **Urteil:** 2021 kein Hinweis auf Verarbeitungsfehler (gleicher Sensor!), Trend plus Erholung. 2022 Rest 3–6 Punkte unerklärt. Regel: 2021 normal nutzen, 2022 kennzeichnen, nicht korrigieren.
+- **Prüfer:** statistik-pruefer „nicht bestanden“ für meine nachträgliche Aussage „Anstieg an Jahreswechseln“ (Artefakt der Basislinie, per Test gezeigt, zurückgezogen); Auflagen umgesetzt. plausibilitaets-pruefer „plausibel mit Vorbehalt“; Empfehlungen umgesetzt (u. a. Energiekrise Europa geprüft), „Nicht behaupten“-Liste im Bericht.
+- **Tests:** 817/817 (vor den letzten Textänderungen).
+- **Nicht angefasst:** Nachtlicht-Download (Prozess 82367), `vnp46a3*.py`, Kachellisten, `scripts/vnp46a3_*`, `.env`. Würfel nur gelesen. Keine Daten ab 2023.
+- **Bericht:** `berichte/2026-10-05_anstieg-2021-2022.md`.
