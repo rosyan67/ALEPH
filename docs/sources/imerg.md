@@ -53,6 +53,7 @@ Kennzeichnung (wie in `docs/sources/vnp46a3.md`):
   - Infrarot nur 60° N–S: „IR only covers 60°N-S" (S. 22).
   - Über gefrorenen Flächen, besonders in hohen Breiten, verminderte Güte: „users should be aware of the diminished performance of these estimates … applications that use and evaluate these estimates over frozen surfaces, especially at high latitudes, should indicate this caveat of reduced skill" (S. 23).
   - Oberhalb 89° N sollten alle Werte fehlen: „all gridbox values above 89°N should be ‚missing' for the precipitationUncal and Precipitation variables. This issue is corrected in V07 IMERG" (S. 67, Punkt 9).
+  - **Gemessen in ALEPH (2026-10-05, alle 153 Monate, technische Prüfung):** Im 0,25°-Würfel fehlen Werte nur in den Zeilen jenseits ±89,5° (Zellmitten 89,625/89,875 N und S), je Monat 0,34–0,57 % der Zellen. Die Zeilen 89,125 und 89,375 N haben Werte. Das Zitat oben beschreibt also einen in V07 behobenen Fehler, keine Lücke ab 89° N. Dass auch am Südpol Werte fehlen, steht nicht im gelesenen Text. [Messung]
   - Folgerung für ALEPH [Eigene Überlegung]: Werte nördlich/südlich von 60° als „verminderte Güte" kennzeichnen (Datenlage-Merkmal), nicht löschen; ob 60° die richtige Linie ist, ist eine Annahme aus der IR-Grenze, keine Anbieterempfehlung.
 - **Fehlwert:** „All products in IMERG use the standard missing value ‚-9999.9' or ‚-9999' for 4-byte floats or 2-byte integers, respectively. These values are carried in the metadata." [Anbieter: S. 74]
 
@@ -73,6 +74,7 @@ Kennzeichnung (wie in `docs/sources/vnp46a3.md`):
 - **Einmalige Freigabe nötig (gemessen 2026-10-02):** Anmeldung gelingt, der Abruf einer Datei liefert aber HTTP 403 mit `"error_description":"EULA Acceptance Failure"` und `"resolution_url":"https://urs.earthdata.nasa.gov/approve_app?client_id=e2WVk8Pw6weeLUKZYOxvTQ"`. [Messung]
   - Dieselbe Adresse nennt GES DISC selbst: „Once registered, you can click here to authorize 'NASA GESDISC DATA ARCHIVE' application." [Anbieter: Verzeichnisseite https://discnrt1.gesdisc.eosdis.nasa.gov/data/]
   - **Was der Nutzer tut:** Adresse oben im Browser öffnen, bei Earthdata anmelden, die Anwendung „NASA GESDISC DATA ARCHIVE" freigeben („Authorize"/„Approve").
+  - **Erledigt 2026-10-05:** Freigabe erteilt, danach liefen alle 153 Abrufe ohne 403. [Messung]
 - **Zugriffsweg:** HTTPS-Download über `earthaccess` (ARCHITECTURE.md Abschnitt 5); Downloadadresse aus dem Katalog, Muster `https://data.gesdisc.earthdata.nasa.gov/data/GPM_L3/GPM_3IMERGM.07/<Jahr>/<Datei>`. [Anbieter: CMR-Granulat, `RelatedUrls`]
 - **Hinweis Serverumzug:** Die alte GES-DISC-Verzeichnisseite meldet: „Access to this server (and all other GES DISC data servers) will end no earlier than September 30th 2026. Users will need to transition to Earthdata". Die Katalog-Adressen zeigen bereits auf `data.gesdisc.earthdata.nasa.gov`. Ob das der neue Weg ist, ist nicht geprüft; ALEPH nimmt immer die Adresse aus dem Katalog, nie eine fest eingetragene. [Anbieter / Eigene Überlegung]
 

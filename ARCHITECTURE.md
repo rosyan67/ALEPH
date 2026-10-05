@@ -163,6 +163,7 @@ Beide werden wie jeder andere Layer auf das gemeinsame Raster gebracht (z. B. Sc
 - Exakt flächengewichtete Umrechnung 0,1° → 0,25° (Verhältnis 2,5; Gewicht = Überlappungsfläche auf der Kugel), Einheit mm/h (mittlere Rate) × Stunden des Kalendermonats → mm/Monat. Fehlwerte werden nie zu 0.
 - Höchstens 2 gleichzeitige Downloads (Bandbreite wird mit dem Nachtlicht-Download geteilt). Zugang braucht die einmalige Freigabe „NASA GESDISC DATA ARCHIVE“ im Earthdata-Profil.
 - Kalibrierungsbruch TRMM → GPM: 2013-01 bis 2014-05 mit TRMM-Kalibrierung (Technical Documentation S. 19, 22); im Würfel als Variable `kalibrierung_trmm` markiert.
+- **Geladen am 2026-10-05:** 153 Monate (`monat_fertig` = 1) plus 3 Monate Zustand 5; Würfel `imerg.zarr` auf der SSD. Fehlwerte je Monat 0,34–0,57 %, nur in den Polzeilen jenseits ±89,5°. Plausibilitätsprüfung am Jahr 2018: `berichte/2026-10-02_imerg.md`.
 
 | Copernicus Data Space | Sentinel-5P (NO₂ in höherer Auflösung), Sentinel-1 (Radar) | Ergänzung zu OMI, ab 2018 |
 | Copernicus Climate Data Store | ERA5 Klimadaten (Temperatur, Bodenfeuchte u. a.) | Klima-Layer |
